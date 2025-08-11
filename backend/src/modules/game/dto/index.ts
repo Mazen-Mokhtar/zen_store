@@ -1,14 +1,24 @@
 import { Transform } from "class-transformer";
-import { IsArray, IsInt, IsOptional, IsString, Min } from "class-validator";
+import { IsArray, IsInt, IsOptional, IsString, Min, IsNotEmpty, IsMongoId } from "class-validator";
 
 export class ListGamesDto {
     @IsOptional()
     @IsString()
     search?: string;
 
+    @IsMongoId()
+    @IsNotEmpty()
+    categoryId: string;
+
     @IsOptional()
-    @IsString()
-    categoryId?: string;
+    @Transform(({ value }) => {
+        if (Array.isArray(value)) return value;                     // ?categories=action&categories=rpg
+        if (typeof value === 'string') return value.split(',');    // ?categories=action,rpg OR ?categories=action
+        return [];
+    })
+    @IsArray()
+    @IsString({ each: true })
+    categories?: string | string[];
 
     @IsOptional()
     @Transform(({ value }) => {
@@ -30,6 +40,7 @@ export class ListGamesDto {
 }
 
 export class CategoryIdDto {
-    @IsString()
+    @IsMongoId()
+    @IsNotEmpty()
     categoryId: string;
 }

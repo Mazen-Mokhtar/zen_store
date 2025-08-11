@@ -9,6 +9,7 @@ import { SharedModule } from "src/commen/sharedModules";
 @Module({
     imports: [SharedModule, categoryModel],
     controllers: [CategoryController],
-    providers: [CategoryService, categoryRepository, cloudService]
+    providers: [CategoryService, categoryRepository, cloudService],
+    exports: [categoryRepository]
 })
 export class categoryModule { }

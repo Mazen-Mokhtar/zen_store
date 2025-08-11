@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect, useCallback } from "react";
-import { useSearchParams } from "next/navigation";
+import { useSearchParams, useRouter } from "next/navigation";
 import { Search, Bell, HelpCircle } from 'lucide-react';
 import { Footer } from '@/components/ui/footer-section';
 import { LoadingSpinner } from '@/components/ui/loading-spinner';
@@ -13,6 +13,7 @@ import { apiService, Game } from '@/lib/api';
 import { handleApiError } from '@/lib/api-error';
 
 import { useTranslation } from '@/lib/i18n';
+import { authService } from '@/lib/auth';
 
 // صور خلفية داكنة بسيطة بدون نصوص
 const heroImages = [
@@ -24,6 +25,7 @@ const heroImages = [
 export default function EndexHeroPage() {
   const { t } = useTranslation();
   const searchParams = useSearchParams();
+  const router = useRouter();
   const categoryId = searchParams.get('category');
   
   // All Games category ID - يمكن تغييره من environment variable أو استخدام القيمة الافتراضية
@@ -34,6 +36,7 @@ export default function EndexHeroPage() {
   const [mobileGames, setMobileGames] = useState<Game[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [isAuth, setIsAuth] = useState(false);
 
   // Hero carousel effect
   useEffect(() => {
@@ -41,6 +44,11 @@ export default function EndexHeroPage() {
       setCurrent((prev) => (prev + 1) % heroImages.length);
     }, 1000);
     return () => clearInterval(interval);
+  }, []);
+
+  // Check auth state on mount
+  useEffect(() => {
+    setIsAuth(authService.isAuthenticated());
   }, []);
 
   // Fetch data function with useCallback to prevent unnecessary re-renders
@@ -57,9 +65,10 @@ export default function EndexHeroPage() {
       // Always use a category - if none provided, use ALL_GAMES_CATEGORY_ID
       const categoryToUse = selectedCategory || ALL_GAMES_CATEGORY_ID;
       
-      console.log('🎮 جلب الألعاب من الفئة:', categoryToUse);
-      gamesData = await apiService.getGamesByCategory(categoryToUse);
-      popularGames = gamesData.data.filter(game => game.isPopular);
+      console.log('🎮 جلب الفئة مع الباقات:', categoryToUse);
+      const withPackages = await apiService.getCategoryWithPackages(categoryToUse);
+      gamesData = { success: withPackages.success, data: withPackages.data } as { success: boolean; data: Game[] };
+      popularGames = withPackages.data.filter(game => game.isPopular);
       
       console.log('📊 Setting popularItems:', { 
         popularGames: popularGames?.length || 0,
@@ -68,7 +77,7 @@ export default function EndexHeroPage() {
       
       setPopularItems({
         games: popularGames || [],
-        packages: []
+        packages: (withPackages as any).packages || []
       });
       
       console.log('📊 Setting mobileGames:', { 
@@ -113,9 +122,29 @@ export default function EndexHeroPage() {
               </div>
               <div className="flex items-center gap-4">
                 <LanguageSelector />
-                <button className="text-sm font-semibold hover:text-gray-200">
-                  {t('dashboard.enter')}
-                </button>
+                {isAuth ? (
+                  <div
+                    onClick={() => router.push('/orders')}
+                    role="button"
+                    title="طلباتي"
+                    className="w-8 h-8 rounded-full border border-gray-600 overflow-hidden cursor-pointer transition-shadow hover:ring-2 hover:ring-emerald-400 hover:ring-offset-2 hover:ring-offset-[#1A1B20]"
+                  >
+                    <Image
+                      src="https://res.cloudinary.com/dfvzhl8oa/image/upload/f_auto,q_auto,c_fill,g_face,w_64,h_64,dpr_2/v1754848996/d2090ffb-1769-4853-916c-79c2a4ae2568_gmih9f.jpg"
+                      alt="Avatar"
+                      width={32}
+                      height={32}
+                      sizes="32px"
+                      className="w-full h-full object-cover"
+                      unoptimized
+                      priority
+                    />
+                  </div>
+                ) : (
+                  <button className="text-sm font-semibold hover:text-gray-200">
+                    {t('dashboard.enter')}
+                  </button>
+                )}
               </div>
             </div>
           </div>
@@ -159,9 +188,29 @@ export default function EndexHeroPage() {
               </div>
               <div className="flex items-center gap-4">
                 <LanguageSelector />
-                <button className="text-sm font-semibold hover:text-gray-200">
-                  {t('dashboard.enter')}
-                </button>
+                {isAuth ? (
+                  <div
+                    onClick={() => router.push('/orders')}
+                    role="button"
+                    title="طلباتي"
+                    className="w-8 h-8 rounded-full border border-gray-600 overflow-hidden cursor-pointer transition-shadow hover:ring-2 hover:ring-emerald-400 hover:ring-offset-2 hover:ring-offset-[#1A1B20]"
+                  >
+                    <Image
+                      src="https://res.cloudinary.com/dfvzhl8oa/image/upload/f_auto,q_auto,c_fill,g_face,w_64,h_64,dpr_2/v1754848996/d2090ffb-1769-4853-916c-79c2a4ae2568_gmih9f.jpg"
+                      alt="Avatar"
+                      width={32}
+                      height={32}
+                      sizes="32px"
+                      className="w-full h-full object-cover"
+                      unoptimized
+                      priority
+                    />
+                  </div>
+                ) : (
+                  <button className="text-sm font-semibold hover:text-gray-200">
+                    {t('dashboard.enter')}
+                  </button>
+                )}
               </div>
             </div>
           </div>
@@ -195,9 +244,29 @@ export default function EndexHeroPage() {
             </div>
             <div className="flex items-center gap-4">
               <LanguageSelector />
-              <button className="text-sm font-semibold hover:text-gray-200">
-                {t('dashboard.enter')}
-              </button>
+              {isAuth ? (
+                <div
+                  onClick={() => router.push('/orders')}
+                  role="button"
+                  title="طلباتي"
+                  className="w-8 h-8 rounded-full border border-gray-600 overflow-hidden cursor-pointer transition-shadow hover:ring-2 hover:ring-emerald-400 hover:ring-offset-2 hover:ring-offset-[#1A1B20]"
+                >
+                  <Image
+                    src="https://res.cloudinary.com/dfvzhl8oa/image/upload/f_auto,q_auto,c_fill,g_face,w_64,h_64,dpr_2/v1754848996/d2090ffb-1769-4853-916c-79c2a4ae2568_gmih9f.jpg"
+                    alt="Avatar"
+                    width={32}
+                    height={32}
+                    sizes="32px"
+                    className="w-full h-full object-cover"
+                    unoptimized
+                    priority
+                  />
+                </div>
+              ) : (
+                <button className="text-sm font-semibold hover:text-gray-200">
+                  {t('dashboard.enter')}
+                </button>
+              )}
             </div>
           </div>
         </div>
@@ -268,11 +337,16 @@ export default function EndexHeroPage() {
 // إضافة مكون PopularesSection في نفس الملف
 function PopularesSection({ items }: { items: Game[] }) {
   const { t } = useTranslation();
+  const router = useRouter();
 
   // إذا لم تكن هناك عناصر، لا تعرض القسم
   if (!items || items.length === 0) {
     return null;
   }
+
+  const handleGameClick = (game: Game) => {
+    router.push(`/packages?gameId=${game._id}&gameName=${encodeURIComponent(game.name)}`);
+  };
 
   return (
     <section className="max-w-6xl mx-auto mt-10 rounded-3xl bg-[#232329] shadow-lg px-6 py-6">
@@ -283,6 +357,7 @@ function PopularesSection({ items }: { items: Game[] }) {
         {items.map((item) => (
           <div
             key={item._id}
+            onClick={() => handleGameClick(item)}
             className="w-48 min-w-[180px] h-72 bg-[#18181c] rounded-2xl shadow flex flex-col items-stretch relative overflow-hidden cursor-pointer hover:scale-105 transition-transform"
           >
             <Image
@@ -311,11 +386,16 @@ function PopularesSection({ items }: { items: Game[] }) {
 // إضافة مكون MobileGamesSection في نفس الملف
 function MobileGamesSection({ games }: { games: Game[] }) {
   const { t } = useTranslation();
+  const router = useRouter();
 
   // إذا لم تكن هناك ألعاب، لا تعرض القسم
   if (!games || games.length === 0) {
     return null;
   }
+
+  const handleGameClick = (game: Game) => {
+    router.push(`/packages?gameId=${game._id}&gameName=${encodeURIComponent(game.name)}`);
+  };
 
   return (
     <section className="max-w-6xl mx-auto mt-10 rounded-3xl bg-[#232329] shadow-lg px-6 py-6">
@@ -324,6 +404,7 @@ function MobileGamesSection({ games }: { games: Game[] }) {
         {games.map((game) => (
           <div 
             key={game._id} 
+            onClick={() => handleGameClick(game)}
             className="w-full h-56 bg-[#18181c] rounded-2xl shadow flex flex-col items-stretch relative overflow-hidden cursor-pointer hover:scale-105 transition-transform"
           >
             <Image src={game.image.secure_url} alt={game.name} width={200} height={200} className="w-full h-full object-cover rounded-2xl" unoptimized />

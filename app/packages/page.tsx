@@ -1,97 +1,224 @@
 "use client";
 import Image from "next/image";
-import { useState } from "react";
+import React, { useState, useEffect } from "react";
+import { useSearchParams } from "next/navigation";
+import { useRouter } from "next/navigation";
 import styles from './packages.module.css';
-
-const packages = [
-  {
-    id: 1,
-    uc: "60 + 600",
-    discount: "10%",
-    price: "EGP 419.99",
-    oldPrice: "EGP 449.99",
-    desc: "اشحن 60 + 600 UC لأول مرة واحصل على مكافأة.",
-    img: "https://cdn.midasbuy.com/images/uc-small.bc30c95b.png",
-  },
-  {
-    id: 2,
-    uc: "30",
-    price: "EGP 20.99",
-    oldPrice: "EGP 22.49",
-    desc: "اشحن 30 UC لأول مرة واحصل على مكافأة.",
-    img: "https://cdn.midasbuy.com/images/uc-small.bc30c95b.png",
-  },
-  {
-    id: 3,
-    uc: "25 + 300",
-    discount: "8%",
-    price: "EGP 209.99",
-    oldPrice: "EGP 224.99",
-    desc: "اشحن 25 + 300 UC لأول مرة واحصل على مكافأة.",
-    img: "https://cdn.midasbuy.com/images/uc-small.bc30c95b.png",
-  },
-  {
-    id: 4,
-    uc: "60",
-    price: "EGP 41.99",
-    oldPrice: "EGP 44.99",
-    desc: "اشحن 60 UC لأول مرة واحصل على مكافأة.",
-    img: "https://cdn.midasbuy.com/images/uc-small.bc30c95b.png",
-  },
-  {
-    id: 5,
-    uc: "4200 + 12000",
-    discount: "35%",
-    price: "EGP 8399.99",
-    oldPrice: "EGP 8999.99",
-    desc: "اشحن 4200 + 12000 UC لأول مرة واحصل على مكافأة.",
-    img: "https://cdn.midasbuy.com/images/uc-small.bc30c95b.png",
-  },
-  {
-    id: 6,
-    uc: "2100 + 6000",
-    discount: "35%",
-    price: "EGP 4199.99",
-    oldPrice: "EGP 4499.99",
-    desc: "اشحن 2100 + 6000 UC لأول مرة واحصل على مكافأة.",
-    img: "https://cdn.midasbuy.com/images/uc-small.bc30c95b.png",
-  },
-  {
-    id: 7,
-    uc: "850 + 3000",
-    discount: "28%",
-    price: "EGP 2099.99",
-    oldPrice: "EGP 2249.99",
-    desc: "اشحن 850 + 3000 UC لأول مرة واحصل على مكافأة.",
-    img: "https://cdn.midasbuy.com/images/uc-small.bc30c95b.png",
-  },
-  {
-    id: 8,
-    uc: "300 + 1500",
-    discount: "20%",
-    price: "EGP 1049.99",
-    oldPrice: "EGP 1124.99",
-    desc: "اشحن 300 + 1500 UC لأول مرة واحصل على مكافأة.",
-    img: "https://cdn.midasbuy.com/images/uc-small.bc30c95b.png",
-  },
-];
-
-const gameDescription = `لعبة ببجي موبايل هي لعبة قتال وبقاء على قيد الحياة تم نشرها بواسطة Tencent Games ومتاحة على أجهزة Android وiOS. استمتع بتجربة معارك واقعية ورسومات مذهلة.`;
+import { apiService, Package, Game } from '@/lib/api';
+import { orderApiService, CreateOrderData } from '@/lib/api';
+import { LoadingSpinner } from '@/components/ui/loading-spinner';
+import { ErrorMessage } from '@/components/ui/error-message';
+import { authService } from '@/lib/auth';
+import { AuthStatus } from '@/components/ui/auth-status';
+import { LoginRequiredModal } from '@/components/ui/login-required-modal';
 
 export default function PackagesPage() {
-  const [userId, setUserId] = useState("");
-  const [selected, setSelected] = useState<number | null>(null);
+  const searchParams = useSearchParams();
+  const router = useRouter();
+  const gameId = searchParams.get('gameId');
+  const gameName = searchParams.get('gameName');
+  
+  const [selected, setSelected] = useState<string | null>(null);
+  const [packages, setPackages] = useState<Package[]>([]);
+  const [game, setGame] = useState<Game | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+  // State to hold dynamic account info fields values
+  const [accountInfo, setAccountInfo] = useState<Record<string, string>>({});
+  const [isCreatingOrder, setIsCreatingOrder] = useState(false);
+  const [isAuthenticated, setIsAuthenticated] = useState(false);
+  const [showLoginModal, setShowLoginModal] = useState(false);
+
+  useEffect(() => {
+    // تأكد من أننا في المتصفح قبل جلب البيانات
+    if (typeof window === 'undefined') return;
+
+    // التحقق من حالة تسجيل الدخول
+    setIsAuthenticated(authService.isAuthenticated());
+
+    const fetchData = async () => {
+      if (!gameId) {
+        setError('Game ID is required');
+        setLoading(false);
+        return;
+      }
+
+      try {
+        setLoading(true);
+        setError(null);
+
+        // جلب معلومات اللعبة
+        const gameResponse = await apiService.getGameById(gameId);
+        if (gameResponse.success && gameResponse.data) {
+          setGame(gameResponse.data);
+        }
+
+        // جلب الباقات الخاصة باللعبة
+        const packagesResponse = await apiService.getPackagesByGameId(gameId);
+        if (packagesResponse.success) {
+          setPackages(packagesResponse.data);
+        } else {
+          setError('Failed to fetch packages');
+        }
+      } catch (err) {
+        console.error('Error fetching data:', err);
+        setError('Failed to load game data');
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchData();
+  }, [gameId]);
+
+  const handleCreateOrder = async () => {
+    // التحقق من تسجيل الدخول أولاً
+    if (!isAuthenticated) {
+      setShowLoginModal(true);
+      return;
+    }
+
+    if (!selected || !game) {
+      alert('يرجى اختيار باقة أولاً');
+      return;
+    }
+
+    // التحقق من الحقول المطلوبة
+    const missingFields: string[] = [];
+    if (game.accountInfoFields) {
+      game.accountInfoFields.forEach(field => {
+        if (field.isRequired && (!accountInfo[field.fieldName] || accountInfo[field.fieldName].trim() === '')) {
+          missingFields.push(field.fieldName);
+        }
+      });
+    }
+
+    if (missingFields.length > 0) {
+      alert(`يرجى ملء الحقول المطلوبة: ${missingFields.join(', ')}`);
+      return;
+    }
+
+    try {
+      setIsCreatingOrder(true);
+      
+      // Log the account info for debugging
+      console.log('🔍 Account info being sent:', accountInfo);
+      
+      // Prepare order data with proper typing
+      const orderData: CreateOrderData = {
+        gameId: gameId as string,
+        packageId: selected,
+        accountInfo: Object.entries(accountInfo).map(([fieldName, value]) => ({
+          fieldName,
+          value: value ? value.toString() : '' // Ensure value is a non-null string
+        })),
+        paymentMethod: 'card',
+        note: `طلب ${game.name} - ${packages.find(p => p._id === selected)?.title}`
+      };
+
+      console.log('📤 Sending order data:', orderData);
+      
+      const response = await orderApiService.createOrder(orderData);
+      console.log('📥 Order creation response:', response);
+
+      if (response.success) {
+        alert('تم إنشاء الطلب بنجاح!');
+        
+        try {
+          console.log('🔄 Redirecting to checkout...');
+          const checkoutResponse = await orderApiService.checkout(response.data._id);
+          console.log('✅ Checkout response:', checkoutResponse);
+          
+          if (checkoutResponse.success && checkoutResponse.data?.url) {
+            window.location.href = checkoutResponse.data.url;
+          } else {
+            const errorMsg = checkoutResponse.error || 'فشل في إنشاء جلسة الدفع';
+            console.error('❌ Checkout failed:', errorMsg);
+            alert(errorMsg);
+          }
+        } catch (checkoutError) {
+          console.error('❌ Error during checkout:', checkoutError);
+          alert('حدث خطأ أثناء توجيهك إلى صفحة الدفع');
+        }
+      } else {
+        const errorMsg = response.error || 'فشل في إنشاء الطلب';
+        console.error('❌ Order creation failed:', errorMsg);
+        alert(errorMsg);
+      }
+    } catch (error) {
+      console.error('❌ Error in handleCreateOrder:', {
+        error,
+        message: error instanceof Error ? error.message : 'Unknown error',
+        stack: error instanceof Error ? error.stack : undefined
+      });
+      
+      let errorMessage = 'حدث خطأ أثناء إنشاء الطلب';
+      if (error instanceof Error) {
+        errorMessage += `: ${error.message}`;
+      }
+      alert(errorMessage);
+    } finally {
+      setIsCreatingOrder(false);
+    }
+  };
+
+  // إذا لم يكن هناك gameId، اعرض رسالة خطأ
+  if (!gameId) {
+    return (
+      <div className={styles.customPackagesBg + " min-h-screen text-white flex items-center justify-center"}>
+        <div className="text-center">
+          <h1 className="text-2xl font-bold mb-4">خطأ</h1>
+          <p className="mb-4">لم يتم تحديد اللعبة</p>
+          <button 
+            onClick={() => router.push('/dashboard')}
+            className="bg-[#00e6c0] text-[#151e2e] px-6 py-2 rounded hover:bg-[#00e6c0]/80 transition"
+          >
+            العودة للرئيسية
+          </button>
+        </div>
+      </div>
+    );
+  }
+
+  if (loading) {
+    return (
+      <div className={styles.customPackagesBg + " min-h-screen text-white flex items-center justify-center"}>
+        <LoadingSpinner size="lg" text="جاري تحميل الباقات..." />
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className={styles.customPackagesBg + " min-h-screen text-white flex items-center justify-center"}>
+        <ErrorMessage 
+          message={error} 
+          onRetry={() => window.location.reload()} 
+        />
+      </div>
+    );
+  }
 
   return (
-    <div className={styles.customPackagesBg + " min-h-screen text-white"}>
+    <div className={styles.customPackagesBg + " min-h-screen text-white"} suppressHydrationWarning>
       {/* Header */}
-      <header className="flex items-center justify-between px-4 py-2 bg-[#1b2631]">
-        <div className="flex items-center gap-2">
-          <Image src="/next.svg" alt="Endex Logo" width={48} height={48} />
-          <span className="text-2xl font-bold tracking-wide">ENDEX</span>
+      <header className="flex items-center justify-between px-4 py-3 bg-[#131b28]/80 backdrop-blur border-b border-white/5">
+        <div className="flex items-center gap-3 min-w-0">
+          <div className="w-8 h-8 rounded-lg bg-white/10 flex items-center justify-center">
+            <Image src="/next.svg" alt="Logo" width={18} height={18} unoptimized />
+          </div>
+          <div className="truncate">
+            <div className="text-sm text-gray-300">الباقات</div>
+            <div className="text-base md:text-lg font-semibold truncate">
+              {gameName || game?.name || 'المتجر'}
+            </div>
+          </div>
         </div>
-        <div className="flex items-center gap-4">
-          <button className="border border-[#00e6c0] text-[#00e6c0] px-6 py-2 rounded hover:bg-[#00e6c0] hover:text-[#151e2e] transition">دخول</button>
+        <div className="flex items-center gap-3">
+          <AuthStatus
+            variant="compact"
+            avatarUrl="https://res.cloudinary.com/dfvzhl8oa/image/upload/v1754848996/d2090ffb-1769-4853-916c-79c2a4ae2568_gmih9f.jpg"
+          />
         </div>
       </header>
 
@@ -100,72 +227,133 @@ export default function PackagesPage() {
         {/* Left: ID + Packages */}
         <section className="flex-1 min-w-0">
           {/* Step 1: User ID */}
-          <div className="mb-4">
-            <div className="input-group">
-              <input
-                required
-                type="text"
-                name="userId"
-                autoComplete="off"
-                className="input"
-                value={userId}
-                onChange={e => setUserId(e.target.value)}
-              />
-              <label className="user-label">أدخل الـ ID الخاص بك</label>
+          {/* تم حذف حقل الـ ID الثابت، كل الحقول ستأتي من accountInfoFields */}
+
+          {/* Step 1.5: Dynamic Account Info Fields */}
+          {game?.accountInfoFields && game.accountInfoFields.length > 0 && (
+            <div className="mb-4">
+              {game.accountInfoFields.map((field, idx) => (
+                <div className="input-group mb-2" key={field.fieldName}>
+                  <input
+                    required={field.isRequired}
+                    type="text"
+                    name={field.fieldName}
+                    autoComplete="off"
+                    className="input"
+                    value={accountInfo[field.fieldName] || ''}
+                    onChange={e => setAccountInfo(info => ({ ...info, [field.fieldName]: e.target.value }))}
+                  />
+                  <label className="user-label">
+                    {field.fieldName}
+                    {!field.isRequired && (
+                      <span style={{ fontSize: '0.85em', color: '#aaa', marginRight: 6 }}>
+                        (اختياري)
+                      </span>
+                    )}
+                  </label>
+                </div>
+              ))}
             </div>
-          </div>
+          )}
           {/* Step 2: Packages */}
           <div>
             <h2 className="text-lg font-bold mb-4 flex items-center gap-2">
               <span className="bg-[#232f47] text-[#00e6c0] rounded-full w-7 h-7 flex items-center justify-center font-bold">2</span>
               اختر الباقة
             </h2>
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
-              {packages.map((pkg) => (
-                <div
-                  key={pkg.id}
-                  onClick={() => setSelected(pkg.id)}
-                  className={`square-card bg-yellow-box cursor-pointer relative transition-all duration-300 ${selected === pkg.id ? "selected-card" : ""}`}
-                  style={{ minHeight: 140, maxWidth: 210, padding: 12 }}
+                         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8">
+               {packages.length > 0 ? (
+                 packages.map((pkg) => (
+                                       <div
+                      key={pkg._id}
+                      onClick={() => setSelected(pkg._id)}
+                      className={`square-card bg-yellow-box cursor-pointer relative transition-all duration-300 ${selected === pkg._id ? "selected-card" : ""}`}
+                    >
+                      <img 
+                        src={pkg.image?.secure_url || "/uc-icon.png"} 
+                        alt={pkg.title} 
+                        className="card-img"
+                        onError={(e) => {
+                          e.currentTarget.src = "/uc-icon.png";
+                        }}
+                      />
+                      <div className="card-title">{pkg.title}</div>
+                      {pkg.isOffer && (
+                        <div className="card-description">
+                          عرض خاص
+                        </div>
+                      )}
+                      <div className="card-price">
+                        {(pkg.finalPrice || pkg.price).toLocaleString()} {pkg.currency || 'EGP'}
+                      </div>
+                      {pkg.originalPrice && pkg.originalPrice > (pkg.finalPrice || pkg.price) && (
+                        <div className="card-oldprice">
+                          {pkg.originalPrice.toLocaleString()} {pkg.currency || 'EGP'}
+                        </div>
+                      )}
+                      {pkg.discountPercentage && pkg.discountPercentage > 0 && (
+                        <span className="absolute top-3 left-3 bg-gradient-to-r from-yellow-400 to-yellow-300 text-[#232f47] text-xs font-bold px-2 py-1 rounded-full shadow border border-yellow-200">
+                          {Math.round(pkg.discountPercentage)}%
+                        </span>
+                      )}
+                      {selected === pkg._id && (
+                        <span className="absolute top-3 right-3 bg-[#00e6c0] text-[#151e2e] text-xs px-2 py-1 rounded-full font-bold z-20">✓</span>
+                      )}
+                    </div>
+                 ))
+               ) : (
+                 <div className="col-span-full text-center py-8">
+                   <p className="text-gray-400 text-lg mb-2">لا توجد باقات متاحة لهذه اللعبة</p>
+                   <p className="text-gray-500 text-sm">يرجى المحاولة لاحقاً أو التواصل مع الدعم</p>
+                 </div>
+               )}
+             </div>
+            {packages.length > 0 && (
+              <div className="flex justify-center mt-6">
+                <button
+                  onClick={handleCreateOrder}
+                  className="buy-btn relative"
+                  disabled={selected === null || isCreatingOrder}
+                  style={{ 
+                    opacity: selected === null || isCreatingOrder ? 0.5 : 1, 
+                    cursor: selected === null || isCreatingOrder ? 'not-allowed' : 'pointer' 
+                  }}
                 >
-                  <img src={pkg.img} alt="UC" className="card-img" style={{ width: 38, height: 38 }} />
-                  <div className="card-title" style={{ fontSize: 16 }}>{pkg.uc}</div>
-                  <div className="card-description" style={{ fontSize: 12 }}>{pkg.desc}</div>
-                  <div className="card-price" style={{ fontSize: 15 }}>{pkg.price}</div>
-                  <div className="card-oldprice" style={{ fontSize: 12 }}>{pkg.oldPrice}</div>
-                  {pkg.discount && (
-                    <span className="absolute top-3 left-3 bg-gradient-to-r from-yellow-400 to-yellow-300 text-[#232f47] text-xs font-bold px-2 py-1 rounded-full shadow border border-yellow-200">
-                      {pkg.discount}
-                    </span>
+                  {isCreatingOrder ? (
+                    <div className="flex items-center gap-2">
+                      <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
+                      جاري الإنشاء...
+                    </div>
+                  ) : (
+                    isAuthenticated ? 'شراء الباقة' : 'تسجيل دخول للشراء'
                   )}
-                  {selected === pkg.id && (
-                    <span className="absolute top-3 right-3 bg-[#00e6c0] text-[#151e2e] text-xs px-2 py-1 rounded-full font-bold z-20">✓</span>
-                  )}
-                </div>
-              ))}
-            </div>
-            <div className="flex justify-center mt-4">
-              <button
-                className="buy-btn"
-                disabled={selected === null}
-                style={{ opacity: selected === null ? 0.5 : 1, cursor: selected === null ? 'not-allowed' : 'pointer' }}
-              >
-                شراء الباقة
-              </button>
-            </div>
+                </button>
+              </div>
+            )}
           </div>
+
+          {/* Login Required Modal */}
+          <LoginRequiredModal
+            isOpen={showLoginModal}
+            onClose={() => setShowLoginModal(false)}
+            onLogin={() => router.push('/signin')}
+          />
+
         </section>
 
         {/* Right: Game Info */}
         <aside className="w-full md:w-72 flex flex-col items-center md:items-start bg-transparent rounded-xl p-4 mt-6 md:mt-0">
-          <Image
-            src="/pubg.jpg"
-            alt="PUBG Mobile"
-            width={220}
-            height={120}
-            className="rounded mb-3 object-cover"
-          />
-          <p className="text-xs text-gray-300 leading-relaxed mb-3">{gameDescription}</p>
+                     <Image
+             src={game?.image?.secure_url || "/pubg.jpg"}
+             alt={game?.name || "Game"}
+             width={220}
+             height={120}
+             className="rounded mb-3 object-cover"
+             unoptimized
+           />
+          <p className="text-xs text-gray-300 leading-relaxed mb-3">
+            {game?.description || "وصف اللعبة غير متوفر"}
+          </p>
           <div className="flex gap-2 w-full justify-center mt-auto">
             <a href="#" className="inline-block"><img src="/appstore.svg" alt="App Store" className="w-24" /></a>
             <a href="#" className="inline-block"><img src="/googleplay.svg" alt="Google Play" className="w-24" /></a>

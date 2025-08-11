@@ -5,12 +5,32 @@ import { TUser } from 'src/DB/models/User/user.schema';
 import { cloudService, IAttachments } from 'src/commen/multer/cloud.service';
 import { messageSystem } from 'src/commen/messages';
 import { Types } from 'mongoose';
+import { GameType } from 'src/DB/models/Game/game.schema';
 
 @Injectable()
 export class GameService {
     constructor(private readonly gameRepository: GameRepository, private readonly cloudService: cloudService) { }
     async addGame(user: TUser, body: CreateGameDto, file?: Express.Multer.File) {
         if (!body.categoryId) throw new BadRequestException('categoryId is required');
+        
+        // التحقق من السعر للعاب Steam
+        if (body.type === GameType.STEAM && (!body.price || body.price <= 0)) {
+            throw new BadRequestException('Price is required and must be greater than 0 for Steam games');
+        }
+
+        // التحقق من الـ offer للعاب Steam
+        if (body.type === GameType.STEAM && body.isOffer) {
+            if (!body.finalPrice || body.finalPrice <= 0) {
+                throw new BadRequestException('Final price must be provided and greater than 0 for an offer');
+            }
+            if (!body.originalPrice || body.originalPrice <= 0) {
+                throw new BadRequestException('Original price must be provided and greater than 0 for an offer');
+            }
+            if (body.finalPrice >= body.originalPrice) {
+                throw new BadRequestException('Final price must be less than original price for an offer');
+            }
+        }
+        
         const game = await this.gameRepository.findOne({ name: body.name })
         if (game)
             throw new BadRequestException(messageSystem.game.alreadyExist)
@@ -48,6 +68,25 @@ export class GameService {
     }
     async updateGame(user: TUser, body: UpdateGameDto, gameId: Types.ObjectId) {
         if (body.categoryId === undefined) throw new BadRequestException('categoryId is required');
+        
+        // التحقق من السعر إذا كان النوع Steam
+        if (body.type === GameType.STEAM && (!body.price || body.price <= 0)) {
+            throw new BadRequestException('Price is required and must be greater than 0 for Steam games');
+        }
+
+        // التحقق من الـ offer إذا كان النوع Steam
+        if (body.type === GameType.STEAM && body.isOffer) {
+            if (!body.finalPrice || body.finalPrice <= 0) {
+                throw new BadRequestException('Final price must be provided and greater than 0 for an offer');
+            }
+            if (!body.originalPrice || body.originalPrice <= 0) {
+                throw new BadRequestException('Original price must be provided and greater than 0 for an offer');
+            }
+            if (body.finalPrice >= body.originalPrice) {
+                throw new BadRequestException('Final price must be less than original price for an offer');
+            }
+        }
+        
         const game = await this.gameRepository.findById(gameId)
         if (!game)
             throw new NotFoundException(messageSystem.game.notFound)
@@ -122,6 +161,8 @@ export class GameService {
         search?: string;
         status?: 'all' | 'active' | 'deleted';
         isPopular?: boolean;
+        type?: GameType;
+        isOffer?: boolean;
     }) {
         const filter: Record<string, any> = {};
 
@@ -142,9 +183,17 @@ export class GameService {
             filter.isPopular = query.isPopular;
         }
 
+        if (query.type) {
+            filter.type = query.type;
+        }
+
+        if (query.isOffer !== undefined) {
+            filter.isOffer = query.isOffer;
+        }
+
         const games = await this.gameRepository.find(
             filter,
-            { select: "name description image offer categories isActive isPopular createdAt" },
+            { select: "name description image type price isOffer originalPrice finalPrice discountPercentage offer categories isActive isPopular createdAt accountInfoFields" },
             {
                 sort: { createdAt: -1 },
             }

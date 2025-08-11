@@ -3,7 +3,15 @@ import { Category } from "@/components/ui/glare-card-demo";
 
 async function getCategories() {
   try {
-    const res = await fetch("http://localhost:3000/category/AllCategory", { cache: "no-store" });
+    // تحديد عنوان API بشكل ديناميكي بناءً على البيئة الحالية
+    const apiUrl = typeof window !== 'undefined'
+      ? `${window.location.origin}/category/AllCategory`
+      : `${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3000'}/category/AllCategory`;
+    
+    const res = await fetch(apiUrl, { 
+      cache: "no-store",
+      credentials: 'same-origin'
+    });
     if (!res.ok) {
       console.warn("Failed to fetch categories, server might be down");
       return []; // Return empty array instead of throwing error
@@ -45,4 +53,4 @@ export default async function CategoryPage() {
       </div>
     </main>
   );
-} 
+}

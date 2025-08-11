@@ -6,11 +6,14 @@ import { PackageRepository } from 'src/DB/models/Packages/packages.repository';
 import { PackageDocument } from 'src/DB/models/Packages/packages.schema';
 import { CreatePackageDto, UpdatePackageDto } from './dto';
 import { TUser } from 'src/DB/models/User/user.schema';
+import { cloudService, IAttachments } from 'src/commen/multer/cloud.service';
 
 @Injectable()
 export class SuperAdminPackagesService {
+    private readonly cloudService = new cloudService();
+    
     constructor(private readonly packageRepository: PackageRepository, private readonly gameRepository: GameRepository) { }
-    async createPackage(user: TUser, body: CreatePackageDto): Promise<PackageDocument> {
+    async createPackage(user: TUser, body: CreatePackageDto, file?: Express.Multer.File): Promise<PackageDocument> {
 
         if (!Types.ObjectId.isValid(body.gameId)) {
             throw new BadRequestException(messageSystem.game.Invalid_gameId);
@@ -19,7 +22,35 @@ export class SuperAdminPackagesService {
         if (!game) {
             throw new BadRequestException(messageSystem.game.Invalid_gameId)
         }
-        return await this.packageRepository.create({ ...body, createdBy: user._id });
+
+        let image: IAttachments | undefined = undefined;
+        
+        // إذا كان هناك ملف مرفوع، ارفعه إلى الخدمة السحابية
+        if (file) {
+            let folderId = String(Math.floor(100000 + Math.random() * 900000));
+            let folder = { folder: `${process.env.APP_NAME}/packages/photos/${folderId}` };
+            
+            const result = await this.cloudService.uploadFile(file, folder);
+            if (result.secure_url) {
+                image = {
+                    secure_url: result.secure_url,
+                    public_id: result.public_id,
+                };
+            } else {
+                throw new BadRequestException('Failed to upload image');
+            }
+        }
+        
+        // إذا كان هناك image في الـ body، استخدمه
+        if (body.image) {
+            image = body.image;
+        }
+
+        return await this.packageRepository.create({ 
+            ...body, 
+            image,
+            createdBy: user._id 
+        });
     }
     async updatePackage(id: string, user: TUser, body: UpdatePackageDto) {
         if (!Types.ObjectId.isValid(id)) {
@@ -37,10 +68,39 @@ export class SuperAdminPackagesService {
         const packageDoc = await this.packageRepository.findById(id)
         if (!packageDoc)
             throw new NotFoundException("Package Not Found")
+
         Object.assign(packageDoc, body);
+        packageDoc.updateBy = user._id;
 
         await packageDoc.save();
         return { success: true, data: packageDoc };
+    }
+
+    async uploadPackageImage(user: TUser, id: string, file: Express.Multer.File) {
+        if (!Types.ObjectId.isValid(id)) {
+            throw new BadRequestException(messageSystem.package.Invalid_package_ID);
+        }
+        
+        const packageDoc = await this.packageRepository.findById(id);
+        if (!packageDoc) {
+            throw new NotFoundException(messageSystem.package.notFound);
+        }
+
+        let folderId = String(Math.floor(100000 + Math.random() * 900000));
+        let folder = { folder: `${process.env.APP_NAME}/packages/photos/${folderId}` };
+        
+        const result = await this.cloudService.uploadFile(file, folder);
+        if (result.secure_url) {
+            packageDoc.image = {
+                secure_url: result.secure_url,
+                public_id: result.public_id,
+            };
+            packageDoc.updateBy = user._id;
+            await packageDoc.save();
+            return { success: true, data: packageDoc };
+        } else {
+            throw new BadRequestException('Failed to upload image');
+        }
     }
     async deletePackage(id: string, user: TUser) {
         if (!Types.ObjectId.isValid(id)) {

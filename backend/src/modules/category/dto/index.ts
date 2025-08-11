@@ -1,13 +1,18 @@
 import { PartialType } from "@nestjs/mapped-types";
 import { Type } from "class-transformer";
-import { IsMongoId, IsNumber, IsOptional, IsPositive, IsString, MaxLength, MinLength } from "class-validator";
+import { IsMongoId, IsNumber, IsOptional, IsPositive, IsString, MaxLength, MinLength, IsEnum } from "class-validator";
 import { Types } from "mongoose";
+import { CategoryType } from "src/DB/models/Category/category.schema";
 
 export class CreatCategoryDTO {
     @IsString()
     @MinLength(2)
     @MaxLength(90)
-    name: string
+    name: string;
+    
+    @IsEnum(CategoryType)
+    @IsOptional()
+    type?: CategoryType;
 }
 export class UpdateCategoryDTO extends PartialType(CreatCategoryDTO) { }
 export class ParamCategoryDTO {
@@ -21,6 +26,9 @@ export class QueryCategoryDTO {
     @MaxLength(90)
     @IsOptional()
     name?: string
+    @IsEnum(CategoryType)
+    @IsOptional()
+    type?: CategoryType
     @IsNumber()
     @IsPositive()
     @IsOptional()

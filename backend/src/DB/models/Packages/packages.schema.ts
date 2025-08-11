@@ -1,6 +1,7 @@
 import { Prop, raw, Schema, SchemaFactory } from '@nestjs/mongoose';
 import { HydratedDocument, Types } from 'mongoose';
 import { User } from 'src/commen/Decorator/user.decorator';
+import { IAttachments } from 'src/commen/multer/cloud.service';
 
 // Schema for Packages
 @Schema({ timestamps: true })
@@ -37,6 +38,12 @@ export class Package {
 
   @Prop({ type: Types.ObjectId, ref: User.name })
   updateBy: Types.ObjectId
+
+  @Prop(raw({
+    secure_url: { type: String, required: false },
+    public_id: { type: String, required: false }
+  }))
+  image?: IAttachments;
 }
 
 export const PackageSchema = SchemaFactory.createForClass(Package);

@@ -1,7 +1,7 @@
 import { BadRequestException } from "@nestjs/common"
 import { diskStorage } from "multer"
 export const validationFile = {
-    image: ["image/jpeg", "image/png", "image/gif"],
+    image: ["image/jpeg", "image/png", "image/gif","image/webp"],
     file: ["plain/text", "application/json"]
 }
 export const cloudMulter = () => {

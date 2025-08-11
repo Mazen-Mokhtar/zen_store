@@ -5,6 +5,7 @@ import { cloudService, IAttachments } from "src/commen/multer/cloud.service";
 import { log } from "console";
 import { FilterQuery } from "mongoose";
 import { categoryRepository } from "src/DB/models/Category/category.repository";
+import { CategoryType } from "src/DB/models/Category/category.schema";
 
 @Injectable()
 export class CategoryService {
@@ -16,7 +17,13 @@ export class CategoryService {
             throw new ConflictException("name already exist")
         let folderId = String(Math.floor(100000 + Math.random() * 900000))
         const { secure_url, public_id } = await this.cloudService.uploadFile(file , {folder : `${process.env.APP_NAME}/Category/${folderId}`})
-        const category = await this.categoryRepository.create({ name: body.name, logo: { secure_url, public_id }, createdBy: user._id , folderId })
+        const category = await this.categoryRepository.create({ 
+            name: body.name, 
+            type: body.type || CategoryType.GAMES, 
+            logo: { secure_url, public_id }, 
+            createdBy: user._id, 
+            folderId 
+        })
         return { data: category }
     }
     async update(params: ParamCategoryDTO, body?: UpdateCategoryDTO, file?: Express.Multer.File) {
@@ -33,7 +40,7 @@ export class CategoryService {
                 await this.cloudService.destroyFile(category.logo.public_id)
             logo = { secure_url, public_id }
         }
-        const check = await this.categoryRepository.updateOne({ _id: category }, { name: body?.name, logo: logo })
+        const check = await this.categoryRepository.updateOne({ _id: category }, { name: body?.name, type: body?.type, logo: logo })
         log(check)
         return { messgae: "Category updated successffuly" }
     }
@@ -45,8 +52,16 @@ export class CategoryService {
         return { success: true, data: category }
     }
     async getAllCategory(query: QueryCategoryDTO) {
+        const filter: any = {};
+        if (query.name) {
+            filter.name = { $regex: query.name, $options: 'i' };
+        }
+        if (query.type) {
+            filter.type = query.type;
+        }
+        
         const options: any = { sort: query.sort };
-        const data = await this.categoryRepository.find({}, undefined, options);
+        const data = await this.categoryRepository.find(filter, undefined, options);
         return { success: true, data };
     }
 

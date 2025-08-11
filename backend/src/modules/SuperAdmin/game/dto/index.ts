@@ -9,9 +9,13 @@ import {
     IsNumber,
     IsEnum,
     IsMongoId,
+    ValidateIf,
+    Min,
+    Max,
 } from 'class-validator';
 import { Type } from 'class-transformer';
 import { PartialType } from '@nestjs/mapped-types';
+import { GameType } from 'src/DB/models/Game/game.schema';
 
 /* === المرفقات الخاصة بالصورة === */
 export class AttachmentDto {
@@ -30,18 +34,22 @@ export class AccountInfoFieldDto {
     @IsNotEmpty()
     fieldName: string;
 
+    @Type(() => Boolean)
     @IsBoolean()
     isRequired: boolean;
 }
+
 export class OfferDto {
     @IsOptional()
     @IsNumber()
     discountPercent?: number;
 
+    @Type(() => Boolean)
     @IsOptional()
     @IsBoolean()
     isActive?: boolean;
 }
+
 /* === DTO لإنشاء لعبة جديدة === */
 export class CreateGameDto {
     @IsString()
@@ -51,6 +59,40 @@ export class CreateGameDto {
     @IsString()
     @IsNotEmpty()
     description: string;
+
+    @IsEnum(GameType)
+    type: GameType;
+
+    @ValidateIf(o => o.type === GameType.STEAM)
+    @Type(()=> Number)
+    @IsNumber()
+    @Min(0)
+    price?: number;
+
+    // Offer fields for Steam games
+    @ValidateIf(o => o.type === GameType.STEAM)
+    @Type(() => Boolean)
+    @IsBoolean()
+    isOffer?: boolean;
+
+    @ValidateIf(o => o.type === GameType.STEAM && o.isOffer === true)
+    @Type(()=> Number)
+    @IsNumber()
+    @Min(0.01)
+    originalPrice?: number;
+
+    @ValidateIf(o => o.type === GameType.STEAM && o.isOffer === true)
+    @Type(()=> Number)
+    @IsNumber()
+    @Min(0.01)
+    finalPrice?: number;
+
+    @ValidateIf(o => o.type === GameType.STEAM && o.isOffer === true)
+    @Type(()=> Number)
+    @IsNumber()
+    @Min(0)
+    @Max(100)
+    discountPercentage?: number;
 
     @IsOptional()
     @ValidateNested()
@@ -78,6 +120,7 @@ export class CreateGameDto {
 */
 export class UpdateGameDto extends PartialType(CreateGameDto) { }
 export class ToggleGameStatusDto {
+  @Type(() => Boolean)
   @IsBoolean()
   isActive: boolean;
 }
@@ -96,7 +139,17 @@ export class ListGamesQueryDto {
   @IsEnum(['all', 'active', 'deleted'])
   status?: 'all' | 'active' | 'deleted';
   
+  @Type(() => Boolean)
   @IsOptional()
   @IsBoolean()
   isPopular?: boolean;
+
+  @IsOptional()
+  @IsEnum(GameType)
+  type?: GameType;
+
+  @Type(() => Boolean)
+  @IsOptional()
+  @IsBoolean()
+  isOffer?: boolean;
 }

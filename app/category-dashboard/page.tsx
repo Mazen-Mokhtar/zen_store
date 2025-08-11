@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useCallback } from "react";
 import { useSearchParams, useRouter } from "next/navigation";
-import { Search, Bell, HelpCircle, ArrowLeft, Filter } from 'lucide-react';
+import { Search, Filter } from 'lucide-react';
 import { Footer } from '@/components/ui/footer-section';
 import { LoadingSpinner } from '@/components/ui/loading-spinner';
 import { ErrorMessage } from '@/components/ui/error-message';
@@ -12,6 +12,7 @@ import Image from 'next/image';
 import { apiService, Game } from '@/lib/api';
 import { handleApiError } from '@/lib/api-error';
 import { useTranslation } from '@/lib/i18n';
+import { authService } from '@/lib/auth';
 
 // صور خلفية مختلفة للفئات
 const categoryHeroImages = {
@@ -60,6 +61,7 @@ export default function CategoryDashboardPage() {
   const [selectedGame, setSelectedGame] = useState<string | null>(null);
   const [gamePackages, setGamePackages] = useState<any[]>([]);
   const [loadingPackages, setLoadingPackages] = useState(false);
+  const [isAuth, setIsAuth] = useState(false);
 
   // تحديد نوع الفئة للحصول على الصور المناسبة
   const getCategoryType = (name: string) => {
@@ -99,8 +101,8 @@ export default function CategoryDashboardPage() {
       let gamesData;
       let popularGames;
       
-      console.log('🎮 جلب الألعاب من الفئة:', selectedCategory);
-      gamesData = await apiService.getGamesByCategory(selectedCategory);
+      console.log('🎮 جلب الألعاب المدفوعة من الفئة:', selectedCategory);
+      gamesData = await apiService.getPaidGamesByCategory(selectedCategory);
       popularGames = gamesData.data.filter(game => game.isPopular);
       
       console.log('📊 Setting popularItems:', { 
@@ -140,14 +142,20 @@ export default function CategoryDashboardPage() {
     fetchData(categoryId);
   }, [categoryId, fetchData]);
 
+  // Check auth state on mount
+  useEffect(() => {
+    setIsAuth(authService.isAuthenticated());
+  }, []);
+
   // Function to fetch packages for a game
   const fetchGamePackages = useCallback(async (gameId: string) => {
     try {
       setLoadingPackages(true);
-      const response = await fetch(`http://localhost:3000/packages?gameId=${gameId}`);
-      if (response.ok) {
-        const data = await response.json();
-        setGamePackages(data.data || []);
+      // Use centralized apiService to avoid hitting frontend routes
+      const res = await apiService.getPackagesByGameId(gameId);
+      if (res && res.success) {
+        const packages = Array.isArray(res.data) ? res.data : [];
+        setGamePackages(packages);
       } else {
         console.warn('Failed to fetch packages');
         setGamePackages([]);
@@ -172,6 +180,25 @@ export default function CategoryDashboardPage() {
       fetchGamePackages(gameId);
     }
   }, [selectedGame, fetchGamePackages]);
+
+  // Handle WhatsApp purchase
+  const handleWhatsAppPurchase = useCallback((game: Game) => {
+    const message = `مرحباً! 🌟
+
+أريد شراء اللعبة التالية:
+
+🎮 اسم اللعبة: ${game.name}
+💰 السعر: ${game.price} EGP
+${game.description ? `📝 الوصف: ${game.description}` : ''}
+${game.category ? `📂 الفئة: ${game.category}` : ''}
+
+هل يمكنني الحصول على مزيد من التفاصيل حول عملية الشراء؟`;
+
+    const encodedMessage = encodeURIComponent(message);
+    const whatsappUrl = `https://wa.me/201010666002?text=${encodedMessage}`;
+    
+    window.open(whatsappUrl, '_blank');
+  }, []);
 
   // Filter and sort games
   const filteredAndSortedGames = categoryGames
@@ -199,24 +226,36 @@ export default function CategoryDashboardPage() {
         <header className="fixed top-0 left-0 right-0 bg-[#1A1B20]/80 backdrop-blur-sm z-50">
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
             <div className="flex items-center justify-between h-16">
-              <div className="flex items-center gap-4">
-                <button 
-                  onClick={() => router.back()}
-                  className="flex items-center gap-2 text-sm font-semibold hover:text-gray-200"
-                >
-                  <ArrowLeft size={16} />
-                  {t('common.back')}
-                </button>
-                <div className="w-px h-6 bg-gray-600"></div>
+              <div className="flex items-center">
                 <div className="flex-shrink-0">
                   <div className="w-8 h-8 bg-green-500 rounded"></div>
                 </div>
               </div>
               <div className="flex items-center gap-4">
                 <LanguageSelector />
-                <button className="text-sm font-semibold hover:text-gray-200">
-                  {t('dashboard.enter')}
-                </button>
+                {isAuth ? (
+                  <div
+                    onClick={() => router.push('/orders')}
+                    role="button"
+                    title="طلباتي"
+                    className="w-8 h-8 rounded-full border border-gray-600 overflow-hidden cursor-pointer transition-shadow hover:ring-2 hover:ring-emerald-400 hover:ring-offset-2 hover:ring-offset-[#1A1B20]"
+                  >
+                    <Image
+                      src="https://res.cloudinary.com/dfvzhl8oa/image/upload/f_auto,q_auto,c_fill,g_face,w_64,h_64,dpr_2/v1754848996/d2090ffb-1769-4853-916c-79c2a4ae2568_gmih9f.jpg"
+                      alt="Avatar"
+                      width={32}
+                      height={32}
+                      sizes="32px"
+                      className="w-full h-full object-cover"
+                      unoptimized
+                      priority
+                    />
+                  </div>
+                ) : (
+                  <button className="text-sm font-semibold hover:text-gray-200">
+                    {t('dashboard.enter')}
+                  </button>
+                )}
               </div>
             </div>
           </div>
@@ -253,24 +292,36 @@ export default function CategoryDashboardPage() {
         <header className="fixed top-0 left-0 right-0 bg-[#1A1B20]/80 backdrop-blur-sm z-50">
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
             <div className="flex items-center justify-between h-16">
-              <div className="flex items-center gap-4">
-                <button 
-                  onClick={() => router.back()}
-                  className="flex items-center gap-2 text-sm font-semibold hover:text-gray-200"
-                >
-                  <ArrowLeft size={16} />
-                  {t('common.back')}
-                </button>
-                <div className="w-px h-6 bg-gray-600"></div>
+              <div className="flex items-center">
                 <div className="flex-shrink-0">
                   <div className="w-8 h-8 bg-green-500 rounded"></div>
                 </div>
               </div>
               <div className="flex items-center gap-4">
                 <LanguageSelector />
-                <button className="text-sm font-semibold hover:text-gray-200">
-                  {t('dashboard.enter')}
-                </button>
+                {isAuth ? (
+                  <div
+                    onClick={() => router.push('/orders')}
+                    role="button"
+                    title="طلباتي"
+                    className="w-8 h-8 rounded-full border border-gray-600 overflow-hidden cursor-pointer transition-shadow hover:ring-2 hover:ring-emerald-400 hover:ring-offset-2 hover:ring-offset-[#1A1B20]"
+                  >
+                    <Image
+                      src="https://res.cloudinary.com/dfvzhl8oa/image/upload/f_auto,q_auto,c_fill,g_face,w_64,h_64,dpr_2/v1754848996/d2090ffb-1769-4853-916c-79c2a4ae2568_gmih9f.jpg"
+                      alt="Avatar"
+                      width={32}
+                      height={32}
+                      sizes="32px"
+                      className="w-full h-full object-cover"
+                      unoptimized
+                      priority
+                    />
+                  </div>
+                ) : (
+                  <button className="text-sm font-semibold hover:text-gray-200">
+                    {t('dashboard.enter')}
+                  </button>
+                )}
               </div>
             </div>
           </div>
@@ -298,24 +349,36 @@ export default function CategoryDashboardPage() {
       <header className="fixed top-0 left-0 right-0 bg-[#1A1B20]/80 backdrop-blur-sm z-50">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex items-center justify-between h-16">
-            <div className="flex items-center gap-4">
-              <button 
-                onClick={() => router.back()}
-                className="flex items-center gap-2 text-sm font-semibold hover:text-gray-200 transition-colors"
-              >
-                <ArrowLeft size={16} />
-                {t('common.back')}
-              </button>
-              <div className="w-px h-6 bg-gray-600"></div>
+            <div className="flex items-center">
               <div className="flex-shrink-0">
                 <div className="w-8 h-8 bg-green-500 rounded"></div>
               </div>
             </div>
             <div className="flex items-center gap-4">
               <LanguageSelector />
-              <button className="text-sm font-semibold hover:text-gray-200">
-                {t('dashboard.enter')}
-              </button>
+              {isAuth ? (
+                <div
+                  onClick={() => router.push('/orders')}
+                  role="button"
+                  title="طلباتي"
+                  className="w-8 h-8 rounded-full border border-gray-600 overflow-hidden cursor-pointer transition-shadow hover:ring-2 hover:ring-emerald-400 hover:ring-offset-2 hover:ring-offset-[#1A1B20]"
+                >
+                  <Image
+                    src="https://res.cloudinary.com/dfvzhl8oa/image/upload/f_auto,q_auto,c_fill,g_face,w_64,h_64,dpr_2/v1754848996/d2090ffb-1769-4853-916c-79c2a4ae2568_gmih9f.jpg"
+                    alt="Avatar"
+                    width={32}
+                    height={32}
+                    sizes="32px"
+                    className="w-full h-full object-cover"
+                    unoptimized
+                    priority
+                  />
+                </div>
+              ) : (
+                <button className="text-sm font-semibold hover:text-gray-200">
+                  {t('dashboard.enter')}
+                </button>
+              )}
             </div>
           </div>
         </div>
@@ -404,6 +467,7 @@ export default function CategoryDashboardPage() {
           onGameClick={handleGameClick}
           gamePackages={gamePackages}
           loadingPackages={loadingPackages}
+          onWhatsAppPurchase={handleWhatsAppPurchase}
         />
         
         {/* Category Games Section */}
@@ -414,6 +478,7 @@ export default function CategoryDashboardPage() {
           onGameClick={handleGameClick}
           gamePackages={gamePackages}
           loadingPackages={loadingPackages}
+          onWhatsAppPurchase={handleWhatsAppPurchase}
         />
         
                  {/* No Games Message */}
@@ -443,13 +508,15 @@ function PopularesSection({
   selectedGame, 
   onGameClick, 
   gamePackages, 
-  loadingPackages 
+  loadingPackages,
+  onWhatsAppPurchase
 }: { 
   items: Game[];
   selectedGame: string | null;
   onGameClick: (gameId: string) => void;
   gamePackages: any[];
   loadingPackages: boolean;
+  onWhatsAppPurchase: (game: Game) => void;
 }) {
   const { t } = useTranslation();
 
@@ -467,7 +534,7 @@ function PopularesSection({
       <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-4">
         {items.map((item) => {
           const isSelected = selectedGame === item._id;
-          const gamePackage = gamePackages.find(pkg => pkg.gameId === item._id);
+          const gamePackage = Array.isArray(gamePackages) ? gamePackages.find(pkg => pkg.gameId === item._id) : null;
           
           return (
             <div
@@ -489,6 +556,33 @@ function PopularesSection({
               {/* Game Info Overlay */}
               <div className="absolute bottom-0 left-0 right-0 px-3 py-4 bg-gradient-to-t from-black/90 via-black/50 to-transparent">
                 <span className="text-white font-semibold text-base drop-shadow text-center block">{item.name}</span>
+                {/* Price Display */}
+                <div className="flex flex-col items-center justify-center mt-2 space-y-1">
+                  {item.price ? (
+                    <>
+                      {/* Original Price (if there's a discount) */}
+                      {item.originalPrice && item.originalPrice > item.price && (
+                        <div className="text-gray-400 text-xs line-through">
+                          {item.originalPrice} EGP
+                        </div>
+                      )}
+                      {/* Current Price */}
+                      <div className="bg-green-600 text-white font-bold text-sm px-3 py-1.5 rounded-lg shadow-md">
+                        {item.price} EGP
+                      </div>
+                      {/* Discount Badge */}
+                      {item.originalPrice && item.originalPrice > item.price && (
+                        <div className="bg-red-500 text-white text-xs font-bold px-2 py-0.5 rounded-full">
+                          -{Math.round(((item.originalPrice - item.price) / item.originalPrice) * 100)}%
+                        </div>
+                      )}
+                    </>
+                  ) : (
+                    <div className="text-gray-400 text-xs bg-gray-800/50 px-2 py-1 rounded-lg">
+                      {t('dashboard.priceNotAvailable')}
+                    </div>
+                  )}
+                </div>
               </div>
               
               {/* Badges */}
@@ -506,30 +600,20 @@ function PopularesSection({
               {/* Buy Now Overlay - Only show when selected */}
               {isSelected && (
                 <div className="absolute inset-0 bg-black/80 flex flex-col items-center justify-center p-4">
-                  {loadingPackages ? (
-                    <div className="text-white text-center">
-                      <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-green-500 mx-auto mb-2"></div>
-                      <span className="text-sm">{t('dashboard.loading')}</span>
+                  <div className="text-white text-center">
+                    <div className="text-lg font-bold mb-2">
+                      {item.price} EGP
                     </div>
-                  ) : gamePackage ? (
-                    <div className="text-white text-center">
-                      <div className="text-lg font-bold mb-2">
-                        {gamePackage.finalPrice || gamePackage.price} {gamePackage.currency}
-                      </div>
-                      {gamePackage.isOffer && gamePackage.originalPrice && (
-                        <div className="text-sm text-gray-400 line-through mb-2">
-                          {gamePackage.originalPrice} {gamePackage.currency}
-                        </div>
-                      )}
-                      <button className="bg-green-500 hover:bg-green-600 text-white font-bold py-2 px-4 rounded-full transition-colors">
-                        {t('dashboard.buyNow')}
-                      </button>
-                    </div>
-                  ) : (
-                    <div className="text-white text-center">
-                      <span className="text-sm text-gray-400">{t('dashboard.noPackagesAvailable')}</span>
-                    </div>
-                  )}
+                    <button 
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        onWhatsAppPurchase(item);
+                      }}
+                      className="bg-green-500 hover:bg-green-600 text-white font-bold py-2 px-6 rounded-full transition-colors transform hover:scale-105"
+                    >
+                      {t('dashboard.buyNow')}
+                    </button>
+                  </div>
                 </div>
               )}
             </div>
@@ -547,7 +631,8 @@ function CategoryGamesSection({
   selectedGame, 
   onGameClick, 
   gamePackages, 
-  loadingPackages 
+  loadingPackages,
+  onWhatsAppPurchase
 }: { 
   games: Game[]; 
   categoryName: string;
@@ -555,6 +640,7 @@ function CategoryGamesSection({
   onGameClick: (gameId: string) => void;
   gamePackages: any[];
   loadingPackages: boolean;
+  onWhatsAppPurchase: (game: Game) => void;
 }) {
   const { t } = useTranslation();
 
@@ -573,7 +659,7 @@ function CategoryGamesSection({
       <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-5">
         {games.map((game) => {
           const isSelected = selectedGame === game._id;
-          const gamePackage = gamePackages.find(pkg => pkg.gameId === game._id);
+          const gamePackage = Array.isArray(gamePackages) ? gamePackages.find(pkg => pkg.gameId === game._id) : null;
           
           return (
             <div 
@@ -595,6 +681,33 @@ function CategoryGamesSection({
               {/* Game Info Overlay */}
               <div className="absolute bottom-0 left-0 right-0 px-3 py-4 bg-gradient-to-t from-black/90 via-black/50 to-transparent">
                 <span className="text-white font-semibold text-sm drop-shadow text-center block">{game.name}</span>
+                {/* Price Display */}
+                <div className="flex flex-col items-center justify-center mt-1 space-y-0.5">
+                  {game.price ? (
+                    <>
+                      {/* Original Price (if there's a discount) */}
+                      {game.originalPrice && game.originalPrice > game.price && (
+                        <div className="text-gray-400 text-xs line-through">
+                          {game.originalPrice} EGP
+                        </div>
+                      )}
+                      {/* Current Price */}
+                      <div className="bg-green-600 text-white font-bold text-xs px-2 py-1 rounded-lg shadow-md">
+                        {game.price} EGP
+                      </div>
+                      {/* Discount Badge */}
+                      {game.originalPrice && game.originalPrice > game.price && (
+                        <div className="bg-red-500 text-white text-xs font-bold px-1.5 py-0.5 rounded-full">
+                          -{Math.round(((game.originalPrice - game.price) / game.originalPrice) * 100)}%
+                        </div>
+                      )}
+                    </>
+                  ) : (
+                    <div className="text-gray-400 text-xs bg-gray-800/50 px-2 py-1 rounded-lg">
+                      {t('dashboard.priceNotAvailable')}
+                    </div>
+                  )}
+                </div>
               </div>
               
               {/* Badges */}
@@ -612,30 +725,20 @@ function CategoryGamesSection({
               {/* Buy Now Overlay - Only show when selected */}
               {isSelected && (
                 <div className="absolute inset-0 bg-black/80 flex flex-col items-center justify-center p-4">
-                  {loadingPackages ? (
-                    <div className="text-white text-center">
-                      <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-green-500 mx-auto mb-2"></div>
-                      <span className="text-sm">{t('dashboard.loading')}</span>
+                  <div className="text-white text-center">
+                    <div className="text-lg font-bold mb-2">
+                      {game.price} EGP
                     </div>
-                  ) : gamePackage ? (
-                    <div className="text-white text-center">
-                      <div className="text-lg font-bold mb-2">
-                        {gamePackage.finalPrice || gamePackage.price} {gamePackage.currency}
-                      </div>
-                      {gamePackage.isOffer && gamePackage.originalPrice && (
-                        <div className="text-sm text-gray-400 line-through mb-2">
-                          {gamePackage.originalPrice} {gamePackage.currency}
-                        </div>
-                      )}
-                      <button className="bg-green-500 hover:bg-green-600 text-white font-bold py-2 px-4 rounded-full transition-colors">
-                        {t('dashboard.buyNow')}
-                      </button>
-                    </div>
-                  ) : (
-                    <div className="text-white text-center">
-                      <span className="text-sm text-gray-400">{t('dashboard.noPackagesAvailable')}</span>
-                    </div>
-                  )}
+                    <button 
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        onWhatsAppPurchase(game);
+                      }}
+                      className="bg-green-500 hover:bg-green-600 text-white font-bold py-2 px-6 rounded-full transition-colors transform hover:scale-105"
+                    >
+                      {t('dashboard.buyNow')}
+                    </button>
+                  </div>
                 </div>
               )}
             </div>
@@ -652,4 +755,4 @@ function CategoryGamesSection({
       </div>
     </section>
   );
-} 
+}

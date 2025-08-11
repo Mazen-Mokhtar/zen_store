@@ -1,0 +1,16 @@
+# Keep LF for all text files in working tree and repo
+* text=auto eol=lf
+
+# Windows-only scripts (allow CRLF explicitly if needed)
+*.bat text eol=crlf
+*.cmd text eol=crlf
+*.ps1 text eol=crlf
+
+# Binary files (never modify line endings)
+*.png binary
+*.jpg binary
+*.jpeg binary
+*.gif binary
+*.pdf binary
+*.woff binary
+*.woff2 binary

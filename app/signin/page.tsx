@@ -4,6 +4,7 @@ import { SignInPage, Testimonial } from "@/components/ui/sign-in";
 import { ThemeToggle } from "@/components/ui/theme-toggle";
 import { useState, useRef } from "react";
 import { useRouter } from "next/navigation";
+import { authService } from "@/lib/auth";
 
 const sampleTestimonials: Testimonial[] = [
   {
@@ -90,17 +91,17 @@ export default function SignInPageDemo() {
       return;
     }
     try {
-      const res = await fetch("http://localhost:3000/auth/login", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          email,
-          password,
-        }),
-      });
-      const result = await res.json();
-      if (!res.ok) throw new Error(result.message || "Login failed");
-      // هنا ممكن تخزن التوكن أو تعمل redirect
+      const result = await authService.login(email, password);
+      if (result.success) {
+        // نجح تسجيل الدخول
+        showError("تم تسجيل الدخول بنجاح!");
+        // انتقل إلى الصفحة السابقة أو الرئيسية
+        const urlParams = new URLSearchParams(window.location.search);
+        const returnUrl = urlParams.get('returnUrl') || '/dashboard';
+        router.push(returnUrl);
+      } else {
+        showError(result.error || "حدث خطأ أثناء تسجيل الدخول");
+      }
     } catch (err: any) {
       showError(err.message || "حدث خطأ أثناء تسجيل الدخول");
     } finally {
