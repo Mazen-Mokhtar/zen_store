@@ -1,7 +1,7 @@
 'use client';
 import React, { useRef, useState, useEffect } from 'react';
 import type { ComponentProps, ReactNode } from 'react';
-import { motion } from '@motionone/react';
+import { motion } from 'framer-motion';
 import { FacebookIcon, FrameIcon, InstagramIcon, LinkedinIcon, YoutubeIcon } from 'lucide-react';
 
 interface FooterLink {
@@ -141,4 +141,4 @@ function AnimatedContainer({ className, delay = 0.1, children, animate = true }:
 function useReducedMotion() {
   if (typeof window === 'undefined') return false;
   return window.matchMedia('(prefers-reduced-motion: reduce)').matches;
-} 
+}

@@ -105,7 +105,9 @@ class SecurityManager {
       });
       
       // Prevent the page from being displayed in an iframe
-      window.top.location.href = window.location.href;
+      if (window.top !== null) {
+        window.top.location.href = window.location.href;
+      }
     }
   }
 
@@ -383,4 +385,4 @@ export const sanitizeInput = securityManager.sanitizeInput.bind(securityManager)
 export const sanitizeHTML = securityManager.sanitizeHTML.bind(securityManager);
 export const isValidURL = securityManager.isValidURL.bind(securityManager);
 export const isValidEmail = securityManager.isValidEmail.bind(securityManager);
-export const validatePasswordStrength = securityManager.validatePasswordStrength.bind(securityManager); 
+export const validatePasswordStrength = securityManager.validatePasswordStrength.bind(securityManager);

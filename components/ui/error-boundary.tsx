@@ -29,7 +29,7 @@ export class ErrorBoundary extends Component<Props, State> {
         <div className="bg-[#0D0E12] min-h-screen text-white font-sans flex items-center justify-center">
           <div className="text-center">
             <h2 className="text-2xl font-bold text-red-400 mb-4">Something went wrong</h2>
-            <p className="text-gray-400 mb-4">We're sorry, but something unexpected happened.</p>
+            <p className="text-gray-400 mb-4">We&apos;re sorry, but something unexpected happened.</p>
             <button 
               onClick={() => window.location.reload()} 
               className="px-4 py-2 bg-green-500 text-black rounded hover:bg-green-600 transition-colors"
@@ -43,4 +43,4 @@ export class ErrorBoundary extends Component<Props, State> {
 
     return this.props.children;
   }
-} 
+}

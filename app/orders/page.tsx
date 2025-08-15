@@ -1,4 +1,6 @@
 "use client";
+// Add dynamic export to prevent static prerendering
+export const dynamic = "force-dynamic";
 
 import { useState, useEffect, useCallback } from "react";
 import { useRouter } from "next/navigation";
@@ -13,6 +15,7 @@ import Image from 'next/image';
 import { useTranslation } from '@/lib/i18n';
 import { authService } from '@/lib/auth';
 import { AuthStatus } from '@/components/ui/auth-status';
+import { orderApiService } from '@/lib/api';
 
 interface Order {
   _id: string;
@@ -100,59 +103,13 @@ export default function OrdersPage() {
       setLoading(true);
       setError(null);
 
-      // Use the authService to get the token
-      const token = authService.getToken();
-      if (!token) {
-        setError('يجب تسجيل الدخول لعرض الطلبات');
-        setLoading(false);
-        return;
+      const result = await orderApiService.getUserOrders();
+      if (result?.success) {
+        setOrders(result.data || []);
+      } else {
+        setError('حدث خطأ أثناء جلب الطلبات');
       }
-
-      console.log('🔍 Attempting to fetch orders with token:', {
-        token: token ? 'Token exists' : 'No token',
-        tokenPreview: token ? `${token.substring(0, 10)}...` : 'N/A',
-        timestamp: new Date().toISOString()
-      });
-
-      // استخدام نفس المنفذ للتغلب على مشكلة CORS
-      const baseUrl = window.location.origin;
-      const apiUrl = baseUrl.includes('localhost') 
-        ? 'http://localhost:3000/order' 
-        : `${baseUrl}/order`;
-        
-      console.log('🌐 Using API URL:', apiUrl);
-      
-      const response = await fetch(apiUrl, {
-        headers: {
-          'Authorization': `${token}`,
-          'Content-Type': 'application/json',
-          'Accept': 'application/json'
-        },
-        // تغيير وضع الاعتماد لتجنب مشكلة CORS
-        credentials: 'same-origin'
-      });
-
-      console.log('📡 Orders API Response:', {
-        status: response.status,
-        statusText: response.statusText,
-        ok: response.ok,
-        timestamp: new Date().toISOString()
-      });
-
-      if (!response.ok) {
-        const errorData = await response.json().catch(() => ({}));
-        console.error('❌ Orders API Error:', {
-          status: response.status,
-          error: errorData,
-          timestamp: new Date().toISOString()
-        });
-        throw new Error(errorData.message || 'فشل في جلب الطلبات');
-      }
-
-      const data = await response.json();
-      setOrders(data.data || []);
     } catch (err) {
-      console.error('Error fetching orders:', err);
       setError('حدث خطأ أثناء جلب الطلبات');
     } finally {
       setLoading(false);
@@ -168,43 +125,7 @@ export default function OrdersPage() {
     setShowModal(true);
   };
 
-  const handleCancelOrder = async (orderId: string) => {
-    try {
-      const token = authService.getToken();
-      if (!token) {
-        alert('يجب تسجيل الدخول لإلغاء الطلب');
-        return;
-      }
-
-      // استخدام نفس المنفذ للتغلب على مشكلة CORS
-      const baseUrl = window.location.origin;
-      const apiUrl = baseUrl.includes('localhost') 
-        ? `http://localhost:3000/order/${orderId}/cancel` 
-        : `${baseUrl}/order/${orderId}/cancel`;
-      
-      console.log('🌐 Using Cancel API URL:', apiUrl);
-      
-      const response = await fetch(apiUrl, {
-        method: 'PATCH',
-        headers: {
-          'Authorization': `${token}`,
-          'Content-Type': 'application/json'
-        },
-        credentials: 'same-origin'
-      });
-
-      if (response.ok) {
-        // تحديث الطلب في القائمة
-        setOrders(prev => prev.map(order => 
-          order._id === orderId 
-            ? { ...order, status: 'rejected' as const, adminNote: 'تم الإلغاء بواسطة المستخدم' }
-            : order
-        ));
-      }
-    } catch (err) {
-      console.error('Error cancelling order:', err);
-    }
-  };
+  // تم إزالة دالة handleCancelOrder
 
   const formatDate = (dateString: string) => {
     return new Date(dateString).toLocaleDateString('ar-EG', {
@@ -259,26 +180,13 @@ export default function OrdersPage() {
                       <p className="text-gray-400 text-sm">{userData.email}</p>
                     </div>
                     <button
-                      onClick={() => router.push('/')}
+                      onClick={() => router.push('/category')}
                       className="px-4 py-2 bg-[#00e6c0]/10 text-[#00e6c0] border border-[#00e6c0]/30 rounded-lg hover:bg-[#00e6c0]/20 transition"
                     >
                       {t('common.back_to_home')}
                     </button>
                   </div>
-                ) : (
-                  <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
-                    <div>
-                      <h2 className="text-xl font-bold mb-2">{t('orders.login_required')}</h2>
-                      <p className="text-gray-400 text-sm">{t('orders.please_login_to_continue')}</p>
-                    </div>
-                    <button
-                      onClick={() => router.push('/signin')}
-                      className="px-4 py-2 bg-[#00e6c0] text-[#151e2e] rounded-lg hover:opacity-90 transition"
-                    >
-                      {t('auth.login')}
-                    </button>
-                  </div>
-                )}
+                ) : null}
               </div>
             </div>
           </div>
@@ -333,7 +241,7 @@ export default function OrdersPage() {
                     <p className="text-gray-400 text-sm">{userData.email}</p>
                   </div>
                   <button
-                    onClick={() => router.push('/')}
+                    onClick={() => router.push('/category')}
                     className="px-4 py-2 bg-green-600 hover:bg-green-700 rounded-md text-white font-medium transition-colors flex items-center gap-2"
                   >
                     <Package size={16} />
@@ -400,7 +308,7 @@ export default function OrdersPage() {
                   <p className="text-gray-400 text-sm">{userData.email}</p>
                 </div>
                 <button
-                  onClick={() => router.push('/')}
+                  onClick={() => router.push('/category')}
                   className="px-4 py-2 bg-green-600 hover:bg-green-700 rounded-md text-white font-medium transition-colors flex items-center gap-2"
                 >
                   <Package size={16} />
@@ -429,7 +337,7 @@ export default function OrdersPage() {
               <h3 className="text-xl font-bold text-gray-400 mb-2">لا توجد طلبات</h3>
               <p className="text-gray-500 mb-6">لم تقم بإنشاء أي طلبات بعد</p>
               <button 
-                onClick={() => router.push('/dashboard')}
+                onClick={() => router.push('/category')}
                 className="bg-green-500 hover:bg-green-600 text-black font-bold py-3 px-6 rounded-full transition-colors"
               >
                 تصفح الألعاب
@@ -539,7 +447,6 @@ export default function OrdersPage() {
             setShowModal(false);
             setSelectedOrder(null);
           }}
-          onCancel={handleCancelOrder}
         />
       )}
 

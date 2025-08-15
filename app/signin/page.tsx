@@ -5,6 +5,7 @@ import { ThemeToggle } from "@/components/ui/theme-toggle";
 import { useState, useRef } from "react";
 import { useRouter } from "next/navigation";
 import { authService } from "@/lib/auth";
+import GuestGuard from "@/components/guards/GuestGuard";
 
 const sampleTestimonials: Testimonial[] = [
   {
@@ -95,9 +96,13 @@ export default function SignInPageDemo() {
       if (result.success) {
         // نجح تسجيل الدخول
         showError("تم تسجيل الدخول بنجاح!");
-        // انتقل إلى الصفحة السابقة أو الرئيسية
+        // انتقل إلى الصفحة السابقة أو صفحة الفئات
         const urlParams = new URLSearchParams(window.location.search);
-        const returnUrl = urlParams.get('returnUrl') || '/dashboard';
+        const rawReturnUrl = urlParams.get('returnUrl') || '/category';
+        let returnUrl = rawReturnUrl;
+        try {
+          returnUrl = decodeURIComponent(rawReturnUrl);
+        } catch {}
         router.push(returnUrl);
       } else {
         showError(result.error || "حدث خطأ أثناء تسجيل الدخول");
@@ -123,18 +128,20 @@ export default function SignInPageDemo() {
   }
 
   return (
-    <div className="bg-background text-foreground">
-      <ThemeToggle />
-      {error && <Toast message={error} type="error" />}
-      <SignInPage
-        heroImageSrc="https://images.unsplash.com/photo-1642615835477-d303d7dc9ee9?w=2160&q=80"
-        testimonials={sampleTestimonials}
-        onSignIn={handleSignIn}
-        onGoogleSignIn={handleGoogleSignIn}
-        onResetPassword={handleResetPassword}
-        onCreateAccount={handleCreateAccount}
-      />
-      {loading && <div className="text-center text-blue-500 mt-4">جاري تسجيل الدخول...</div>}
-    </div>
+    <GuestGuard>
+      <div className="bg-background text-foreground">
+        <ThemeToggle />
+        {error && <Toast message={error} type="error" />}
+        <SignInPage
+          heroImageSrc="https://images.unsplash.com/photo-1642615835477-d303d7dc9ee9?w=2160&q=80"
+          testimonials={sampleTestimonials}
+          onSignIn={handleSignIn}
+          onGoogleSignIn={handleGoogleSignIn}
+          onResetPassword={handleResetPassword}
+          onCreateAccount={handleCreateAccount}
+        />
+        {loading && <div className="text-center text-blue-500 mt-4">جاري تسجيل الدخول...</div>}
+      </div>
+    </GuestGuard>
   );
 }

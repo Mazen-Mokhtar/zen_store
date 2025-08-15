@@ -157,7 +157,7 @@ function FormLayout01() {
           Register to workspace
         </h3>
         <p className="mt-1 text-sm text-muted-foreground dark:text-muted-foreground">
-          Take a few moments to register for your company's workspace
+          Take a few moments to register for your company&apos;s workspace
         </p>
         <form onSubmit={handleSubmit} className="mt-8">
           <div className="grid grid-cols-1 gap-y-6">
@@ -205,4 +205,4 @@ function FormLayout01() {
   );
 }
 
-export default FormLayout01; 
+export default FormLayout01;

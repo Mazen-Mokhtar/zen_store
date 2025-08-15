@@ -7,12 +7,12 @@ export interface PerformanceMetric {
   timestamp: number;
 }
 
-export interface PerformanceObserver {
+export interface MetricObserver {
   onMetric: (metric: PerformanceMetric) => void;
 }
-
-class PerformanceManager {
-  private observers: PerformanceObserver[] = [];
+ 
+ class PerformanceManager {
+  private observers: MetricObserver[] = [];
   private metrics: PerformanceMetric[] = [];
   private isMonitoring: boolean = false;
 
@@ -76,9 +76,18 @@ class PerformanceManager {
         const entries = list.getEntries();
         
         entries.forEach(entry => {
+          // Some TS DOM lib versions type entries as PerformanceEntry; narrow safely
+          const processingStart = (entry as any)?.processingStart as number | undefined;
+          const duration = (entry as any)?.duration as number | undefined;
+          const fidValue = typeof processingStart === 'number'
+            ? processingStart - entry.startTime
+            : typeof duration === 'number'
+              ? duration
+              : 0;
+
           const metric: PerformanceMetric = {
             name: 'FID',
-            value: entry.processingStart - entry.startTime,
+            value: fidValue,
             unit: 'ms',
             timestamp: Date.now()
           };
@@ -100,8 +109,10 @@ class PerformanceManager {
         const entries = list.getEntries();
         
         entries.forEach(entry => {
-          if (!entry.hadRecentInput) {
-            clsValue += (entry as any).value;
+          const lsEntry = entry as any;
+          if (!lsEntry.hadRecentInput) {
+            const value = typeof lsEntry.value === 'number' ? lsEntry.value : 0;
+            clsValue += value;
           }
         });
         
@@ -128,19 +139,19 @@ class PerformanceManager {
         entries.forEach(entry => {
           if (entry.entryType === 'resource') {
             const resourceEntry = entry as PerformanceResourceTiming;
-            const loadTime = resourceEntry.loadEventEnd - resourceEntry.loadEventStart;
-            
-            const metric: PerformanceMetric = {
-              name: 'Resource Load',
-              value: loadTime,
-              unit: 'ms',
-              timestamp: Date.now()
-            };
-            
-            this.recordMetric(metric);
-          }
-        });
-      });
+            const loadTime = resourceEntry.responseEnd - resourceEntry.startTime;
+             
+             const metric: PerformanceMetric = {
+               name: 'Resource Load',
+               value: loadTime,
+               unit: 'ms',
+               timestamp: Date.now()
+             };
+             
+             this.recordMetric(metric);
+           }
+         });
+       });
       
       observer.observe({ entryTypes: ['resource'] });
     }
@@ -208,11 +219,11 @@ class PerformanceManager {
   }
 
   // Public methods
-  addObserver(observer: PerformanceObserver): void {
+  addObserver(observer: MetricObserver): void {
     this.observers.push(observer);
   }
 
-  removeObserver(observer: PerformanceObserver): void {
+  removeObserver(observer: MetricObserver): void {
     this.observers = this.observers.filter(obs => obs !== observer);
   }
 
@@ -290,8 +301,8 @@ class PerformanceManager {
   // Bundle size optimization
   async loadModule(modulePath: string): Promise<any> {
     try {
-      const module = await import(modulePath);
-      return module;
+      const mod = await import(modulePath);
+      return mod;
     } catch (error) {
       console.error(`Failed to load module: ${modulePath}`, error);
       throw error;
@@ -365,4 +376,4 @@ export const debounce = performanceManager.debounce.bind(performanceManager);
 export const throttle = performanceManager.throttle.bind(performanceManager);
 export const preloadImage = performanceManager.preloadImage.bind(performanceManager);
 export const createIntersectionObserver = performanceManager.createIntersectionObserver.bind(performanceManager);
-export const loadModule = performanceManager.loadModule.bind(performanceManager); 
+export const loadModule = performanceManager.loadModule.bind(performanceManager);

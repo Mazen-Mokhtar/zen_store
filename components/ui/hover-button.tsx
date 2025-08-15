@@ -3,6 +3,12 @@
 import * as React from "react"
 import { cn } from "@/lib/utils"
 
+// Allow CSS variables in inline styles
+export type CSSVars = React.CSSProperties & {
+  ["--circle-start"]?: string
+  ["--circle-end"]?: string
+}
+
 interface HoverButtonProps extends React.ButtonHTMLAttributes<HTMLButtonElement> {
   children: React.ReactNode
 }
@@ -83,6 +89,16 @@ const HoverButton = React.forwardRef<HTMLButtonElement, HoverButtonProps>(
       })
     }, [circles])
 
+    const cssVars: CSSVars = {
+      "--circle-start": "var(--tw-gradient-from, #a0d9f8)",
+      "--circle-end": "var(--tw-gradient-to, #3a5bbf)",
+    }
+
+    const mergedStyle: CSSVars = {
+      ...(props.style as React.CSSProperties),
+      ...cssVars,
+    }
+
     return (
       <button
         ref={buttonRef}
@@ -103,10 +119,7 @@ const HoverButton = React.forwardRef<HTMLButtonElement, HoverButtonProps>(
         onPointerEnter={handlePointerEnter}
         onPointerLeave={handlePointerLeave}
         {...props}
-        style={{
-          "--circle-start": "var(--tw-gradient-from, #a0d9f8)",
-          "--circle-end": "var(--tw-gradient-to, #3a5bbf)",
-        }}
+        style={mergedStyle}
       >
         {circles.map(({ id, x, y, color, fadeState }) => (
           <div
@@ -133,4 +146,4 @@ const HoverButton = React.forwardRef<HTMLButtonElement, HoverButtonProps>(
 
 HoverButton.displayName = "HoverButton"
 
-export { HoverButton } 
+export { HoverButton }

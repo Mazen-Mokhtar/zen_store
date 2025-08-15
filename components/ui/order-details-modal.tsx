@@ -33,7 +33,6 @@ interface Order {
 interface OrderDetailsModalProps {
   order: Order;
   onClose: () => void;
-  onCancel: (orderId: string) => void;
 }
 
 const statusConfig = {
@@ -73,8 +72,7 @@ const statusConfig = {
 
 export const OrderDetailsModal: React.FC<OrderDetailsModalProps> = ({
   order,
-  onClose,
-  onCancel
+  onClose
 }) => {
   const statusInfo = statusConfig[order.status];
   const StatusIcon = statusInfo.icon;
@@ -89,10 +87,7 @@ export const OrderDetailsModal: React.FC<OrderDetailsModalProps> = ({
     });
   };
 
-  const handleCancel = () => {
-    onCancel(order._id);
-    onClose();
-  };
+  // تم إزالة دالة handleCancel
 
   return (
     <div className="fixed inset-0 bg-black/80 backdrop-blur-sm z-50 flex items-center justify-center p-4">
@@ -259,15 +254,6 @@ export const OrderDetailsModal: React.FC<OrderDetailsModalProps> = ({
           </div>
           
           <div className="flex items-center gap-3">
-            {(order.status === 'pending' || order.status === 'paid') && (
-              <button
-                onClick={handleCancel}
-                className="px-4 py-2 bg-red-500/20 text-red-400 rounded-lg hover:bg-red-500/30 transition-colors text-sm font-medium"
-              >
-                إلغاء الطلب
-              </button>
-            )}
-            
             <button
               onClick={onClose}
               className="px-6 py-2 bg-gray-700 text-white rounded-lg hover:bg-gray-600 transition-colors text-sm font-medium"

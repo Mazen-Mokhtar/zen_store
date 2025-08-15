@@ -1,5 +1,8 @@
 import { NextResponse } from 'next/server';
 
+// Add dynamic export to prevent static prerendering
+export const dynamic = "force-dynamic";
+
 export async function POST(request: Request) {
   try {
     const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3000';

@@ -29,6 +29,10 @@ export class ApiError extends Error {
 export const handleApiError = (error: unknown): string => {
   if (error instanceof ApiError) {
     switch (error.status) {
+      case 401:
+        return 'يرجى تسجيل الدخول للمتابعة';
+      case 403:
+        return 'ليس لديك الصلاحية للوصول إلى هذا المورد';
       case 404:
         return 'The requested resource was not found';
       case 500:
@@ -45,4 +49,4 @@ export const handleApiError = (error: unknown): string => {
   }
   
   return 'An unexpected error occurred';
-}; 
+};
