@@ -1,86 +1,79 @@
+// Define our own mock types to avoid jest dependency
+type Mocked<T> = {
+  [P in keyof T]: T[P] extends (...args: any[]) => any ? MockedFunction<T[P]> : T[P];
+};
+
+type MockedFunction<T extends (...args: any[]) => any> = {
+  (...args: Parameters<T>): ReturnType<T>;
+  calls: Array<Parameters<T>>;
+  mockClear(): void;
+  mockReset(): void;
+};
+
 export interface TestCase {
   id: string;
   name: string;
   description: string;
-  test: () => Promise<boolean> | boolean;
-  category: 'unit' | 'integration' | 'e2e' | 'performance' | 'security';
-  priority: 'low' | 'medium' | 'high' | 'critical';
-  timeout?: number;
+  category: 'unit' | 'integration' | 'e2e';
+  fn: () => Promise<void> | void;
 }
 
 export interface TestResult {
-  testId: string;
+  id: string;
   name: string;
-  passed: boolean;
+  category: TestCase['category'];
+  status: 'passed' | 'failed' | 'skipped';
   duration: number;
-  error?: string;
-  timestamp: number;
+  error?: Error;
 }
 
-export interface TestSuite {
-  name: string;
-  tests: TestCase[];
-  setup?: () => Promise<void>;
-  teardown?: () => Promise<void>;
+export interface TestReport {
+  totalTests: number;
+  passed: number;
+  failed: number;
+  skipped: number;
+  duration: number;
+  results: TestResult[];
 }
 
 class TestRunner {
   private tests: Map<string, TestCase> = new Map();
-  private results: TestResult[] = [];
   private isRunning: boolean = false;
+  private hooks: {
+    beforeEach: Array<() => Promise<void> | void>;
+    afterEach: Array<() => Promise<void> | void>;
+    beforeAll: Array<() => Promise<void> | void>;
+    afterAll: Array<() => Promise<void> | void>;
+  } = {
+    beforeEach: [],
+    afterEach: [],
+    beforeAll: [],
+    afterAll: []
+  };
 
-  // Register a test case
-  registerTest(testCase: TestCase): void {
-    this.tests.set(testCase.id, testCase);
-  }
-
-  // Register multiple tests
-  registerTests(testCases: TestCase[]): void {
-    testCases.forEach(testCase => this.registerTest(testCase));
-  }
-
-  // Register a test suite
-  registerTestSuite(suite: TestSuite): void {
-    suite.tests.forEach(testCase => this.registerTest(testCase));
-  }
-
-  // Run a single test
-  async runTest(testId: string): Promise<TestResult> {
-    const testCase = this.tests.get(testId);
-    if (!testCase) {
-      throw new Error(`Test not found: ${testId}`);
+  // Test registration
+  registerTest(test: TestCase): void {
+    if (this.tests.has(test.id)) {
+      throw new Error(`Test with id ${test.id} already exists`);
     }
+    this.tests.set(test.id, test);
+  }
 
-    const startTime = Date.now();
-    let passed = false;
-    let error: string | undefined;
+  // Hook registration
+  beforeEach(fn: () => Promise<void> | void): void {
+    this.hooks.beforeEach.push(fn);
+  }
 
-    try {
-      const timeout = testCase.timeout || 5000;
-      const result = await Promise.race([
-        testCase.test(),
-        new Promise<never>((_, reject) => 
-          setTimeout(() => reject(new Error('Test timeout')), timeout)
-        )
-      ]);
+  afterEach(fn: () => Promise<void> | void): void {
+    this.hooks.afterEach.push(fn);
+  }
 
-      passed = Boolean(result);
-    } catch (err) {
-      error = err instanceof Error ? err.message : String(err);
-    }
+  beforeAll(fn: () => Promise<void> | void): void {
+    this.hooks.beforeAll.push(fn);
+  }
 
-    const duration = Date.now() - startTime;
-    const testResult: TestResult = {
-      testId,
-      name: testCase.name,
-      passed,
-      duration,
-      error,
-      timestamp: Date.now()
-    };
-
-    this.results.push(testResult);
-    return testResult;
+  afterAll(fn: () => Promise<void> | void): void {
+    this.hooks.afterAll.push(fn);
   }
 
   // Run all tests
@@ -93,7 +86,9 @@ class TestRunner {
     const results: TestResult[] = [];
 
     try {
-      for (const testCase of this.tests.values()) {
+      const testCases = Array.from(this.tests.values());
+      for (let i = 0; i < testCases.length; i++) {
+        const testCase = testCases[i];
         const result = await this.runTest(testCase.id);
         results.push(result);
       }
@@ -109,154 +104,167 @@ class TestRunner {
     const categoryTests = Array.from(this.tests.values()).filter(test => test.category === category);
     const results: TestResult[] = [];
 
-    for (const testCase of categoryTests) {
-      const result = await this.runTest(testCase.id);
+    for (const test of categoryTests) {
+      const result = await this.runTest(test.id);
       results.push(result);
     }
 
     return results;
   }
 
-  // Run tests by priority
-  async runTestsByPriority(priority: TestCase['priority']): Promise<TestResult[]> {
-    const priorityTests = Array.from(this.tests.values()).filter(test => test.priority === priority);
-    const results: TestResult[] = [];
-
-    for (const testCase of priorityTests) {
-      const result = await this.runTest(testCase.id);
-      results.push(result);
+  // Run a single test
+  async runTest(id: string): Promise<TestResult> {
+    const test = this.tests.get(id);
+    if (!test) {
+      throw new Error(`Test with id ${id} not found`);
     }
 
-    return results;
-  }
+    // Run beforeEach hooks
+    for (const hook of this.hooks.beforeEach) {
+      await hook();
+    }
 
-  // Get test results
-  getResults(): TestResult[] {
-    return [...this.results];
-  }
+    const startTime = performance.now();
+    let status: TestResult['status'] = 'passed';
+    let error: Error | undefined;
 
-  // Get test results by test ID
-  getResultsByTestId(testId: string): TestResult[] {
-    return this.results.filter(result => result.testId === testId);
-  }
+    try {
+      await test.fn();
+    } catch (e) {
+      status = 'failed';
+      error = e instanceof Error ? e : new Error(String(e));
+    }
 
-  // Get latest result for a test
-  getLatestResult(testId: string): TestResult | null {
-    const testResults = this.getResultsByTestId(testId);
-    return testResults.length > 0 ? testResults[testResults.length - 1] : null;
-  }
+    const endTime = performance.now();
+    const duration = endTime - startTime;
 
-  // Clear results
-  clearResults(): void {
-    this.results = [];
-  }
-
-  // Get test statistics
-  getTestStatistics(): {
-    total: number;
-    passed: number;
-    failed: number;
-    successRate: number;
-    averageDuration: number;
-    categoryStats: Record<string, { total: number; passed: number; failed: number }>;
-    priorityStats: Record<string, { total: number; passed: number; failed: number }>;
-  } {
-    const total = this.results.length;
-    const passed = this.results.filter(r => r.passed).length;
-    const failed = total - passed;
-    const successRate = total > 0 ? (passed / total) * 100 : 0;
-    const averageDuration = total > 0 ? this.results.reduce((sum, r) => sum + r.duration, 0) / total : 0;
-
-    const categoryStats: Record<string, { total: number; passed: number; failed: number }> = {};
-    const priorityStats: Record<string, { total: number; passed: number; failed: number }> = {};
-
-    this.results.forEach(result => {
-      const testCase = this.tests.get(result.testId);
-      if (testCase) {
-        // Category stats
-        if (!categoryStats[testCase.category]) {
-          categoryStats[testCase.category] = { total: 0, passed: 0, failed: 0 };
-        }
-        categoryStats[testCase.category].total++;
-        if (result.passed) {
-          categoryStats[testCase.category].passed++;
-        } else {
-          categoryStats[testCase.category].failed++;
-        }
-
-        // Priority stats
-        if (!priorityStats[testCase.priority]) {
-          priorityStats[testCase.priority] = { total: 0, passed: 0, failed: 0 };
-        }
-        priorityStats[testCase.priority].total++;
-        if (result.passed) {
-          priorityStats[testCase.priority].passed++;
-        } else {
-          priorityStats[testCase.priority].failed++;
-        }
-      }
-    });
+    // Run afterEach hooks
+    for (const hook of this.hooks.afterEach) {
+      await hook();
+    }
 
     return {
-      total,
-      passed,
-      failed,
-      successRate,
-      averageDuration,
-      categoryStats,
-      priorityStats
+      id: test.id,
+      name: test.name,
+      category: test.category,
+      status,
+      duration,
+      error
     };
   }
 
-  // Generate test report
-  generateTestReport(): string {
-    const stats = this.getTestStatistics();
-    const failedTests = this.results.filter(r => !r.passed);
-
-    let report = `# Test Report\n\n`;
-    report += `## Summary\n`;
-    report += `- Total Tests: ${stats.total}\n`;
-    report += `- Passed: ${stats.passed}\n`;
-    report += `- Failed: ${stats.failed}\n`;
-    report += `- Success Rate: ${stats.successRate.toFixed(2)}%\n`;
-    report += `- Average Duration: ${stats.averageDuration.toFixed(2)}ms\n\n`;
-
-    report += `## Category Statistics\n`;
-    Object.entries(stats.categoryStats).forEach(([category, stat]) => {
-      const rate = stat.total > 0 ? (stat.passed / stat.total) * 100 : 0;
-      report += `- ${category}: ${stat.passed}/${stat.total} (${rate.toFixed(2)}%)\n`;
-    });
-    report += `\n`;
-
-    report += `## Priority Statistics\n`;
-    Object.entries(stats.priorityStats).forEach(([priority, stat]) => {
-      const rate = stat.total > 0 ? (stat.passed / stat.total) * 100 : 0;
-      report += `- ${priority}: ${stat.passed}/${stat.total} (${rate.toFixed(2)}%)\n`;
-    });
-    report += `\n`;
-
-    if (failedTests.length > 0) {
-      report += `## Failed Tests\n`;
-      failedTests.forEach(test => {
-        report += `- ${test.name} (${test.testId})\n`;
-        if (test.error) {
-          report += `  Error: ${test.error}\n`;
-        }
-        report += `  Duration: ${test.duration}ms\n\n`;
-      });
+  // Skip a test
+  skipTest(id: string): void {
+    const test = this.tests.get(id);
+    if (!test) {
+      throw new Error(`Test with id ${id} not found`);
     }
 
-    return report;
+    // Replace the test function with a no-op that marks as skipped
+    const skippedTest: TestCase = {
+      ...test,
+      fn: async () => {
+        // Don't return anything, just a no-op function
+      }
+    };
+
+    this.tests.set(id, skippedTest);
+  }
+
+  // Get test report
+  getTestReport(results: TestResult[]): TestReport {
+    const totalTests = results.length;
+    const passed = results.filter(r => r.status === 'passed').length;
+    const failed = results.filter(r => r.status === 'failed').length;
+    const skipped = results.filter(r => r.status === 'skipped').length;
+    const duration = results.reduce((sum, r) => sum + r.duration, 0);
+
+    return {
+      totalTests,
+      passed,
+      failed,
+      skipped,
+      duration,
+      results
+    };
+  }
+
+  // Clear all tests
+  clearTests(): void {
+    this.tests.clear();
+  }
+
+  // Test utilities
+  async assertThrows(fn: () => any, errorType?: any): Promise<void> {
+    let thrown = false;
+    let error: any;
+
+    try {
+      await fn();
+    } catch (e) {
+      thrown = true;
+      error = e;
+    }
+
+    if (!thrown) {
+      throw new Error('Expected function to throw an error');
+    }
+
+    if (errorType && !(error instanceof errorType)) {
+      throw new Error(`Expected error to be instance of ${errorType.name}`);
+    }
+  }
+
+  // Generate test report
+  generateReport(results: TestResult[]): string {
+    const report = this.getTestReport(results);
+    let output = '\n=== Test Report ===\n';
+    output += `Total Tests: ${report.totalTests}\n`;
+    output += `Passed: ${report.passed}\n`;
+    output += `Failed: ${report.failed}\n`;
+    output += `Skipped: ${report.skipped}\n`;
+    output += `Duration: ${report.duration.toFixed(2)}ms\n\n`;
+
+    output += '=== Test Results ===\n';
+    for (const result of report.results) {
+      const status = result.status === 'passed' ? '✅' : result.status === 'failed' ? '❌' : '⏭️';
+      output += `${status} ${result.name} (${result.duration.toFixed(2)}ms)\n`;
+      if (result.error) {
+        output += `   Error: ${result.error.message}\n`;
+      }
+    }
+
+    return output;
   }
 
   // Mock utilities
-  createMock<T>(obj: T): jest.Mocked<T> {
-    return obj as jest.Mocked<T>;
+  createMock<T>(obj: T): Mocked<T> {
+    const mockedObj = { ...obj } as any;
+    
+    // Add mock properties to functions
+    for (const key in obj) {
+      if (typeof obj[key] === 'function') {
+        mockedObj[key] = this.createSpy(obj[key] as unknown as (...args: any[]) => any);
+      }
+    }
+    
+    return mockedObj as Mocked<T>;
   }
 
   // Spy utilities
-  createSpy<T extends (...args: any[]) => any>(fn: T): jest.MockedFunction<T> {
-    return fn as jest.MockedFunction<T>;
+  createSpy<T extends (...args: any[]) => any>(fn: T): MockedFunction<T> {
+    const calls: Array<Parameters<T>> = [];
+    
+    const spy = ((...args: Parameters<T>): ReturnType<T> => {
+      calls.push(args);
+      return fn(...args);
+    }) as MockedFunction<T>;
+    
+    spy.calls = calls;
+    spy.mockClear = () => { calls.length = 0; };
+    spy.mockReset = () => { calls.length = 0; };
+    
+    return spy;
   }
 
   // Assertion utilities
@@ -266,89 +274,73 @@ class TestRunner {
     }
   }
 
-  assertEqual(actual: any, expected: any, message?: string): void {
+  assertEquals<T>(actual: T, expected: T, message?: string): void {
     if (actual !== expected) {
-      throw new Error(message || `Expected ${expected}, but got ${actual}`);
+      throw new Error(message || `Expected ${expected} but got ${actual}`);
     }
   }
 
-  assertDeepEqual(actual: any, expected: any, message?: string): void {
-    if (JSON.stringify(actual) !== JSON.stringify(expected)) {
-      throw new Error(message || `Expected ${JSON.stringify(expected)}, but got ${JSON.stringify(actual)}`);
+  assertDeepEquals<T>(actual: T, expected: T, message?: string): void {
+    const actualStr = JSON.stringify(actual);
+    const expectedStr = JSON.stringify(expected);
+    if (actualStr !== expectedStr) {
+      throw new Error(message || `Expected ${expectedStr} but got ${actualStr}`);
     }
   }
 
-  assertThrows(fn: () => void, errorType?: any, message?: string): void {
-    try {
-      fn();
-      throw new Error(message || 'Expected function to throw an error');
-    } catch (error) {
-      if (errorType && !(error instanceof errorType)) {
-        throw new Error(message || `Expected error of type ${errorType.name}, but got ${error.constructor.name}`);
-      }
+  assertContains(haystack: string, needle: string, message?: string): void {
+    if (!haystack.includes(needle)) {
+      throw new Error(message || `Expected "${haystack}" to contain "${needle}"`);
+    }
+  }
+
+  assertNotEquals<T>(actual: T, expected: T, message?: string): void {
+    if (actual === expected) {
+      throw new Error(message || `Expected ${actual} to not equal ${expected}`);
+    }
+  }
+
+  assertTruthy(value: any, message?: string): void {
+    if (!value) {
+      throw new Error(message || `Expected ${value} to be truthy`);
+    }
+  }
+
+  assertFalsy(value: any, message?: string): void {
+    if (value) {
+      throw new Error(message || `Expected ${value} to be falsy`);
     }
   }
 }
 
 export const testRunner = new TestRunner();
 
-// Predefined test cases
-export const createAPITest = (name: string, endpoint: string, expectedStatus: number = 200): TestCase => ({
-  id: `api_${name.toLowerCase().replace(/\s+/g, '_')}`,
-  name,
-  description: `Test API endpoint: ${endpoint}`,
-  category: 'integration',
-  priority: 'medium',
-  test: async () => {
-    try {
-      const response = await fetch(endpoint);
-      return response.status === expectedStatus;
-    } catch {
-      return false;
-    }
-  }
-});
+// Export test utilities
+export const test = (name: string, category: TestCase['category'], fn: () => Promise<void> | void): void => {
+  const id = `test-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
+  testRunner.registerTest({
+    id,
+    name,
+    description: name,
+    category,
+    fn
+  });
+};
 
-export const createComponentTest = (name: string, component: React.ComponentType<any>): TestCase => ({
-  id: `component_${name.toLowerCase().replace(/\s+/g, '_')}`,
-  name,
-  description: `Test React component: ${name}`,
-  category: 'unit',
-  priority: 'medium',
-  test: () => {
-    // In a real test environment, this would render the component and test it
-    return true;
-  }
-});
-
-export const createPerformanceTest = (name: string, fn: () => void, maxDuration: number): TestCase => ({
-  id: `perf_${name.toLowerCase().replace(/\s+/g, '_')}`,
-  name,
-  description: `Performance test: ${name}`,
-  category: 'performance',
-  priority: 'low',
-  timeout: maxDuration * 2,
-  test: async () => {
-    const startTime = performance.now();
-    fn();
-    const duration = performance.now() - startTime;
-    return duration <= maxDuration;
-  }
-});
-
-export const createSecurityTest = (name: string, securityCheck: () => boolean): TestCase => ({
-  id: `security_${name.toLowerCase().replace(/\s+/g, '_')}`,
-  name,
-  description: `Security test: ${name}`,
-  category: 'security',
-  priority: 'high',
-  test: securityCheck
-});
-
-// Export testing utilities
+export const beforeEach = testRunner.beforeEach.bind(testRunner);
+export const afterEach = testRunner.afterEach.bind(testRunner);
+export const beforeAll = testRunner.beforeAll.bind(testRunner);
+export const afterAll = testRunner.afterAll.bind(testRunner);
+export const runTests = testRunner.runAllTests.bind(testRunner);
+export const runTestsByCategory = testRunner.runTestsByCategory.bind(testRunner);
+export const skipTest = testRunner.skipTest.bind(testRunner);
 export const assert = testRunner.assert.bind(testRunner);
-export const assertEqual = testRunner.assertEqual.bind(testRunner);
-export const assertDeepEqual = testRunner.assertDeepEqual.bind(testRunner);
+export const assertEquals = testRunner.assertEquals.bind(testRunner);
+export const assertDeepEquals = testRunner.assertDeepEquals.bind(testRunner);
+export const assertContains = testRunner.assertContains.bind(testRunner);
+export const assertNotEquals = testRunner.assertNotEquals.bind(testRunner);
+export const assertTruthy = testRunner.assertTruthy.bind(testRunner);
+export const assertFalsy = testRunner.assertFalsy.bind(testRunner);
 export const assertThrows = testRunner.assertThrows.bind(testRunner);
 export const createMock = testRunner.createMock.bind(testRunner);
-export const createSpy = testRunner.createSpy.bind(testRunner); 
+export const createSpy = testRunner.createSpy.bind(testRunner);

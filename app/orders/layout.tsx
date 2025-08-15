@@ -1,5 +1,6 @@
 import type { Metadata } from 'next';
 import { ThemeProvider } from '@/components/theme-provider';
+import AuthGuard from '@/components/guards/AuthGuard';
 
 export const metadata: Metadata = {
   title: 'طلباتي - Endex',
@@ -18,7 +19,9 @@ export default function OrdersLayout({
       enableSystem
       disableTransitionOnChange
     >
-      {children}
+      <AuthGuard>
+        {children}
+      </AuthGuard>
     </ThemeProvider>
   );
 }

@@ -52,11 +52,11 @@ class Cache {
 
   // Clean up expired items
   cleanup(): void {
-    for (const [key] of this.cache) {
+    this.cache.forEach((_value, key) => {
       if (this.isExpired(key)) {
         this.cache.delete(key);
       }
-    }
+    });
   }
 }
 
@@ -100,4 +100,4 @@ if (typeof window !== 'undefined') {
   setInterval(() => {
     cache.cleanup();
   }, 5 * 60 * 1000);
-} 
+}

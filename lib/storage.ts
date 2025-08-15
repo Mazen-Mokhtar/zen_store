@@ -81,7 +81,8 @@ export const DEFAULT_PREFERENCES: UserPreferences = {
 
 // Helper functions
 export const getUserPreferences = (): UserPreferences => {
-  return storage.get(STORAGE_KEYS.USER_PREFERENCES, DEFAULT_PREFERENCES);
+  const prefs = storage.get(STORAGE_KEYS.USER_PREFERENCES);
+  return prefs ? { ...DEFAULT_PREFERENCES, ...prefs } : DEFAULT_PREFERENCES;
 };
 
 export const setUserPreferences = (preferences: Partial<UserPreferences>): void => {
@@ -90,7 +91,8 @@ export const setUserPreferences = (preferences: Partial<UserPreferences>): void 
 };
 
 export const getRecentViewed = (): string[] => {
-  return storage.get(STORAGE_KEYS.RECENT_VIEWED, []);
+  const recent = storage.get<string[]>(STORAGE_KEYS.RECENT_VIEWED);
+  return recent || [];
 };
 
 export const addRecentViewed = (itemId: string): void => {
@@ -101,7 +103,8 @@ export const addRecentViewed = (itemId: string): void => {
 };
 
 export const getFavorites = (): string[] => {
-  return storage.get(STORAGE_KEYS.FAVORITES, []);
+  const favorites = storage.get<string[]>(STORAGE_KEYS.FAVORITES);
+  return favorites || [];
 };
 
 export const addFavorite = (itemId: string): void => {
@@ -119,4 +122,4 @@ export const removeFavorite = (itemId: string): void => {
 export const isFavorite = (itemId: string): boolean => {
   const favorites = getFavorites();
   return favorites.includes(itemId);
-}; 
+};

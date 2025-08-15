@@ -141,7 +141,7 @@ export default function EndexHeroPage() {
                     />
                   </div>
                 ) : (
-                  <button className="text-sm font-semibold hover:text-gray-200">
+                  <button className="text-sm font-semibold hover:text-gray-200" onClick={() => router.push(`/signin?returnUrl=${encodeURIComponent('/dashboard')}`)}>
                     {t('dashboard.enter')}
                   </button>
                 )}
@@ -207,7 +207,7 @@ export default function EndexHeroPage() {
                     />
                   </div>
                 ) : (
-                  <button className="text-sm font-semibold hover:text-gray-200">
+                  <button className="text-sm font-semibold hover:text-gray-200" onClick={() => router.push(`/signin?returnUrl=${encodeURIComponent('/dashboard')}`)}>
                     {t('dashboard.enter')}
                   </button>
                 )}
@@ -263,7 +263,7 @@ export default function EndexHeroPage() {
                   />
                 </div>
               ) : (
-                <button className="text-sm font-semibold hover:text-gray-200">
+                <button className="text-sm font-semibold hover:text-gray-200" onClick={() => router.push(`/signin?returnUrl=${encodeURIComponent('/dashboard')}`)}>
                   {t('dashboard.enter')}
                 </button>
               )}
@@ -428,4 +428,4 @@ function MobileGamesSection({ games }: { games: Game[] }) {
       </div>
     </section>
   );
-} 
+}

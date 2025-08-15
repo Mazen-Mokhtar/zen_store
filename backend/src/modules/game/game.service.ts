@@ -166,37 +166,21 @@ export class GameService {
             if (!category) {
                 throw new NotFoundException('Category not found');
             }
-
-            // Find distinct gameIds that have active, not-deleted packages
-            const packages = await this.packageRepository.find(
+            console.log(categoryId);
+            const games = await this.gameRepository.find(
                 {
+                    categoryId : categoryId,
+                    type: { $ne: GameType.STEAM },
                     isActive: true,
                     $or: [
                         { isDeleted: false },
                         { isDeleted: { $exists: false } }
                     ]
                 },
-                { select: 'gameId' },
-                { lean: true }
+                { select: 'name description image isOffer categoryId isActive createdAt isPopular price accountInfoFields' },
+                { sort: { createdAt: -1 }, lean: true }
             );
-            const gameIds = Array.from(new Set(packages.map((p: any) => String(p.gameId)))).map(id => new Types.ObjectId(id));
-
-            const games = gameIds.length
-                ? await this.gameRepository.find(
-                    {
-                        _id: { $in: gameIds },
-                        categoryId,
-                        isActive: true,
-                        $or: [
-                            { isDeleted: false },
-                            { isDeleted: { $exists: false } }
-                        ]
-                    },
-                    { select: 'name description image offer categories isActive createdAt isPopular price accountInfoFields' },
-                    { sort: { createdAt: -1 }, lean: true }
-                )
-                : [];
-
+            console.log(games);
             return {
                 success: true,
                 data: games,
@@ -205,7 +189,7 @@ export class GameService {
             };
         } catch (error) {
             if (error instanceof NotFoundException) throw error;
-            throw new BadRequestException('Failed to fetch package-based games for this category');
+            throw new BadRequestException('Failed to fetch games for this category');
         }
     }
 

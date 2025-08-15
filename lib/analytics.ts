@@ -245,7 +245,7 @@ class AnalyticsManager {
   }
 
   // Flush data to server
-  private async flush(): void {
+  private async flush(): Promise<void> {
     if (!this.isEnabled) return;
 
     const data = {

@@ -46,7 +46,11 @@ export function AuthStatus({ className = "", variant = 'default', avatarUrl }: A
   };
 
   const handleLogin = () => {
-    router.push('/signin');
+    const current = typeof window !== 'undefined' 
+      ? window.location.pathname + window.location.search 
+      : '/';
+    const returnUrl = encodeURIComponent(current);
+    router.push(`/signin?returnUrl=${returnUrl}`);
   };
 
   const goOrders = () => {

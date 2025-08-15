@@ -37,7 +37,7 @@ class NotificationService {
     this.notify();
 
     // Auto remove after duration
-    if (newNotification.duration > 0) {
+    if (typeof newNotification.duration === 'number' && newNotification.duration > 0) {
       setTimeout(() => {
         this.remove(id);
       }, newNotification.duration);
@@ -98,4 +98,4 @@ export const showBrowserNotification = (title: string, options?: NotificationOpt
   if (Notification.permission === 'granted') {
     new Notification(title, options);
   }
-}; 
+};

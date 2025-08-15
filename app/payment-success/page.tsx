@@ -1,4 +1,6 @@
 "use client";
+// Add dynamic export to prevent static prerendering
+export const dynamic = "force-dynamic";
 
 import { useEffect, useState } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';

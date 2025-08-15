@@ -13,12 +13,14 @@ function buildHeaders(request: Request) {
   return out;
 }
 
-export async function POST(request: Request, { params }: { params: { orderId: string } }) {
+export async function POST(request: Request, context: { params: Promise<{ orderId: string }> }) {
   try {
     const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3000';
     const body = await request.json().catch(() => undefined);
 
-    const res = await fetch(`${API_BASE_URL}/order/${params.orderId}/checkout`, {
+    const { orderId } = await context.params;
+
+    const res = await fetch(`${API_BASE_URL}/order/${orderId}/checkout`, {
       method: 'POST',
       headers: buildHeaders(request),
       body: JSON.stringify(body ?? {}),

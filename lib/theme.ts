@@ -134,7 +134,7 @@ class ThemeManager {
     }
   }
 
-  private applyTheme(): void {
+  applyTheme(): void {
     if (typeof window === 'undefined') return;
 
     const theme = this.getCurrentTheme();
@@ -144,10 +144,10 @@ class ThemeManager {
     Object.entries(theme.colors).forEach(([key, value]) => {
       if (typeof value === 'object') {
         Object.entries(value).forEach(([subKey, subValue]) => {
-          root.style.setProperty(`--color-${key}-${subKey}`, subValue);
+          root.style.setProperty(`--color-${key}-${subKey}`, String(subValue));
         });
       } else {
-        root.style.setProperty(`--color-${key}`, value);
+        root.style.setProperty(`--color-${key}`, String(value));
       }
     });
 
@@ -269,4 +269,4 @@ if (typeof window !== 'undefined') {
       themeManager.setTheme(newTheme);
     }
   });
-} 
+}

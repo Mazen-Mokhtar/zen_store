@@ -70,7 +70,7 @@ class SettingsManager {
     });
   }
 
-  private applySettings(key: keyof AppSettings, value: any) {
+  public applySettings(key: keyof AppSettings, value: any) {
     switch (key) {
       case 'theme':
         this.applyTheme(value);
@@ -87,7 +87,7 @@ class SettingsManager {
     }
   }
 
-  private applyTheme(theme: AppSettings['theme']) {
+  public applyTheme(theme: AppSettings['theme']) {
     if (typeof window === 'undefined') return;
 
     const root = document.documentElement;
@@ -200,4 +200,4 @@ if (typeof window !== 'undefined') {
       settingsManager.applyTheme('auto');
     }
   });
-} 
+}

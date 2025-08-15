@@ -21,7 +21,8 @@ export class GameController {
   }
   @Get('category/:categoryId/with-packages')
   async getGamesWithPackagesByCategory(@Param() params: CategoryIdDto) {
-    return this.gameService.getGamesWithPackagesByCategory(new Types.ObjectId(params.categoryId));
+    console.log(params.categoryId);
+    return await this.gameService.getGamesWithPackagesByCategory(new Types.ObjectId(params.categoryId));
   }
 
   @Get(':gameId')

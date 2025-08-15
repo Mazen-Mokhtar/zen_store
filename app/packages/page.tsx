@@ -1,4 +1,7 @@
 "use client";
+// Add dynamic export to prevent static prerendering
+export const dynamic = "force-dynamic";
+
 import Image from "next/image";
 import React, { useState, useEffect } from "react";
 import { useSearchParams } from "next/navigation";
@@ -336,7 +339,13 @@ export default function PackagesPage() {
           <LoginRequiredModal
             isOpen={showLoginModal}
             onClose={() => setShowLoginModal(false)}
-            onLogin={() => router.push('/signin')}
+            onLogin={() => {
+              const current = typeof window !== 'undefined' 
+                ? window.location.pathname + window.location.search 
+                : '/packages';
+              const returnUrl = encodeURIComponent(current);
+              router.push(`/signin?returnUrl=${returnUrl}`);
+            }}
           />
 
         </section>
