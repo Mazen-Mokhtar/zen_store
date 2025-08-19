@@ -2,7 +2,8 @@
 // Add dynamic export to prevent static prerendering
 export const dynamic = "force-dynamic";
 
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useMemo } from "react";
+import React from "react";
 import { useRouter } from "next/navigation";
 import { ArrowLeft, Package, Clock, CheckCircle, XCircle, Eye, Calendar, CreditCard, Banknote, Info } from 'lucide-react';
 import { Footer } from '@/components/ui/footer-section';
@@ -16,65 +17,128 @@ import { useTranslation } from '@/lib/i18n';
 import { authService } from '@/lib/auth';
 import { AuthStatus } from '@/components/ui/auth-status';
 import { orderApiService } from '@/lib/api';
+import type { Order } from '@/lib/types';
+import { ORDER_STATUS_CONFIG } from '@/lib/types';
 
-interface Order {
-  _id: string;
-  gameId: {
-    _id: string;
-    name: string;
-    image: {
-      secure_url: string;
-    };
-  };
-  packageId: {
-    _id: string;
-    title: string;
-    price: number;
-    currency: string;
-  };
-  accountInfo: { fieldName: string; value: string }[];
-  status: 'pending' | 'paid' | 'delivered' | 'rejected';
-  paymentMethod: 'card' | 'cash';
-  totalAmount: number;
-  adminNote?: string;
-  createdAt: string;
-  paidAt?: string;
-  refundAmount?: number;
-  refundDate?: string;
-}
+const statusConfig = ORDER_STATUS_CONFIG;
 
-const statusConfig = {
-  pending: {
-    color: 'text-yellow-400',
-    bgColor: 'bg-yellow-400/10',
-    borderColor: 'border-yellow-400/20',
-    icon: Clock,
-    label: 'قيد الانتظار'
-  },
-  paid: {
-    color: 'text-blue-400',
-    bgColor: 'bg-blue-400/10',
-    borderColor: 'border-blue-400/20',
-    icon: CheckCircle,
-    label: 'مدفوع'
-  },
-  delivered: {
-    color: 'text-green-400',
-    bgColor: 'bg-green-400/10',
-    borderColor: 'border-green-400/20',
-    icon: CheckCircle,
-    label: 'تم التسليم'
-  },
-  rejected: {
-    color: 'text-red-400',
-    bgColor: 'bg-red-400/10',
-    borderColor: 'border-red-400/20',
-    icon: XCircle,
-    label: 'مرفوض'
-  }
+// Local mapping from order status to icon component
+// Local mapping for status icons:
+// We intentionally keep icons decoupled from ORDER_STATUS_CONFIG in lib/types.ts to avoid
+// importing React components from a shared types module and to keep server-safe types separate
+// from client-only UI concerns. If you update ORDER_STATUS_CONFIG (labels/colors), ensure
+// consistency here for new statuses.
+const STATUS_ICONS: Record<Order['status'], React.ComponentType<{ className?: string }>> = {
+  pending: Clock,
+  paid: CheckCircle,
+  delivered: CheckCircle,
+  rejected: XCircle,
 };
 
-export default function OrdersPage() {
+// Memoized Order Item Component
+const OrderItem = React.memo<{
+  order: Order;
+  onOrderClick: (order: Order) => void;
+  formatDate: (dateString: string) => string;
+}>(({ order, onOrderClick, formatDate }) => {
+  const statusInfo = statusConfig[order.status];
+  const StatusIcon = STATUS_ICONS[order.status];
+
+  return (
+    <div
+      className="grid grid-cols-6 gap-4 bg-[#18181c] rounded-lg p-4 border border-gray-700 hover:border-gray-600 transition-all duration-300 cursor-pointer hover:bg-[#1f1f23] items-center"
+      onClick={() => onOrderClick(order)}
+    >
+      {/* Product Info */}
+      <div className="col-span-2 flex items-center gap-3">
+        <div className="relative">
+          <Image
+            src={order.gameId.image.secure_url}
+            alt={order.gameId.name}
+            width={50}
+            height={50}
+            className="rounded-lg object-cover"
+            unoptimized
+          />
+          <div className="absolute -bottom-1 -right-1 bg-[#232329] rounded-full p-1">
+            {order.paymentMethod === 'card' ? (
+              <CreditCard className="w-3 h-3 text-blue-400" />
+            ) : (
+              <Banknote className="w-3 h-3 text-green-400" />
+            )}
+          </div>
+        </div>
+
+        <div>
+          <h3 className="font-bold text-white text-sm">
+            {order.gameId.name}
+          </h3>
+          <p className="text-gray-400 text-xs">
+            {order.packageId.title}
+          </p>
+        </div>
+      </div>
+
+      {/* Order Time */}
+      <div className="text-center text-sm text-gray-300">
+        {formatDate(order.createdAt)}
+      </div>
+
+      {/* Order ID */}
+      <div className="text-center font-mono text-sm text-gray-300">
+        {order._id.slice(-6).toUpperCase()}
+      </div>
+
+      {/* Status */}
+      <div className="text-center">
+        <div className={`inline-flex items-center justify-center gap-1 px-3 py-1 rounded-full text-xs font-medium ${statusInfo.bgColor} ${statusInfo.borderColor} ${statusInfo.color} border`}>
+          <StatusIcon className="w-3 h-3" />
+          {statusInfo.label}
+        </div>
+      </div>
+
+      {/* Price */}
+      <div className="text-center font-bold text-green-400">
+        {order.totalAmount} {order.packageId.currency}
+      </div>
+    </div>
+  );
+});
+
+OrderItem.displayName = 'OrderItem';
+
+// Memoized User Info Component
+const UserInfoBox = React.memo<{
+  isAuthenticated: boolean;
+  userData: { name: string; email: string };
+  onBackToGames: () => void;
+}>(({ isAuthenticated, userData, onBackToGames }) => (
+  <div className="w-full py-8 px-6 bg-[#1A1B20] border-b border-gray-800">
+    <div className="max-w-7xl mx-auto">
+      <div className="bg-[#252630] rounded-lg p-6 shadow-lg border border-gray-700">
+        {isAuthenticated ? (
+          <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
+            <div>
+              <h2 className="text-xl font-bold mb-2">{userData.name}</h2>
+              <p className="text-gray-400 text-sm">{userData.email}</p>
+            </div>
+            <button
+              onClick={onBackToGames}
+              className="px-4 py-2 bg-green-600 hover:bg-green-700 rounded-md text-white font-medium transition-colors flex items-center gap-2"
+            >
+              <Package size={16} />
+              العودة إلى الألعاب
+            </button>
+          </div>
+        ) : null}
+      </div>
+    </div>
+  </div>
+));
+
+UserInfoBox.displayName = 'UserInfoBox';
+
+function OrdersPage() {
   const { t } = useTranslation();
   const router = useRouter();
   const [orders, setOrders] = useState<Order[]>([]);
@@ -120,14 +184,23 @@ export default function OrdersPage() {
     fetchOrders();
   }, [fetchOrders]);
 
-  const handleOrderClick = (order: Order) => {
+  const handleOrderClick = useCallback((order: Order) => {
     setSelectedOrder(order);
     setShowModal(true);
-  };
+  }, []);
+
+  const handleBackToGames = useCallback(() => {
+    router.push('/category');
+  }, [router]);
+
+  const handleModalClose = useCallback(() => {
+    setShowModal(false);
+    setSelectedOrder(null);
+  }, []);
 
   // تم إزالة دالة handleCancelOrder
 
-  const formatDate = (dateString: string) => {
+  const formatDate = useCallback((dateString: string) => {
     return new Date(dateString).toLocaleDateString('ar-EG', {
       year: 'numeric',
       month: 'long',
@@ -135,7 +208,20 @@ export default function OrdersPage() {
       hour: '2-digit',
       minute: '2-digit'
     });
-  };
+  }, []);
+
+  // Memoize rendered orders to avoid re-renders
+  const renderedOrders = useMemo(() => 
+    orders.map((order) => (
+      <OrderItem
+        key={order._id}
+        order={order}
+        onOrderClick={handleOrderClick}
+        formatDate={formatDate}
+      />
+    )), 
+    [orders, handleOrderClick, formatDate]
+  );
 
   if (loading) {
     return (
@@ -299,25 +385,11 @@ export default function OrdersPage() {
       {/* Main Content */}
       <main className="pt-16">
         {/* User Info Box */}
-        <div className="w-full py-8 px-6 bg-[#1A1B20] border-b border-gray-800">
-          <div className="max-w-7xl mx-auto">
-            <div className="bg-[#252630] rounded-lg p-6 shadow-lg border border-gray-700">
-              <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
-                <div>
-                  <h2 className="text-xl font-bold mb-2">{userData.name}</h2>
-                  <p className="text-gray-400 text-sm">{userData.email}</p>
-                </div>
-                <button
-                  onClick={() => router.push('/category')}
-                  className="px-4 py-2 bg-green-600 hover:bg-green-700 rounded-md text-white font-medium transition-colors flex items-center gap-2"
-                >
-                  <Package size={16} />
-                  العودة إلى الألعاب
-                </button>
-              </div>
-            </div>
-          </div>
-        </div>
+        <UserInfoBox
+          isAuthenticated={isAuthenticated}
+          userData={userData}
+          onBackToGames={handleBackToGames}
+        />
 
         {/* Orders Section */}
         <div className="max-w-7xl mx-auto mt-8 px-6">
@@ -368,71 +440,7 @@ export default function OrdersPage() {
               
               {/* Orders List */}
               <div className="space-y-2">
-                {orders.map((order) => {
-                  const statusInfo = statusConfig[order.status];
-                  const StatusIcon = statusInfo.icon;
-
-                  return (
-                    <div
-                      key={order._id}
-                      className="grid grid-cols-6 gap-4 bg-[#18181c] rounded-lg p-4 border border-gray-700 hover:border-gray-600 transition-all duration-300 cursor-pointer hover:bg-[#1f1f23] items-center"
-                      onClick={() => handleOrderClick(order)}
-                    >
-                      {/* Product Info */}
-                      <div className="col-span-2 flex items-center gap-3">
-                        <div className="relative">
-                          <Image
-                            src={order.gameId.image.secure_url}
-                            alt={order.gameId.name}
-                            width={50}
-                            height={50}
-                            className="rounded-lg object-cover"
-                            unoptimized
-                          />
-                          <div className="absolute -bottom-1 -right-1 bg-[#232329] rounded-full p-1">
-                            {order.paymentMethod === 'card' ? (
-                              <CreditCard className="w-3 h-3 text-blue-400" />
-                            ) : (
-                              <Banknote className="w-3 h-3 text-green-400" />
-                            )}
-                          </div>
-                        </div>
-
-                        <div>
-                          <h3 className="font-bold text-white text-sm">
-                            {order.gameId.name}
-                          </h3>
-                          <p className="text-gray-400 text-xs">
-                            {order.packageId.title}
-                          </p>
-                        </div>
-                      </div>
-
-                      {/* Order Time */}
-                      <div className="text-center text-sm text-gray-300">
-                        {formatDate(order.createdAt)}
-                      </div>
-
-                      {/* Order ID */}
-                      <div className="text-center font-mono text-sm text-gray-300">
-                        {order._id.slice(-6).toUpperCase()}
-                      </div>
-
-                      {/* Status */}
-                      <div className="text-center">
-                        <div className={`inline-flex items-center justify-center gap-1 px-3 py-1 rounded-full text-xs font-medium ${statusInfo.bgColor} ${statusInfo.borderColor} ${statusInfo.color} border`}>
-                          <StatusIcon className="w-3 h-3" />
-                          {statusInfo.label}
-                        </div>
-                      </div>
-
-                      {/* Price */}
-                      <div className="text-center font-bold text-green-400">
-                        {order.totalAmount} {order.packageId.currency}
-                      </div>
-                    </div>
-                  );
-                })}
+                {renderedOrders}
               </div>
             </div>
           )}
@@ -443,10 +451,7 @@ export default function OrdersPage() {
       {showModal && selectedOrder && (
         <OrderDetailsModal
           order={selectedOrder}
-          onClose={() => {
-            setShowModal(false);
-            setSelectedOrder(null);
-          }}
+          onClose={handleModalClose}
         />
       )}
 
@@ -454,3 +459,5 @@ export default function OrdersPage() {
     </div>
   );
 }
+
+export default React.memo(OrdersPage);

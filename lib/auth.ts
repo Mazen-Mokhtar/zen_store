@@ -1,4 +1,6 @@
 // إدارة حالة تسجيل الدخول والتوكن
+import { logger } from './utils';
+
 export interface User {
   _id: string;
   email: string;
@@ -76,7 +78,7 @@ class AuthService {
       
       return JSON.parse(json) as JwtPayload;
     } catch (error) {
-      console.warn('Failed to decode JWT payload:', error);
+      logger.warn('Failed to decode JWT payload:', error);
       return null;
     }
   }
@@ -95,7 +97,7 @@ class AuthService {
     const isExpired = nowMs >= expMs;
     
     if (isExpired) {
-      console.warn('JWT token has expired:', {
+      logger.warn('JWT token has expired:', {
         expiredAt: new Date(expMs).toISOString(),
         currentTime: new Date(nowMs).toISOString()
       });
@@ -177,7 +179,7 @@ class AuthService {
    * Handle when session has expired
    */
   private handleSessionExpired(): void {
-    console.warn('Session has expired, logging out user');
+    logger.warn('Session has expired, logging out user');
     
     // Import notification service dynamically to avoid circular dependencies
     if (typeof window !== 'undefined') {
@@ -188,7 +190,7 @@ class AuthService {
         );
       }).catch(() => {
         // Fallback notification
-        console.warn('Session expired notification failed');
+        logger.warn('Session expired notification failed');
       });
     }
     
@@ -209,7 +211,7 @@ class AuthService {
           `Session will expire in ${minutesRemaining} minute${minutesRemaining !== 1 ? 's' : ''}. Please save your work and refresh your session.`
         );
       }).catch(() => {
-        console.warn('Notification service not available');
+        logger.warn('Notification service not available');
       });
     }
   }
@@ -238,7 +240,7 @@ class AuthService {
           
           // Validate token before loading session
           if (this.isJwtExpired(token)) {
-            console.warn('Expired token found in storage, clearing session');
+            logger.warn('Expired token found in storage, clearing session');
             this.clearStorage();
             this.authState = { user: null, token: null, isAuthenticated: false };
             return;
@@ -250,9 +252,9 @@ class AuthService {
             isAuthenticated: true
           };
           
-          console.log('Session loaded from storage successfully');
+          logger.log('Session loaded from storage successfully');
         } catch (error) {
-          console.error('Failed to parse stored user data:', error);
+          logger.error('Failed to parse stored user data:', error);
           this.clearAuth();
         }
       }
@@ -280,7 +282,7 @@ class AuthService {
   setAuth(token: string, user: User) {
     // Validate token before setting
     if (this.isJwtExpired(token)) {
-      console.error('Attempted to set expired token');
+      logger.error('Attempted to set expired token');
       throw new Error('Cannot set expired authentication token');
     }
     
@@ -292,7 +294,7 @@ class AuthService {
     
     this.saveToStorage();
     this.startSessionMonitoring();
-    console.log('Authentication state updated successfully');
+    logger.log('Authentication state updated successfully');
   }
 
   clearAuth() {
@@ -304,13 +306,13 @@ class AuthService {
     
     this.clearStorage();
     this.stopSessionMonitoring();
-    console.log('Authentication state cleared');
+    logger.log('Authentication state cleared');
   }
 
   getAuthState(): AuthState {
     // Always validate current token state
     if (this.authState.token && this.isJwtExpired(this.authState.token)) {
-      console.warn('Auth state contains expired token, clearing...');
+      logger.warn('Auth state contains expired token, clearing...');
       this.clearAuth();
     }
     
@@ -349,7 +351,7 @@ class AuthService {
       const apiBase = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3000';
       const apiUrl = `${apiBase}/auth/login`;
       
-      console.log('Attempting login to:', apiUrl);
+      logger.log('Attempting login to:', apiUrl);
       
       const response = await fetch(apiUrl, {
         method: 'POST',
@@ -357,15 +359,12 @@ class AuthService {
           'Content-Type': 'application/json'
         },
         body: JSON.stringify({ email, password }),
-        // نستخدم include فقط إذا كان الخادم يعتمد على الكوكيز، وإلا يمكن حذف هذا السطر
-        // وفي حالتنا نستقبل accessToken في الـ body لذا لسنا بحاجة إلى الكوكيز
-        // credentials: 'include'
       });
 
       const data = await response.json();
 
       if (!response.ok) {
-        console.error('Login failed:', data);
+        logger.error('Login failed:', data);
         return {
           success: false,
           error: data.message || 'فشل في تسجيل الدخول'
@@ -402,7 +401,7 @@ class AuthService {
       // حفظ التوكن والمستخدم في حالة المصادقة
       this.setAuth(accessToken, user);
 
-      console.log('Login successful, session established');
+      logger.log('Login successful, session established');
 
       // إرجاع البيانات للاستخدام الفوري
       return {
@@ -413,7 +412,7 @@ class AuthService {
         }
       };
     } catch (error) {
-      console.error('Login error:', error);
+      logger.error('Login error:', error);
       return {
         success: false,
         error: 'حدث خطأ في الاتصال بالخادم'
@@ -423,7 +422,7 @@ class AuthService {
 
   // دالة تسجيل الخروج
   logout() {
-    console.log('Logging out user');
+    logger.log('Logging out user');
     this.clearAuth();
     
     // Redirect to home or login page
@@ -441,12 +440,81 @@ class AuthService {
   }
 
   /**
-   * Extend session - placeholder for future token refresh implementation
+   * Extend session - implements token refresh functionality
    */
   async extendSession(): Promise<boolean> {
-    // TODO: Implement token refresh logic when backend supports it
-    console.log('Session extension not implemented yet');
-    return false;
+    try {
+      const currentToken = this.authState.token;
+      
+      if (!currentToken) {
+        logger.warn('Cannot extend session: no token available');
+        return false;
+      }
+
+      // Don't attempt refresh for already expired tokens
+      if (this.isJwtExpired(currentToken)) {
+        logger.warn('Cannot extend session: token is already expired');
+        this.logout();
+        return false;
+      }
+
+      const apiBase = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3000';
+      const refreshUrl = `${apiBase}/auth/refresh`;
+
+      logger.log('Attempting session refresh...');
+
+      const response = await fetch(refreshUrl, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': currentToken,
+          'token': currentToken
+        },
+        body: JSON.stringify({
+          // Send current token for refresh
+          token: currentToken
+        })
+      });
+
+      const data = await response.json();
+
+      if (response.ok && data.success && data.data?.accessToken) {
+        const newToken = data.data.accessToken;
+        
+        // Validate new token before using it
+        if (this.isJwtExpired(newToken)) {
+          logger.error('Received expired token from refresh endpoint');
+          return false;
+        }
+
+        // Update stored authentication with new token
+        const currentUser = this.authState.user;
+        if (currentUser) {
+          // Use updated user data if provided, otherwise keep current user
+          const updatedUser = data.data.user || currentUser;
+          this.setAuth(newToken, updatedUser);
+          
+          logger.log('Session refreshed successfully');
+          return true;
+        } else {
+          logger.error('No user data available for token refresh');
+          return false;
+        }
+      } else {
+        logger.error('Session refresh failed:', data.message || 'Unknown error');
+        
+        // If refresh fails with 401, token might be invalid - logout
+        if (response.status === 401) {
+          logger.warn('Session refresh rejected - logging out');
+          this.logout();
+        }
+        
+        return false;
+      }
+    } catch (error) {
+      logger.error('Session refresh error:', error);
+      return false;
+    }
   }
 
   /**

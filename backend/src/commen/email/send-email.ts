@@ -1,16 +1,18 @@
-import { InternalServerErrorException } from "@nestjs/common"
+import { InternalServerErrorException, Logger } from "@nestjs/common"
 import { createTransport, SendMailOptions } from "nodemailer"
+
 export const sendEmail = async (data: SendMailOptions) => {
+    const logger = new Logger('Email');
     try {
         const transporter = createTransport({
-            host: "smtp.gmail.email",
-            service: "gmail",
-            port: 587,
-            secure: false, // true for 465, false for other ports
-            auth: {
-                user: process.env.EMAIL,
-                pass: process.env.EMAIL_PASS,
-            },
+           host: "smtp.gmail.email",
+           service: "gmail",
+           port: 587,
+           secure: false, // true for 465, false for other ports
+           auth: {
+               user: process.env.EMAIL,
+               pass: process.env.EMAIL_PASS,
+           },
         });
 
         // Wrap in an async IIFE so we can use await.
@@ -20,7 +22,7 @@ export const sendEmail = async (data: SendMailOptions) => {
                 ...data
             });
 
-            console.log("Message sent:", info.messageId);
+            logger.log(`Message sent: ${info.messageId}`);
         })();
     } catch (error) {
         throw new InternalServerErrorException(error)

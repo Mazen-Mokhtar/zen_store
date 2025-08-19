@@ -6,6 +6,7 @@ import { useState, useRef } from "react";
 import { useRouter } from "next/navigation";
 import { authService } from "@/lib/auth";
 import GuestGuard from "@/components/guards/GuestGuard";
+import { logger } from "@/lib/utils";
 
 const sampleTestimonials: Testimonial[] = [
   {
@@ -114,10 +115,10 @@ export default function SignInPageDemo() {
     }
   };
 
-  const handleGoogleSignIn = () => {
-    console.log("Continue with Google clicked");
-    alert("Continue with Google clicked");
-  };
+const handleGoogleSignIn = () => {
+  logger.log("Continue with Google clicked");
+  alert("Continue with Google clicked");
+};
   
   const handleResetPassword = () => {
     alert("Reset Password clicked");

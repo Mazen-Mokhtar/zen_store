@@ -133,6 +133,10 @@ const translations: Record<string, Translation> = {
       forbidden: 'Access to this resource is forbidden.',
       unknownError: 'An unexpected error occurred.',
       dataLoadFailed: 'Failed to load data. Please try again later.',
+      categoryDashboard: {
+        categoryIdRequired: 'Category ID is required',
+        invalidCategoryId: 'Invalid category ID. Please choose a valid category.',
+      },
     },
     notifications: {
       success: 'Success',
@@ -250,13 +254,17 @@ const translations: Record<string, Translation> = {
       about: 'حول',
     },
     errors: {
-      networkError: 'خطأ في الشبكة. يرجى التحقق من اتصالك.',
-      serverError: 'خطأ في الخادم الداخلي. يرجى المحاولة مرة أخرى لاحقاً.',
+      networkError: 'خطأ في الشبكة. يرجى التحقق من الاتصال.',
+      serverError: 'خطأ داخلي في الخادم. حاول مرة أخرى لاحقًا.',
       notFound: 'المورد المطلوب غير موجود.',
-      unauthorized: 'غير مصرح لك بالوصول إلى هذا المورد.',
+      unauthorized: 'غير مخول للوصول إلى هذا المورد.',
       forbidden: 'الوصول إلى هذا المورد محظور.',
       unknownError: 'حدث خطأ غير متوقع.',
-      dataLoadFailed: 'فشل في تحميل البيانات. يرجى المحاولة مرة أخرى لاحقاً.',
+      dataLoadFailed: 'فشل في تحميل البيانات. حاول مرة أخرى لاحقًا.',
+      categoryDashboard: {
+        categoryIdRequired: 'معرّف الفئة مطلوب',
+        invalidCategoryId: 'معرّف الفئة غير صالح. يرجى اختيار فئة صالحة.',
+      },
     },
     notifications: {
       success: 'نجح',
@@ -328,6 +336,10 @@ const translations: Record<string, Translation> = {
       forbidden: 'Acesso a este recurso é proibido.',
       unknownError: 'Ocorreu um erro inesperado.',
       dataLoadFailed: 'Falha ao carregar dados. Tente novamente mais tarde.',
+      categoryDashboard: {
+        categoryIdRequired: 'É necessário o ID da categoria',
+        invalidCategoryId: 'ID de categoria inválido. Por favor, escolha uma categoria válida.',
+      },
     },
     notifications: {
       success: 'Sucesso',
@@ -445,11 +457,13 @@ export const i18n = new I18nManager();
 
 // React hook for translations
 export const useTranslation = () => {
-  return {
+  const { useMemo } = require('react');
+  
+  return useMemo(() => ({
     t: i18n.t.bind(i18n),
     currentLanguage: i18n.getCurrentLanguage(),
     setLanguage: i18n.setLanguage.bind(i18n),
     isRTL: i18n.isRTL.bind(i18n),
     supportedLanguages: i18n.getSupportedLanguages(),
-  };
-}; 
+  }), []);
+};

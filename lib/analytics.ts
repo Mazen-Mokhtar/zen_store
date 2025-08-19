@@ -1,3 +1,5 @@
+import { logger } from './utils';
+
 export interface AnalyticsEvent {
   name: string;
   properties?: Record<string, any>;
@@ -84,7 +86,7 @@ class AnalyticsManager {
     };
 
     this.events.push(event);
-    console.log('Analytics Event:', event);
+    logger.log('Analytics Event:', event);
   }
 
   // Track page views
@@ -101,7 +103,7 @@ class AnalyticsManager {
     };
 
     this.pageViews.push(pageView);
-    console.log('Page View:', pageView);
+    logger.log('Page View:', pageView);
   }
 
   // Track user interactions
@@ -118,7 +120,7 @@ class AnalyticsManager {
     };
 
     this.interactions.push(interaction);
-    console.log('User Interaction:', interaction);
+    logger.log('User Interaction:', interaction);
   }
 
   // Track performance metrics
@@ -265,14 +267,14 @@ class AnalyticsManager {
       //   body: JSON.stringify(data)
       // });
 
-      console.log('Analytics data flushed:', data);
+      logger.log('Analytics data flushed:', data);
       
       // Clear local data after successful flush
       this.events = [];
       this.pageViews = [];
       this.interactions = [];
     } catch (error) {
-      console.error('Failed to flush analytics data:', error);
+      logger.error('Failed to flush analytics data:', error);
     }
   }
 

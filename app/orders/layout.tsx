@@ -1,6 +1,6 @@
 import type { Metadata } from 'next';
-import { ThemeProvider } from '@/components/theme-provider';
 import AuthGuard from '@/components/guards/AuthGuard';
+import { Suspense } from 'react';
 
 export const metadata: Metadata = {
   title: 'طلباتي - Endex',
@@ -13,15 +13,10 @@ export default function OrdersLayout({
   children: React.ReactNode;
 }) {
   return (
-    <ThemeProvider
-      attribute="class"
-      defaultTheme="dark"
-      enableSystem
-      disableTransitionOnChange
-    >
+    <Suspense fallback={null}>
       <AuthGuard>
         {children}
       </AuthGuard>
-    </ThemeProvider>
+    </Suspense>
   );
 }

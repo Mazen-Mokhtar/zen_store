@@ -1,4 +1,5 @@
 import { storage } from './storage';
+import { logger } from './utils';
 
 export interface AppSettings {
   theme: 'light' | 'dark' | 'auto';
@@ -169,7 +170,7 @@ class SettingsManager {
       }
       return false;
     } catch (error) {
-      console.error('Failed to import settings:', error);
+      logger.error('Failed to import settings:', error);
       return false;
     }
   }

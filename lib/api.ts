@@ -1,5 +1,7 @@
 import { notificationService } from './notifications';
-import { getCachedData, setCachedData, CACHE_TTL } from './cache';
+import { getCachedData, setCachedData, CACHE_TTL, invalidateCache } from './cache';
+import type { Order, CreateOrderData } from './types';
+import { logger } from './utils';
 
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3000';
 
@@ -46,39 +48,8 @@ export interface Package {
   updatedAt?: string;
 }
 
-export interface Order {
-  _id: string;
-  gameId: {
-    _id: string;
-    name: string;
-    image: {
-      secure_url: string;
-    };
-  };
-  packageId: {
-    _id: string;
-    title: string;
-    price: number;
-    currency: string;
-  };
-  accountInfo: { fieldName: string; value: string }[];
-  status: 'pending' | 'paid' | 'delivered' | 'rejected';
-  paymentMethod: 'card' | 'cash';
-  totalAmount: number;
-  adminNote?: string;
-  createdAt: string;
-  paidAt?: string;
-  refundAmount?: number;
-  refundDate?: string;
-}
-
-export interface CreateOrderData {
-  gameId: string;
-  packageId: string;
-  accountInfo: { fieldName: string; value: string }[];
-  paymentMethod: 'card' | 'cash';
-  note?: string;
-}
+// Import shared types from types module
+export type { Order, CreateOrderData } from './types';
 
 export class ApiError extends Error {
   constructor(
@@ -205,6 +176,19 @@ class ApiService {
 
     // Handle authentication errors
     if (response.status === 401 || response.status === 403) {
+      // On 401, try to extend session once before handling as auth error
+      if (response.status === 401 && retry === 0) {
+        try {
+          const { authService } = await import('./auth');
+          const refreshed = await authService.extendSession();
+          if (refreshed) {
+            // Retry original request with incremented retry to avoid loops
+            return this.request(endpoint, { ...options, retry: retry + 1 });
+          }
+        } catch (e) {
+          // ignore and fall through to default auth error handling
+        }
+      }
       await this.handleAuthError(response.status, errorData);
     }
 
@@ -221,7 +205,7 @@ class ApiService {
   private async handleAuthError(status: number, errorData: any): Promise<void> {
     const { authService } = await import('./auth');
     
-    console.warn(`Authentication error ${status}:`, errorData);
+    logger.warn(`Authentication error ${status}:`, errorData);
     
     if (status === 401) {
       // Session expired - clear auth and redirect
@@ -347,7 +331,7 @@ class ApiService {
     try {
       return await this.getPublic<{ success: boolean; data: Game }>(`/game/${gameId}`);
     } catch (error) {
-      console.error('Failed to get game by id:', error);
+      logger.error('Failed to get game by id:', error);
       return { success: false, data: null as any };
     }
   }
@@ -356,7 +340,7 @@ class ApiService {
     try {
       return await this.getPublic<{ success: boolean; data: Package[] }>(`/packages?gameId=${gameId}`);
     } catch (error) {
-      console.error('Failed to get packages by game id:', error);
+      logger.error('Failed to get packages by game id:', error);
       return { success: false, data: [] };
     }
   }
@@ -383,7 +367,7 @@ class ApiService {
       setCachedData(cacheKey, normalized, CACHE_TTL.MEDIUM);
       return normalized;
     } catch (error) {
-      console.error('Failed to get category with packages:', error);
+      logger.error('Failed to get category with packages:', error);
       return { success: false, data: [], packages: [] };
     }
   }
@@ -398,7 +382,7 @@ class ApiService {
       setCachedData(cacheKey, response, CACHE_TTL.MEDIUM);
       return response;
     } catch (error) {
-      console.error('Failed to get paid games by category:', error);
+      logger.error('Failed to get paid games by category:', error);
       return { success: false, data: [] };
     }
   }
@@ -413,7 +397,7 @@ class ApiService {
       setCachedData(cacheKey, response, CACHE_TTL.MEDIUM);
       return response;
     } catch (error) {
-      console.error('Failed to get games by category:', error);
+      logger.error('Failed to get games by category:', error);
       return { success: false, data: [] };
     }
   }
@@ -438,10 +422,27 @@ class OrderApiService {
 
   async getUserOrders(): Promise<{ success: boolean; data: Order[] }> {
     try {
-      const response = await this.api.authenticatedRequest<{ success: boolean; data: Order[] }>('/order');
+      // Create a user-scoped cache key
+      const { authService } = await import('./auth');
+      const user = authService.getUser();
+
+      if (!user) {
+        return { success: false, data: [] };
+      }
+
+      const cacheKey = `user-orders:${user._id}`;
+      const cached = getCachedData<{ success: boolean; data: Order[] }>(cacheKey);
+      if (cached) return cached;
+
+      const response = await this.api.authenticatedRequest<{ success: boolean; data: Order[] }>(
+        '/order'
+      );
+
+      // Short TTL for authenticated data
+      setCachedData(cacheKey, response, CACHE_TTL.SHORT);
       return response;
     } catch (error) {
-      console.error('Failed to get user orders:', error);
+      logger.error('Failed to get user orders:', error);
       return { success: false, data: [] };
     }
   }
@@ -452,9 +453,22 @@ class OrderApiService {
         method: 'POST',
         body: JSON.stringify(orderData),
       });
+
+      // Invalidate user orders cache after creating an order
+      try {
+        const { authService } = await import('./auth');
+        const user = authService.getUser();
+        if (user) {
+          const cacheKey = `user-orders:${user._id}`;
+          invalidateCache(cacheKey);
+        }
+      } catch (e) {
+        logger.warn('Failed to invalidate user orders cache after createOrder:', e);
+      }
+
       return { success: true, data: response.data || response };
     } catch (error) {
-      console.error('Failed to create order:', error);
+      logger.error('Failed to create order:', error);
       return {
         success: false,
         error: error instanceof Error ? error.message : 'حدث خطأ غير متوقع'
@@ -464,10 +478,19 @@ class OrderApiService {
 
   async getOrderDetails(orderId: string): Promise<{ success: boolean; data?: Order; error?: string }> {
     try {
-      const response = await this.api.authenticatedRequest<{ success: boolean; data: Order }>(`/order/${orderId}`);
+      const cacheKey = `order-details:${orderId}`;
+      const cached = getCachedData<{ success: boolean; data: Order }>(cacheKey);
+      if (cached) return cached;
+
+      const response = await this.api.authenticatedRequest<{ success: boolean; data: Order }>(
+        `/order/${orderId}`
+      );
+
+      // Cache order details with short TTL
+      setCachedData(cacheKey, response, CACHE_TTL.SHORT);
       return response;
     } catch (error) {
-      console.error('Failed to get order details:', error);
+      logger.error('Failed to get order details:', error);
       return {
         success: false,
         error: error instanceof Error ? error.message : 'فشل في جلب تفاصيل الطلب'
@@ -477,12 +500,28 @@ class OrderApiService {
 
   async checkout(orderId: string): Promise<{ success: boolean; data?: any; error?: string }> {
     try {
-      const response = await this.api.authenticatedRequest<{ success: boolean; data: any }>(`/order/${orderId}/checkout`, {
-        method: 'POST'
-      });
+      const response = await this.api.authenticatedRequest<{ success: boolean; data: any }>(
+        `/order/${orderId}/checkout`,
+        {
+          method: 'POST',
+        }
+      );
+
+      // Invalidate caches affected by checkout
+      try {
+        const { authService } = await import('./auth');
+        const user = authService.getUser();
+        if (user) {
+          invalidateCache(`user-orders:${user._id}`);
+        }
+        invalidateCache(`order-details:${orderId}`);
+      } catch (e) {
+        logger.warn('Failed to invalidate caches after checkout:', e);
+      }
+
       return response;
     } catch (error) {
-      console.error('Failed to checkout:', error);
+      logger.error('Failed to checkout:', error);
       return {
         success: false,
         error: error instanceof Error ? error.message : 'فشل في إتمام الدفع'

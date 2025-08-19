@@ -12,8 +12,9 @@ import {
   UseGuards,
   UseInterceptors,
   UsePipes,
-  ValidationPipe
-} from '@nestjs/common';
+  ValidationPipe,
+  Logger
+ } from '@nestjs/common';
 import { GameService } from './game.service';
 import { RoleTypes, TUser } from 'src/DB/models/User/user.schema';
 import { Roles } from 'src/commen/Decorator/roles.decorator';
@@ -25,11 +26,13 @@ import { User } from 'src/commen/Decorator/user.decorator';
 import { CreateGameDto, ListGamesQueryDto, ToggleGameStatusDto, ToggleGamePopularDto, UpdateGameDto } from './dto';
 import { Types } from 'mongoose';
 import { MongoIdPipe } from 'src/commen/pipes/mongoId.pipes';
+
 @UsePipes(new ValidationPipe({ whitelist: true }))
 @Controller('game/dashboard')
 export class GameController {
+  private readonly logger = new Logger(GameController.name);
   constructor(private readonly gameService: GameService) { }
-  
+ 
   @UseInterceptors(FileInterceptor('image', cloudMulter()))
   @UseGuards(AuthGuard, RolesGuard)
   @Roles([RoleTypes.SUPER_ADMIN])
@@ -88,8 +91,8 @@ export class GameController {
     @Param('gameId', MongoIdPipe) gameId: string,
     @UploadedFile() file: Express.Multer.File,
   ) {
-    console.log(file);
-
+    this.logger.log(`Uploading game image: ${file?.originalname ?? 'no file'}`);
+    
     if (!file) {
       throw new BadRequestException("File missing")
     }

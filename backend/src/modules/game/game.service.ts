@@ -1,18 +1,20 @@
-import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
-import { Types } from 'mongoose';
+import { BadRequestException, Injectable, NotFoundException, Logger } from '@nestjs/common';
+import { Types, FilterQuery } from 'mongoose';
 import { messageSystem } from 'src/commen/messages';
 import { GameRepository } from 'src/DB/models/Game/game.repository';
 import { categoryRepository } from 'src/DB/models/Category/category.repository';
-import { GameType } from 'src/DB/models/Game/game.schema';
+import { GameType, TGame } from 'src/DB/models/Game/game.schema';
 import { PackageRepository } from 'src/DB/models/Packages/packages.repository';
 
 @Injectable()
 export class GameService {
+    private readonly logger = new Logger(GameService.name);
     constructor(
         private readonly gameRepository: GameRepository,
         private readonly categoryRepository: categoryRepository,
         private readonly packageRepository: PackageRepository,
     ) { }
+    
     async listGames(query: {
         search?: string;
         categories?: string | string[];
@@ -45,8 +47,9 @@ export class GameService {
 
         const page = query.page || 1;
         const limit = query.limit || 10;
-        console.log(filter);
-
+        
+        this.logger.log(`Game list filter: ${JSON.stringify(filter)}`);
+        
         const result = await this.gameRepository.paginate(
             filter,
             page,
@@ -65,6 +68,7 @@ export class GameService {
             },
         };
     }
+    
     async getGamesByCategory(categoryId: Types.ObjectId) {
         try {
             // التحقق من وجود الفئة أولاً
@@ -166,7 +170,9 @@ export class GameService {
             if (!category) {
                 throw new NotFoundException('Category not found');
             }
-            console.log(categoryId);
+            
+            this.logger.log(`Fetching games for categoryId: ${categoryId}`);
+            
             const games = await this.gameRepository.find(
                 {
                     categoryId : categoryId,
@@ -180,7 +186,9 @@ export class GameService {
                 { select: 'name description image isOffer categoryId isActive createdAt isPopular price accountInfoFields' },
                 { sort: { createdAt: -1 }, lean: true }
             );
-            console.log(games);
+            
+            this.logger.log(`Found ${games.length} games with packages`);
+            
             return {
                 success: true,
                 data: games,
@@ -192,5 +200,4 @@ export class GameService {
             throw new BadRequestException('Failed to fetch games for this category');
         }
     }
-
 }

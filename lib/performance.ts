@@ -1,4 +1,5 @@
-import { analytics } from './analytics';
+import { lazyAnalytics } from './lazy-analytics';
+import { logger } from './utils';
 
 export interface PerformanceMetric {
   name: string;
@@ -62,7 +63,7 @@ export interface MetricObserver {
           };
           
           this.recordMetric(metric);
-          analytics.trackPerformance('lcp', lastEntry.startTime);
+          void lazyAnalytics.trackPerformance('lcp', lastEntry.startTime);
         }
       });
       
@@ -93,7 +94,7 @@ export interface MetricObserver {
           };
           
           this.recordMetric(metric);
-          analytics.trackPerformance('fid', metric.value);
+          void lazyAnalytics.trackPerformance('fid', metric.value);
         });
       });
       
@@ -124,7 +125,7 @@ export interface MetricObserver {
         };
         
         this.recordMetric(metric);
-        analytics.trackPerformance('cls', clsValue);
+        void lazyAnalytics.trackPerformance('cls', clsValue);
       });
       
       observer.observe({ entryTypes: ['layout-shift'] });
@@ -171,7 +172,7 @@ export interface MetricObserver {
         };
         
         this.recordMetric(metric);
-        analytics.trackPerformance('memory_usage', usedMemory);
+        void lazyAnalytics.trackPerformance('memory_usage', usedMemory);
       }, 30000); // Check every 30 seconds
     }
   }
@@ -189,7 +190,7 @@ export interface MetricObserver {
         };
         
         this.recordMetric(metric);
-        analytics.trackPerformance('network_type', metric.value);
+        void lazyAnalytics.trackPerformance('network_type', metric.value);
       }
     }
   }
@@ -304,7 +305,7 @@ export interface MetricObserver {
       const mod = await import(modulePath);
       return mod;
     } catch (error) {
-      console.error(`Failed to load module: ${modulePath}`, error);
+      logger.error(`Failed to load module: ${modulePath}`, error);
       throw error;
     }
   }
@@ -314,8 +315,8 @@ export interface MetricObserver {
     if (typeof window !== 'undefined' && 'caches' in window) {
       caches.open('app-cache').then(cache => {
         cache.add(url).then(() => {
-          console.log(`Cached: ${url}`);
-        });
+          logger.log(`Cached: ${url}`);
+          });
       });
     }
   }

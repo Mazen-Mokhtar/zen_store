@@ -1,5 +1,18 @@
-import { GlareCardDemo } from "@/components/ui/glare-card-demo";
-import { Category } from "@/components/ui/glare-card-demo";
+import dynamic from "next/dynamic";
+import type { Category } from "@/components/ui/glare-card-demo";
+import { logger } from '@/lib/utils'
+
+// Dynamic import of the client component to improve code-splitting
+const GlareCardDemo = dynamic(
+  () => import("@/components/ui/glare-card-demo").then((mod) => mod.GlareCardDemo),
+  {
+    loading: () => (
+      <div className="text-center text-white">
+        <p className="text-lg mb-4">Loading categories...</p>
+      </div>
+    ),
+  }
+);
 
 async function getCategories() {
   try {
@@ -13,13 +26,13 @@ async function getCategories() {
       credentials: 'same-origin'
     });
     if (!res.ok) {
-      console.warn("Failed to fetch categories, server might be down");
+      logger.warn("Failed to fetch categories, server might be down")
       return []; // Return empty array instead of throwing error
     }
     const data = await res.json();
     return data.data.slice(0, 3) as Category[]; // Only first 3 categories
   } catch (error) {
-    console.warn("Error fetching categories:", error);
+    logger.warn("Error fetching categories:", error)
     return []; // Return empty array on any error
   }
 }

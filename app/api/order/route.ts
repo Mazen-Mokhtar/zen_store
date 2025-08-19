@@ -1,4 +1,5 @@
 import { NextResponse } from 'next/server';
+import { logger } from '@/lib/utils'
 
 // Add dynamic export to prevent static prerendering
 export const dynamic = "force-dynamic";
@@ -21,10 +22,10 @@ export async function POST(request: Request) {
     if (tokenHeader) outHeaders['token'] = tokenHeader;
 
     // Log the outgoing request
-    console.log('📤 Forwarding order request to:', `${API_BASE_URL}/order`, {
+    logger.debug('📤 Forwarding order request to:', `${API_BASE_URL}/order`, {
       hasAuthorization: !!authHeader,
       hasTokenHeader: !!tokenHeader,
-    });
+    })
 
     const response = await fetch(`${API_BASE_URL}/order`, {
       method: 'POST',
@@ -38,7 +39,7 @@ export async function POST(request: Request) {
     // Handle non-OK responses
     if (!response.ok) {
       const errorData = await response.text().catch(() => ({}));
-      console.error('❌ Error from API:', response.status, response.statusText, errorData);
+      logger.error('❌ Error from API:', response.status, response.statusText, errorData)
       return NextResponse.json(
         { error: 'Failed to create order', details: errorData },
         { status: response.status }
@@ -49,7 +50,7 @@ export async function POST(request: Request) {
     return NextResponse.json(data);
     
   } catch (error) {
-    console.error('❌ Error in order API route:', error);
+    logger.error('❌ Error in order API route:', error)
     return NextResponse.json(
       { error: 'Internal server error', details: error instanceof Error ? error.message : 'Unknown error' },
       { status: 500 }

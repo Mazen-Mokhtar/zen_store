@@ -1,8 +1,5 @@
 import type { Metadata } from 'next';
-import { Inter } from 'next/font/google';
-import { ThemeProvider } from '@/components/theme-provider';
-
-const inter = Inter({ subsets: ['latin'] });
+import { Suspense } from 'react';
 
 export const metadata: Metadata = {
   title: 'Category Dashboard - Endex',
@@ -15,13 +12,8 @@ export default function CategoryDashboardLayout({
   children: React.ReactNode;
 }) {
   return (
-    <ThemeProvider
-      attribute="class"
-      defaultTheme="dark"
-      enableSystem
-      disableTransitionOnChange
-    >
+    <Suspense fallback={null}>
       {children}
-    </ThemeProvider>
+    </Suspense>
   );
-} 
+}

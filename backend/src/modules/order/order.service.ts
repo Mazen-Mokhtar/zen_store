@@ -1,4 +1,4 @@
-import { BadRequestException, Injectable } from "@nestjs/common";
+import { BadRequestException, Injectable, Logger } from "@nestjs/common";
 import { OrderRepository } from "src/DB/models/Order/order.repository";
 import { GameRepository } from "src/DB/models/Game/game.repository";
 import { PackageRepository } from "src/DB/models/Packages/packages.repository";
@@ -12,6 +12,7 @@ import { RoleTypes } from "src/DB/models/User/user.schema";
 
 @Injectable()
 export class OrderService {
++  private readonly logger = new Logger(OrderService.name);
     constructor(
         private readonly orderRepository: OrderRepository,
         private readonly gameRepository: GameRepository,
@@ -100,8 +101,8 @@ export class OrderService {
 
     async webhook(req: Request) {
         const data = await this.stripeService.webhook(req);
-        console.log({data});
-        console.log(typeof data);
+        this.logger.log('Webhook data received:', {data});
+        this.logger.log('Data type:', typeof data);
         if (typeof data === 'string') {
             return "Done";
         } else {
