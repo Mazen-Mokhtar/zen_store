@@ -3,8 +3,6 @@ import { HydratedDocument } from "mongoose";
 import { generateHash } from "src/commen/security/hash";
 import * as CryptoJS from 'crypto-js';
 import { IAttachments } from "src/commen/multer/cloud.service";
-+import { Logger } from '@nestjs/common';
-+const userSchemaLogger = new Logger('UserSchema');
 export enum RoleTypes {
     USER = "user",
     ADMIN = "admin",
@@ -84,20 +82,18 @@ userSchema.post(['find', 'findOne', 'findById'] as any, function (doc) {
     const decryptSingleDoc = (singleDoc: any) => {
         if (singleDoc && singleDoc.phone) {
             if (!process.env.PHONE_ENC) {
--                console.error('PHONE_ENC environment variable is not defined.');
-+                userSchemaLogger.error('PHONE_ENC environment variable is not defined.');
-                 singleDoc.phone = null;
-                 return;
-             }
-             try {
-                 const decryptedBytes = CryptoJS.AES.decrypt(singleDoc.phone, process.env.PHONE_ENC);
-                 singleDoc.phone = decryptedBytes.toString(CryptoJS.enc.Utf8);
-             } catch (error) {
--                console.error("Decryption failed for phone number:", error);
-+                userSchemaLogger.error(`Decryption failed for phone number: ${error instanceof Error ? error.message : String(error)}`);
-                 // Optionally set phone to null or an empty string if decryption fails
-                 singleDoc.phone = null;
-             }
+                console.error('PHONE_ENC environment variable is not defined.');
+                singleDoc.phone = null;
+                return;
+            }
+            try {
+                const decryptedBytes = CryptoJS.AES.decrypt(singleDoc.phone, process.env.PHONE_ENC);
+                singleDoc.phone = decryptedBytes.toString(CryptoJS.enc.Utf8);
+            } catch (error) {
+                console.error("Decryption failed for phone number:", error);
+                // Optionally set phone to null or an empty string if decryption fails
+                singleDoc.phone = null;
+            }
         }
     };
 

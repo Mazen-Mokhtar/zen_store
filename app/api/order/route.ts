@@ -1,30 +1,42 @@
 import { NextResponse } from 'next/server';
+import { cookies } from 'next/headers';
 import { logger } from '@/lib/utils'
 
 // Add dynamic export to prevent static prerendering
 export const dynamic = "force-dynamic";
+
+async function getAuthHeaders(): Promise<Record<string, string>> {
+  const cookieStore = await cookies();
+  const raw = cookieStore.get('auth_token')?.value;
+  const decoded = raw ? decodeURIComponent(raw) : undefined;
+  
+  const headers: Record<string, string> = {
+    'Content-Type': 'application/json',
+    'Accept': 'application/json',
+  };
+  
+  if (decoded && decoded.trim().length > 0) {
+    // If cookie already contains a role prefix (user|admin|superAdmin), use it as-is
+    const hasRolePrefix = /^(user|admin|superAdmin)\s+.+/i.test(decoded);
+    headers['Authorization'] = hasRolePrefix ? decoded : `user ${decoded}`;
+    // Optional: keep raw token (without role) header only when no prefix existed
+    // headers['token'] = hasRolePrefix ? decoded.split(/\s+/, 2)[1] : decoded;
+  }
+  
+  return headers;
+}
 
 export async function POST(request: Request) {
   try {
     const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3000';
     const body = await request.json().catch(() => undefined);
 
-    // Read auth headers from incoming request and forward them
-    const incoming = new Headers(request.headers);
-    const authHeader = incoming.get('authorization');
-    const tokenHeader = incoming.get('token');
-
-    const outHeaders: Record<string, string> = {
-      'Content-Type': 'application/json',
-      'Accept': 'application/json',
-    };
-    if (authHeader) outHeaders['Authorization'] = authHeader;
-    if (tokenHeader) outHeaders['token'] = tokenHeader;
+    const outHeaders = await getAuthHeaders();
 
     // Log the outgoing request
     logger.debug('📤 Forwarding order request to:', `${API_BASE_URL}/order`, {
-      hasAuthorization: !!authHeader,
-      hasTokenHeader: !!tokenHeader,
+      hasAuthorization: !!outHeaders['Authorization'],
+      // hasTokenHeader: !!outHeaders['token'],
     })
 
     const response = await fetch(`${API_BASE_URL}/order`, {
@@ -57,20 +69,12 @@ export async function POST(request: Request) {
     );
   }
 }
+
 export async function GET(request: Request) {
   try {
     const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3000';
 
-    const incoming = new Headers(request.headers);
-    const authHeader = incoming.get('authorization');
-    const tokenHeader = incoming.get('token');
-
-    const outHeaders: Record<string, string> = {
-      'Accept': 'application/json',
-      'Content-Type': 'application/json',
-    };
-    if (authHeader) outHeaders['Authorization'] = authHeader;
-    if (tokenHeader) outHeaders['token'] = tokenHeader;
+    const outHeaders = await getAuthHeaders();
 
     const response = await fetch(`${API_BASE_URL}/order`, {
       method: 'GET',

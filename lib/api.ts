@@ -84,7 +84,8 @@ class ApiService {
     const timeoutId = setTimeout(() => controller.abort(), timeout);
 
     try {
-      let url = endpoint.startsWith('http') ? endpoint : `${API_BASE_URL}${endpoint}`;
+      // Prefer Next.js API proxy for same-origin cookie forwarding when using relative '/api' endpoints
+      let url = endpoint.startsWith('http') ? endpoint : (endpoint.startsWith('/api') ? endpoint : `${API_BASE_URL}${endpoint}`);
       
       const headers = new Headers({
         'Content-Type': 'application/json',
@@ -95,30 +96,22 @@ class ApiService {
         incoming.forEach((value, key) => headers.set(key, value));
       }
 
-      // Add authentication headers only if not skipped
+      // Do not attach Authorization header when using httpOnly cookie
       if (!skipAuth) {
-        // Dynamic import to avoid circular dependencies and ensure fresh token
-        const { authService } = await import('./auth');
-        const token = authService.getToken();
-        const user = authService.getUser();
-        
-        if (token && user) {
-          // Backend expects Authorization in format: "{role} {actualToken}"
-          // The token from authService includes role prefix already
-          headers.set('Authorization', token);
-          headers.set('token', token);
-        }
+        // We no longer attach Authorization tokens client-side.
+        // All authenticated requests must go through relative Next.js API routes (/api/*)
+        // which automatically include httpOnly cookies.
       }
 
       const response = await fetch(url, {
         ...fetchOptions,
         headers,
         signal: controller.signal,
+        credentials: url.startsWith('/api') ? 'include' : 'same-origin',
       });
 
       clearTimeout(timeoutId);
 
-      // Handle response
       if (!response.ok) {
         await this.handleErrorResponse(response, retry, endpoint, options);
       }
@@ -136,21 +129,15 @@ class ApiService {
         if (error.name === 'AbortError') {
           throw new ApiError(408, 'Request timeout');
         }
-        
-        // Check for network connectivity
         if (typeof navigator !== 'undefined' && !navigator.onLine) {
           throw new ApiError(0, 'No internet connection');
         }
-        
-        // Retry logic for network errors
         if (retry < this.retryAttempts && this.isRetryableError(error)) {
           await this.delay(this.retryDelay * (retry + 1));
           return this.request<T>(endpoint, { ...options, retry: retry + 1 });
         }
-        
         throw new ApiError(0, `Network error: ${error.message}`);
       }
-      
       throw new ApiError(500, 'Unknown error occurred');
     }
   }
@@ -435,7 +422,7 @@ class OrderApiService {
       if (cached) return cached;
 
       const response = await this.api.authenticatedRequest<{ success: boolean; data: Order[] }>(
-        '/order'
+        '/api/order'
       );
 
       // Short TTL for authenticated data
@@ -449,7 +436,7 @@ class OrderApiService {
 
   async createOrder(orderData: CreateOrderData): Promise<{ success: boolean; data?: any; error?: string }> {
     try {
-      const response = await this.api.authenticatedRequest<any>('/order', {
+      const response = await this.api.authenticatedRequest<any>('/api/order', {
         method: 'POST',
         body: JSON.stringify(orderData),
       });
@@ -483,7 +470,7 @@ class OrderApiService {
       if (cached) return cached;
 
       const response = await this.api.authenticatedRequest<{ success: boolean; data: Order }>(
-        `/order/${orderId}`
+        `/api/order/${orderId}`
       );
 
       // Cache order details with short TTL
@@ -501,7 +488,7 @@ class OrderApiService {
   async checkout(orderId: string): Promise<{ success: boolean; data?: any; error?: string }> {
     try {
       const response = await this.api.authenticatedRequest<{ success: boolean; data: any }>(
-        `/order/${orderId}/checkout`,
+        `/api/order/${orderId}/checkout`,
         {
           method: 'POST',
         }

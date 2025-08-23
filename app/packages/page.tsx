@@ -246,6 +246,7 @@ export default function PackagesPage() {
                     name={field.fieldName}
                     autoComplete="off"
                     className="input"
+                    placeholder={field.isRequired ? undefined : " "}
                     value={accountInfo[field.fieldName] || ''}
                     onChange={e => setAccountInfo(info => ({ ...info, [field.fieldName]: e.target.value }))}
                   />

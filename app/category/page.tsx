@@ -17,9 +17,7 @@ const GlareCardDemo = dynamic(
 async function getCategories() {
   try {
     // تحديد عنوان API بشكل ديناميكي بناءً على البيئة الحالية
-    const apiUrl = typeof window !== 'undefined'
-      ? `${window.location.origin}/category/AllCategory`
-      : `${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3000'}/category/AllCategory`;
+    const apiUrl = `${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3000'}/category/AllCategory`;
     
     const res = await fetch(apiUrl, { 
       cache: "no-store",

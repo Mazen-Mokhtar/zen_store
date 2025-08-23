@@ -14,8 +14,8 @@ export default function GuestGuard({ children }: GuestGuardProps) {
 
   useEffect(() => {
     // Ensure we never render auth pages for authenticated users
-    const token = authService.getToken();
-    if (token) {
+    const isAuthed = authService.isAuthenticated();
+    if (isAuthed) {
       // User is authenticated, redirect to category page
       router.replace('/category');
       return;

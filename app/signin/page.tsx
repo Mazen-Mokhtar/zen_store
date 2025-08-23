@@ -97,14 +97,22 @@ export default function SignInPageDemo() {
       if (result.success) {
         // نجح تسجيل الدخول
         showError("تم تسجيل الدخول بنجاح!");
-        // انتقل إلى الصفحة السابقة أو صفحة الفئات
-        const urlParams = new URLSearchParams(window.location.search);
-        const rawReturnUrl = urlParams.get('returnUrl') || '/category';
-        let returnUrl = rawReturnUrl;
-        try {
-          returnUrl = decodeURIComponent(rawReturnUrl);
-        } catch {}
-        router.push(returnUrl);
+        
+        // تحقق من دور المستخدم لتحديد الصفحة المناسبة
+        const user = result.data?.user;
+        if (user?.role === 'admin') {
+          // إذا كان أدمن، وجهه لصفحة الأدمن
+          router.push('/admin');
+        } else {
+          // للمستخدمين العاديين، انتقل إلى الصفحة السابقة أو صفحة الفئات
+          const urlParams = new URLSearchParams(window.location.search);
+          const rawReturnUrl = urlParams.get('returnUrl') || '/category';
+          let returnUrl = rawReturnUrl;
+          try {
+            returnUrl = decodeURIComponent(rawReturnUrl);
+          } catch {}
+          router.push(returnUrl);
+        }
       } else {
         showError(result.error || "حدث خطأ أثناء تسجيل الدخول");
       }

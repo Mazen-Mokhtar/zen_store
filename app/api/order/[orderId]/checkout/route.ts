@@ -1,15 +1,19 @@
 import { NextResponse } from 'next/server';
+import { cookies } from 'next/headers';
 
-function buildHeaders(request: Request) {
-  const incoming = new Headers(request.headers);
+async function buildHeaders(): Promise<Record<string, string>> {
+  const cookieStore = await cookies();
+  const raw = cookieStore.get('auth_token')?.value;
+  const decoded = raw ? decodeURIComponent(raw) : undefined;
   const out: Record<string, string> = {
     'Accept': 'application/json',
     'Content-Type': 'application/json',
   };
-  const auth = incoming.get('authorization');
-  const token = incoming.get('token');
-  if (auth) out['Authorization'] = auth;
-  if (token) out['token'] = token;
+  if (decoded && decoded.trim().length > 0) {
+    const hasRolePrefix = /^(user|admin|superAdmin)\s+.+/i.test(decoded);
+    out['Authorization'] = hasRolePrefix ? decoded : `user ${decoded}`;
+    // out['token'] = hasRolePrefix ? decoded.split(/\s+/, 2)[1] : decoded;
+  }
   return out;
 }
 
@@ -22,7 +26,7 @@ export async function POST(request: Request, context: { params: Promise<{ orderI
 
     const res = await fetch(`${API_BASE_URL}/order/${orderId}/checkout`, {
       method: 'POST',
-      headers: buildHeaders(request),
+      headers: await buildHeaders(),
       body: JSON.stringify(body ?? {}),
       // @ts-ignore
       agent: process.env.NODE_ENV === 'development' ? undefined : undefined,
