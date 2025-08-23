@@ -5,14 +5,14 @@ import { Request } from "express";
 import { RolesGuard } from "src/commen/Guards/role.guard";
 import { Roles } from "src/commen/Decorator/roles.decorator";
 import { User } from "src/commen/Decorator/user.decorator";
-import { TUser } from "src/DB/models/User/user.schema";
+import { TUser, RoleTypes } from "src/DB/models/User/user.schema";
 
 @Controller("user")
 export class userController {
     constructor(private readonly userService: userService) { }
     @Get("profile")
-    @Roles(["admin"])
-    @UseGuards(AuthGuard,RolesGuard)
+    @Roles([RoleTypes.USER, RoleTypes.ADMIN, RoleTypes.SUPER_ADMIN])
+    @UseGuards(AuthGuard, RolesGuard)
     getProfile(@User() user: TUser) {
         return this.userService.getProfile(user)
     }

@@ -7,13 +7,16 @@ import React, { useState, useEffect } from "react";
 import { useSearchParams } from "next/navigation";
 import { useRouter } from "next/navigation";
 import styles from './packages.module.css';
-import { apiService, Package, Game } from '@/lib/api';
-import { orderApiService, CreateOrderData } from '@/lib/api';
+import { apiService } from '@/lib/api';
+import type { Package, Game } from '@/lib/api';
+import { orderApiService } from '@/lib/api';
+import type { CreateOrderData } from '@/lib/api';
 import { LoadingSpinner } from '@/components/ui/loading-spinner';
 import { ErrorMessage } from '@/components/ui/error-message';
 import { authService } from '@/lib/auth';
 import { AuthStatus } from '@/components/ui/auth-status';
 import { LoginRequiredModal } from '@/components/ui/login-required-modal';
+import { logger } from '@/lib/utils';
 
 export default function PackagesPage() {
   const searchParams = useSearchParams();
@@ -64,7 +67,7 @@ export default function PackagesPage() {
           setError('Failed to fetch packages');
         }
       } catch (err) {
-        console.error('Error fetching data:', err);
+        logger.error('Error fetching data:', err);
         setError('Failed to load game data');
       } finally {
         setLoading(false);
@@ -105,7 +108,7 @@ export default function PackagesPage() {
       setIsCreatingOrder(true);
       
       // Log the account info for debugging
-      console.log('🔍 Account info being sent:', accountInfo);
+      logger.log('🔍 Account info being sent:', accountInfo);
       
       // Prepare order data with proper typing
       const orderData: CreateOrderData = {
@@ -119,37 +122,37 @@ export default function PackagesPage() {
         note: `طلب ${game.name} - ${packages.find(p => p._id === selected)?.title}`
       };
 
-      console.log('📤 Sending order data:', orderData);
+      logger.log('📤 Sending order data:', orderData);
       
       const response = await orderApiService.createOrder(orderData);
-      console.log('📥 Order creation response:', response);
+      logger.log('📥 Order creation response:', response);
 
       if (response.success) {
         alert('تم إنشاء الطلب بنجاح!');
         
         try {
-          console.log('🔄 Redirecting to checkout...');
+          logger.log('🔄 Redirecting to checkout...');
           const checkoutResponse = await orderApiService.checkout(response.data._id);
-          console.log('✅ Checkout response:', checkoutResponse);
+          logger.log('✅ Checkout response:', checkoutResponse);
           
           if (checkoutResponse.success && checkoutResponse.data?.url) {
             window.location.href = checkoutResponse.data.url;
           } else {
             const errorMsg = checkoutResponse.error || 'فشل في إنشاء جلسة الدفع';
-            console.error('❌ Checkout failed:', errorMsg);
+            logger.error('❌ Checkout failed:', errorMsg);
             alert(errorMsg);
           }
         } catch (checkoutError) {
-          console.error('❌ Error during checkout:', checkoutError);
+          logger.error('❌ Error during checkout:', checkoutError);
           alert('حدث خطأ أثناء توجيهك إلى صفحة الدفع');
         }
       } else {
         const errorMsg = response.error || 'فشل في إنشاء الطلب';
-        console.error('❌ Order creation failed:', errorMsg);
+        logger.error('❌ Order creation failed:', errorMsg);
         alert(errorMsg);
       }
     } catch (error) {
-      console.error('❌ Error in handleCreateOrder:', {
+      logger.error('❌ Error in handleCreateOrder:', {
         error,
         message: error instanceof Error ? error.message : 'Unknown error',
         stack: error instanceof Error ? error.stack : undefined
@@ -243,6 +246,7 @@ export default function PackagesPage() {
                     name={field.fieldName}
                     autoComplete="off"
                     className="input"
+                    placeholder={field.isRequired ? undefined : " "}
                     value={accountInfo[field.fieldName] || ''}
                     onChange={e => setAccountInfo(info => ({ ...info, [field.fieldName]: e.target.value }))}
                   />
@@ -272,13 +276,16 @@ export default function PackagesPage() {
                       onClick={() => setSelected(pkg._id)}
                       className={`square-card bg-yellow-box cursor-pointer relative transition-all duration-300 ${selected === pkg._id ? "selected-card" : ""}`}
                     >
-                      <img 
-                        src={pkg.image?.secure_url || "/uc-icon.png"} 
-                        alt={pkg.title} 
+                      <Image
+                        src={pkg.image?.secure_url || "/uc-icon.png"}
+                        alt={pkg.title}
+                        width={64}
+                        height={64}
                         className="card-img"
-                        onError={(e) => {
-                          e.currentTarget.src = "/uc-icon.png";
+                        onError={(e: any) => {
+                          if (e?.target) e.target.src = "/uc-icon.png";
                         }}
+                        unoptimized
                       />
                       <div className="card-title">{pkg.title}</div>
                       {pkg.isOffer && (
@@ -364,8 +371,26 @@ export default function PackagesPage() {
             {game?.description || "وصف اللعبة غير متوفر"}
           </p>
           <div className="flex gap-2 w-full justify-center mt-auto">
-            <a href="#" className="inline-block"><img src="/appstore.svg" alt="App Store" className="w-24" /></a>
-            <a href="#" className="inline-block"><img src="/googleplay.svg" alt="Google Play" className="w-24" /></a>
+            <a href="#" className="inline-block">
+              <Image 
+                src="/appstore.svg" 
+                alt="App Store" 
+                width={96} 
+                height={32} 
+                className="w-24" 
+                unoptimized 
+              />
+            </a>
+            <a href="#" className="inline-block">
+              <Image 
+                src="/googleplay.svg" 
+                alt="Google Play" 
+                width={96} 
+                height={32} 
+                className="w-24" 
+                unoptimized 
+              />
+            </a>
           </div>
         </aside>
       </main>

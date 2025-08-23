@@ -1,3 +1,5 @@
+import { logger } from './utils';
+
 export class LocalStorage {
   private static instance: LocalStorage;
   private storage: Storage;
@@ -25,7 +27,7 @@ export class LocalStorage {
       const item = this.storage.getItem(key);
       return item ? JSON.parse(item) : defaultValue || null;
     } catch (error) {
-      console.error(`Error reading from localStorage key "${key}":`, error);
+      logger.error(`Error reading from localStorage key "${key}":`, error);
       return defaultValue || null;
     }
   }
@@ -34,7 +36,7 @@ export class LocalStorage {
     try {
       this.storage.setItem(key, JSON.stringify(value));
     } catch (error) {
-      console.error(`Error writing to localStorage key "${key}":`, error);
+      logger.error(`Error writing to localStorage key "${key}":`, error);
     }
   }
 
@@ -42,7 +44,7 @@ export class LocalStorage {
     try {
       this.storage.removeItem(key);
     } catch (error) {
-      console.error(`Error removing from localStorage key "${key}":`, error);
+      logger.error(`Error removing from localStorage key "${key}":`, error);
     }
   }
 
@@ -50,7 +52,7 @@ export class LocalStorage {
     try {
       this.storage.clear();
     } catch (error) {
-      console.error('Error clearing localStorage:', error);
+      logger.error('Error clearing localStorage:', error);
     }
   }
 }

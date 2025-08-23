@@ -1,4 +1,7 @@
 // إدارة حالة تسجيل الدخول والتوكن
+import { useState, useEffect } from 'react';
+import { logger } from './utils';
+
 export interface User {
   _id: string;
   email: string;
@@ -76,7 +79,7 @@ class AuthService {
       
       return JSON.parse(json) as JwtPayload;
     } catch (error) {
-      console.warn('Failed to decode JWT payload:', error);
+      logger.warn('Failed to decode JWT payload:', error);
       return null;
     }
   }
@@ -95,7 +98,7 @@ class AuthService {
     const isExpired = nowMs >= expMs;
     
     if (isExpired) {
-      console.warn('JWT token has expired:', {
+      logger.warn('JWT token has expired:', {
         expiredAt: new Date(expMs).toISOString(),
         currentTime: new Date(nowMs).toISOString()
       });
@@ -177,7 +180,7 @@ class AuthService {
    * Handle when session has expired
    */
   private handleSessionExpired(): void {
-    console.warn('Session has expired, logging out user');
+    logger.warn('Session has expired, logging out user');
     
     // Import notification service dynamically to avoid circular dependencies
     if (typeof window !== 'undefined') {
@@ -188,7 +191,7 @@ class AuthService {
         );
       }).catch(() => {
         // Fallback notification
-        console.warn('Session expired notification failed');
+        logger.warn('Session expired notification failed');
       });
     }
     
@@ -209,7 +212,7 @@ class AuthService {
           `Session will expire in ${minutesRemaining} minute${minutesRemaining !== 1 ? 's' : ''}. Please save your work and refresh your session.`
         );
       }).catch(() => {
-        console.warn('Notification service not available');
+        logger.warn('Notification service not available');
       });
     }
   }
@@ -229,30 +232,23 @@ class AuthService {
 
   private loadFromStorage() {
     if (typeof window !== 'undefined') {
-      const token = localStorage.getItem('auth_token');
+      // Only load user data from localStorage - token is now in httpOnly cookie
       const userStr = localStorage.getItem('auth_user');
       
-      if (token && userStr) {
+      if (userStr) {
         try {
           const user = JSON.parse(userStr);
           
-          // Validate token before loading session
-          if (this.isJwtExpired(token)) {
-            console.warn('Expired token found in storage, clearing session');
-            this.clearStorage();
-            this.authState = { user: null, token: null, isAuthenticated: false };
-            return;
-          }
-          
+          // Set auth state with user but no token (handled by httpOnly cookie)
           this.authState = {
             user,
-            token,
+            token: null, // No longer store tokens in localStorage
             isAuthenticated: true
           };
           
-          console.log('Session loaded from storage successfully');
+          logger.log('User data loaded from storage successfully');
         } catch (error) {
-          console.error('Failed to parse stored user data:', error);
+          logger.error('Failed to parse stored user data:', error);
           this.clearAuth();
         }
       }
@@ -261,8 +257,8 @@ class AuthService {
 
   private saveToStorage() {
     if (typeof window !== 'undefined') {
-      if (this.authState.token && this.authState.user) {
-        localStorage.setItem('auth_token', this.authState.token);
+      if (this.authState.user) {
+        // Only save user data - token is handled by httpOnly cookie
         localStorage.setItem('auth_user', JSON.stringify(this.authState.user));
       } else {
         this.clearStorage();
@@ -272,27 +268,24 @@ class AuthService {
 
   private clearStorage() {
     if (typeof window !== 'undefined') {
-      localStorage.removeItem('auth_token');
       localStorage.removeItem('auth_user');
+      // Keep this line for old sessions cleanup
+      localStorage.removeItem('auth_token');
     }
   }
 
   setAuth(token: string, user: User) {
-    // Validate token before setting
-    if (this.isJwtExpired(token)) {
-      console.error('Attempted to set expired token');
-      throw new Error('Cannot set expired authentication token');
-    }
-    
+    // With httpOnly cookies, we don't validate or store tokens client-side
+    // This method is kept for compatibility but only stores user data
     this.authState = {
       user,
-      token,
+      token: null, // No longer store tokens in localStorage
       isAuthenticated: true
     };
     
     this.saveToStorage();
     this.startSessionMonitoring();
-    console.log('Authentication state updated successfully');
+    logger.log('Authentication state updated successfully');
   }
 
   clearAuth() {
@@ -304,116 +297,98 @@ class AuthService {
     
     this.clearStorage();
     this.stopSessionMonitoring();
-    console.log('Authentication state cleared');
+    logger.log('Authentication state cleared');
   }
 
   getAuthState(): AuthState {
-    // Always validate current token state
-    if (this.authState.token && this.isJwtExpired(this.authState.token)) {
-      console.warn('Auth state contains expired token, clearing...');
-      this.clearAuth();
-    }
-    
     return { ...this.authState };
   }
 
   isAuthenticated(): boolean {
-    const hasValidToken = !!this.authState.token && !this.isJwtExpired(this.authState.token);
-    
-    // If token is invalid but state shows authenticated, clear the state
-    if (!hasValidToken && this.authState.isAuthenticated) {
-      this.clearAuth();
-    }
-    
-    return hasValidToken;
+    // With httpOnly cookies, we trust the user data presence for client-side checks
+    // Server-side verification happens automatically with cookies
+    return !!this.authState.user && this.authState.isAuthenticated;
   }
 
   getToken(): string | null {
-    if (this.isJwtExpired(this.authState.token)) {
-      this.clearAuth();
-      return null;
-    }
-    
-    return this.authState.token;
+    // Tokens are now in httpOnly cookies, not accessible from client-side
+    // Return null to prevent any client-side token usage
+    return null;
   }
 
   getUser(): User | null {
-    // Only return user if authentication is valid
-    return this.isAuthenticated() ? this.authState.user : null;
+    return this.authState.user;
+  }
+
+  isAdmin(): boolean {
+    return this.authState.user?.role === 'admin';
+  }
+
+  hasRole(role: string): boolean {
+    return this.authState.user?.role === role;
   }
 
   // دالة تسجيل الدخول
   async login(email: string, password: string): Promise<{ success: boolean; error?: string; data?: any }> {
     try {
-      // تحديد عنوان API بشكل صريح من متغيرات البيئة لتجنب إرسال الطلب إلى تطبيق Next.js
-      const apiBase = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3000';
-      const apiUrl = `${apiBase}/auth/login`;
+      // Remove hardcoded admin check - let backend handle all authentication
       
-      console.log('Attempting login to:', apiUrl);
+      // Use Next.js API route instead of direct backend call
+      const apiUrl = '/api/auth/login';
+      
+      logger.log('Attempting login via Next.js API route:', apiUrl);
       
       const response = await fetch(apiUrl, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json'
         },
+        credentials: 'include', // Include cookies for httpOnly handling
         body: JSON.stringify({ email, password }),
-        // نستخدم include فقط إذا كان الخادم يعتمد على الكوكيز، وإلا يمكن حذف هذا السطر
-        // وفي حالتنا نستقبل accessToken في الـ body لذا لسنا بحاجة إلى الكوكيز
-        // credentials: 'include'
       });
 
       const data = await response.json();
 
       if (!response.ok) {
-        console.error('Login failed:', data);
+        logger.error('Login failed:', data);
         return {
           success: false,
           error: data.message || 'فشل في تسجيل الدخول'
         };
       }
 
-      // حفظ بيانات المستخدم والتوكن
-      const accessToken = data.data?.accessToken;
-      
-      if (!accessToken) {
-        return {
-          success: false,
-          error: 'لم يتم العثور على رمز الوصول في الاستجابة'
-        };
-      }
-
-      // Validate token before using it
-      if (this.isJwtExpired(accessToken)) {
-        return {
-          success: false,
-          error: 'تم استلام رمز وصول منتهي الصلاحية من الخادم'
-        };
-      }
-
-      // استخدام المستخدم القادم من الخادم إن وجد، وإلا فfallback بسيط
-      const serverUser: Partial<User> | undefined = data.data?.user;
-      const user: User = {
-        _id: serverUser?._id ?? '',
-        email: serverUser?.email ?? email,
-        name: serverUser?.name ?? (email.includes('@') ? email.split('@')[0] : email),
-        role: serverUser?.role ?? 'user'
+      // Get user data from response - no token needed since it's in httpOnly cookie
+      const user: User = data.data?.user || {
+        _id: '',
+        email: email,
+        name: email.includes('@') ? email.split('@')[0] : email,
+        role: 'user'
       };
 
-      // حفظ التوكن والمستخدم في حالة المصادقة
-      this.setAuth(accessToken, user);
+      // Store only user data - token is handled by httpOnly cookie
+      this.authState = {
+        user,
+        token: null, // No longer store tokens in localStorage
+        isAuthenticated: true
+      };
+      
+      // Store only user data in localStorage (not the token)
+      if (typeof window !== 'undefined') {
+        localStorage.setItem('auth_user', JSON.stringify(user));
+        localStorage.removeItem('auth_token'); // Clean up any old tokens
+      }
 
-      console.log('Login successful, session established');
+      logger.log('Login successful, session established with httpOnly cookies');
 
-      // إرجاع البيانات للاستخدام الفوري
       return {
         success: true,
         data: {
           ...data,
-          user // إضافة بيانات المستخدم للاستخدام الفوري
+          user
         }
       };
     } catch (error) {
-      console.error('Login error:', error);
+      logger.error('Login error:', error);
       return {
         success: false,
         error: 'حدث خطأ في الاتصال بالخادم'
@@ -423,7 +398,18 @@ class AuthService {
 
   // دالة تسجيل الخروج
   logout() {
-    console.log('Logging out user');
+    logger.log('Logging out user');
+    
+    // Call Next.js logout API to clear httpOnly cookie
+    if (typeof window !== 'undefined') {
+      fetch('/api/auth/logout', {
+        method: 'POST',
+        credentials: 'include',
+      }).catch(error => {
+        logger.warn('Logout API call failed:', error);
+      });
+    }
+    
     this.clearAuth();
     
     // Redirect to home or login page
@@ -441,12 +427,33 @@ class AuthService {
   }
 
   /**
-   * Extend session - placeholder for future token refresh implementation
+   * Extend session - not needed with httpOnly cookies as server manages expiration
    */
   async extendSession(): Promise<boolean> {
-    // TODO: Implement token refresh logic when backend supports it
-    console.log('Session extension not implemented yet');
-    return false;
+    // With httpOnly cookies, session extension is handled server-side
+    // We just need to check if the user is still authenticated
+    try {
+      // Make a test API call to verify authentication
+      const response = await fetch('/api/order', {
+        method: 'GET',
+        credentials: 'include',
+      });
+
+      if (response.ok) {
+        logger.log('Session still valid');
+        return true;
+      } else if (response.status === 401) {
+        logger.warn('Session expired - logging out');
+        this.logout();
+        return false;
+      } else {
+        logger.warn('Session check failed with status:', response.status);
+        return false;
+      }
+    } catch (error) {
+      logger.error('Session check error:', error);
+      return false;
+    }
   }
 
   /**
@@ -458,6 +465,59 @@ class AuthService {
 }
 
 export const authService = AuthService.getInstance();
+
+// React Hook for using auth service
+
+export function useAuth() {
+  const [authState, setAuthState] = useState<AuthState>(authService.getAuthState());
+  const [isLoading, setIsLoading] = useState(false);
+
+  useEffect(() => {
+    // Subscribe to auth state changes
+    const updateAuthState = () => {
+      setAuthState(authService.getAuthState());
+    };
+
+    // Check auth state on mount
+    updateAuthState();
+
+    // Set up interval to check for auth changes
+    const interval = setInterval(updateAuthState, 1000);
+
+    return () => clearInterval(interval);
+  }, []);
+
+  const login = async (email: string, password: string) => {
+    setIsLoading(true);
+    try {
+      const result = await authService.login(email, password);
+      return result;
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const logout = () => {
+    authService.logout();
+  };
+
+  const extendSession = async () => {
+    return await authService.extendSession();
+  };
+
+  return {
+    user: authState.user,
+    token: authState.token,
+    isAuthenticated: authState.isAuthenticated,
+    isLoading,
+    isAdmin: authService.isAdmin(),
+    hasRole: (role: string) => authService.hasRole(role),
+    login,
+    logout,
+    extendSession,
+    getTokenTimeRemaining: () => authService.getTokenTimeRemaining()
+  };
+}
 
 // Cleanup on page unload
 if (typeof window !== 'undefined') {

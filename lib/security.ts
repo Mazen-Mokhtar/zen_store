@@ -1,3 +1,5 @@
+import { logger } from './utils';
+
 export interface SecurityConfig {
   enableCSP: boolean;
   enableXSSProtection: boolean;
@@ -39,7 +41,7 @@ class SecurityManager {
   private setSecurityHeaders(): void {
     // Note: In a real application, these headers would be set on the server side
     // This is just for demonstration purposes
-    console.log('Security headers would be set here');
+    logger.log('Security headers would be set here');
   }
 
   private monitorSecurityEvents(): void {
@@ -61,7 +63,7 @@ class SecurityManager {
           if (node.nodeType === Node.ELEMENT_NODE) {
             const element = node as Element;
             if (element.tagName === 'SCRIPT' && !element.hasAttribute('data-safe')) {
-              console.warn('Potential XSS attempt detected');
+              logger.warn('Potential XSS attempt detected');
               this.reportSecurityEvent('xss_attempt', {
                 element: element.outerHTML,
                 url: window.location.href
@@ -86,7 +88,7 @@ class SecurityManager {
       
       if (!token || !this.validateCSRFToken(token.value)) {
         event.preventDefault();
-        console.warn('Potential CSRF attempt detected');
+        logger.warn('Potential CSRF attempt detected');
         this.reportSecurityEvent('csrf_attempt', {
           form: form.action,
           url: window.location.href
@@ -98,7 +100,7 @@ class SecurityManager {
   private monitorClickjackingAttempts(): void {
     // Check if the page is being loaded in an iframe
     if (window.top !== window.self) {
-      console.warn('Potential clickjacking attempt detected');
+      logger.warn('Potential clickjacking attempt detected');
       this.reportSecurityEvent('clickjacking_attempt', {
         referrer: document.referrer,
         url: window.location.href
@@ -297,7 +299,7 @@ class SecurityManager {
 
   // Security event reporting
   private reportSecurityEvent(eventType: string, data: any): void {
-    console.warn(`Security event: ${eventType}`, data);
+    logger.warn(`Security event: ${eventType}`, data);
     
     // In a real application, this would send to a security monitoring service
     // fetch('/api/security/events', {

@@ -16,25 +16,44 @@ export default function AuthGuard({ children }: AuthGuardProps) {
   const [checked, setChecked] = useState(false);
 
   useEffect(() => {
-    // Ensure we never render protected content for unauthenticated users or expired sessions
-    const isAuthed = authService.isAuthenticated();
-    if (!isAuthed) {
-      const search = searchParams?.toString();
-      const returnUrl = encodeURIComponent(`${pathname}${search ? `?${search}` : ""}`);
-      try {
-        notificationService.warning("تسجيل الدخول مطلوب", "يرجى تسجيل الدخول للمتابعة");
-      } catch {}
-      router.replace(`/signin?returnUrl=${returnUrl}`);
-      return;
-    }
+    let mounted = true;
 
-    setChecked(true);
+    const verify = async () => {
+      // Quick client state check first
+      const isAuthed = authService.isAuthenticated();
+      if (!isAuthed) {
+        const search = searchParams?.toString();
+        const returnUrl = encodeURIComponent(`${pathname}${search ? `?${search}` : ""}`);
+        try {
+          notificationService.warning("تسجيل الدخول مطلوب", "يرجى تسجيل الدخول للمتابعة");
+        } catch {}
+        router.replace(`/signin?returnUrl=${returnUrl}`);
+        return;
+      }
+
+      // Validate session with server via cookie (lightweight ping)
+      const stillValid = await authService.extendSession();
+      if (!stillValid) {
+        const search = searchParams?.toString();
+        const returnUrl = encodeURIComponent(`${pathname}${search ? `?${search}` : ""}`);
+        router.replace(`/signin?returnUrl=${returnUrl}`);
+        return;
+      }
+
+      if (mounted) setChecked(true);
+    };
+
+    verify();
+
+    return () => {
+      mounted = false;
+    };
   }, [pathname, searchParams, router]);
 
   useEffect(() => {
-    // Cross-tab/session sync: if auth changes in another tab, respond here
+    // Cross-tab/session sync: since token is not in localStorage anymore, listen to user changes
     const onStorage = (e: StorageEvent) => {
-      if (e.key === "auth_token" || e.key === "auth_user" || e.key === null) {
+      if (e.key === "auth_user" || e.key === null) {
         const isAuthed = authService.isAuthenticated();
         if (!isAuthed) {
           const search = searchParams?.toString();

@@ -6,6 +6,7 @@ import { useState, useRef } from "react";
 import { useRouter } from "next/navigation";
 import { authService } from "@/lib/auth";
 import GuestGuard from "@/components/guards/GuestGuard";
+import { logger } from "@/lib/utils";
 
 const sampleTestimonials: Testimonial[] = [
   {
@@ -96,14 +97,22 @@ export default function SignInPageDemo() {
       if (result.success) {
         // نجح تسجيل الدخول
         showError("تم تسجيل الدخول بنجاح!");
-        // انتقل إلى الصفحة السابقة أو صفحة الفئات
-        const urlParams = new URLSearchParams(window.location.search);
-        const rawReturnUrl = urlParams.get('returnUrl') || '/category';
-        let returnUrl = rawReturnUrl;
-        try {
-          returnUrl = decodeURIComponent(rawReturnUrl);
-        } catch {}
-        router.push(returnUrl);
+        
+        // تحقق من دور المستخدم لتحديد الصفحة المناسبة
+        const user = result.data?.user;
+        if (user?.role === 'admin') {
+          // إذا كان أدمن، وجهه لصفحة الأدمن
+          router.push('/admin');
+        } else {
+          // للمستخدمين العاديين، انتقل إلى الصفحة السابقة أو صفحة الفئات
+          const urlParams = new URLSearchParams(window.location.search);
+          const rawReturnUrl = urlParams.get('returnUrl') || '/category';
+          let returnUrl = rawReturnUrl;
+          try {
+            returnUrl = decodeURIComponent(rawReturnUrl);
+          } catch {}
+          router.push(returnUrl);
+        }
       } else {
         showError(result.error || "حدث خطأ أثناء تسجيل الدخول");
       }
@@ -114,10 +123,10 @@ export default function SignInPageDemo() {
     }
   };
 
-  const handleGoogleSignIn = () => {
-    console.log("Continue with Google clicked");
-    alert("Continue with Google clicked");
-  };
+const handleGoogleSignIn = () => {
+  logger.log("Continue with Google clicked");
+  alert("Continue with Google clicked");
+};
   
   const handleResetPassword = () => {
     alert("Reset Password clicked");

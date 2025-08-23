@@ -1,3 +1,5 @@
+import { logger } from './utils';
+
 export interface Notification {
   id: string;
   type: 'success' | 'error' | 'warning' | 'info';
@@ -78,7 +80,7 @@ export const notificationService = new NotificationService();
 // Browser notification support
 export const requestNotificationPermission = async (): Promise<boolean> => {
   if (!('Notification' in window)) {
-    console.warn('This browser does not support desktop notification');
+    logger.warn('This browser does not support desktop notification');
     return false;
   }
 

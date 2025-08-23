@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, memo, useMemo } from "react";
 import { useSearchParams, useRouter } from "next/navigation";
 import { Search, Filter } from 'lucide-react';
 import { Footer } from '@/components/ui/footer-section';
@@ -9,10 +9,13 @@ import { ErrorMessage } from '@/components/ui/error-message';
 import { NotificationToast } from '@/components/ui/notification-toast';
 import { LanguageSelector } from '@/components/ui/language-selector';
 import Image from 'next/image';
-import { apiService, Game } from '@/lib/api';
+import { apiService } from '@/lib/api';
+import type { Game } from '@/lib/api';
 import { handleApiError } from '@/lib/api-error';
 import { useTranslation } from '@/lib/i18n';
 import { authService } from '@/lib/auth';
+import { isValidObjectId, generateWhatsAppPurchaseLink } from '@/lib/utils'
+import { logger } from '@/lib/utils'
 
 // صور خلفية مختلفة للفئات
 const categoryHeroImages = {
@@ -87,55 +90,61 @@ export default function CategoryDashboardPage() {
   // Fetch data function with useCallback to prevent unnecessary re-renders
   const fetchData = useCallback(async (selectedCategory: string | null) => {
     if (!selectedCategory) {
-      setError('Category ID is required');
-      setLoading(false);
-      return;
+      setError(t('errors.categoryDashboard.categoryIdRequired'))
+      setLoading(false)
+      return
+    }
+
+    // Early validation for MongoDB ObjectId to avoid unnecessary API calls and noisy console errors
+    if (!isValidObjectId(selectedCategory)) {
+      setError(t('errors.categoryDashboard.invalidCategoryId'))
+      setLoading(false)
+      return
     }
 
     try {
-      setLoading(true);
-      setError(null);
+      setLoading(true)
+      setError(null)
       
-      console.log('🚀 fetchData called with category:', selectedCategory);
+      // Remove debug flag and use logger.debug instead
+      logger.debug('🚀 fetchData called with category:', selectedCategory)
       
       let gamesData;
       let popularGames;
       
-      console.log('🎮 جلب الألعاب المدفوعة من الفئة:', selectedCategory);
+      logger.debug('🎮 جلب الألعاب المدفوعة من الفئة:', selectedCategory)
       gamesData = await apiService.getPaidGamesByCategory(selectedCategory);
       popularGames = gamesData.data.filter(game => game.isPopular);
       
-      console.log('📊 Setting popularItems:', { 
+      logger.debug('📊 Setting popularItems:', { 
         popularGames: popularGames?.length || 0,
         category: selectedCategory
-      });
-      
+      })
       setPopularItems({
         games: popularGames || [],
         packages: []
       });
       
-      console.log('📊 Setting categoryGames:', { 
+      logger.debug('📊 Setting categoryGames:', { 
         games: gamesData.data?.length || 0,
         category: selectedCategory
-      });
-      
+      })
       setCategoryGames(gamesData.data || []);
 
       if (!gamesData.success) {
-        console.warn('⚠️ API returned success: false');
-        setError('Failed to fetch games data');
+        logger.warn('⚠️ API returned success: false')
+        setError(t('errors.dataLoadFailed'));
       } else if (gamesData.data.length === 0) {
-        console.warn('⚠️ No games found in category:', selectedCategory);
+        logger.warn('⚠️ No games found in category:', selectedCategory)
       }
 
     } catch (err) {
-      console.error('Error fetching data:', err);
+      logger.error('Error fetching data:', err)
       setError(handleApiError(err));
     } finally {
       setLoading(false);
     }
-  }, []);
+  }, [t]);
 
   // Main data fetching effect
   useEffect(() => {
@@ -148,6 +157,29 @@ export default function CategoryDashboardPage() {
   }, []);
 
   // Function to fetch packages for a game
+  // Memoize filtered and sorted games calculation
+  const filteredAndSortedGames = useMemo(() => 
+    categoryGames
+      .filter(game => 
+        game.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        game.description?.toLowerCase().includes(searchTerm.toLowerCase())
+      )
+      .sort((a, b) => {
+        switch (sortBy) {
+          case 'name':
+            return a.name.localeCompare(b.name);
+          case 'popular':
+            return (b.isPopular ? 1 : 0) - (a.isPopular ? 1 : 0);
+          case 'newest':
+            return new Date(b.createdAt || 0).getTime() - new Date(a.createdAt || 0).getTime();
+          default:
+            return 0;
+        }
+      }), 
+    [categoryGames, searchTerm, sortBy]
+  );
+
+  // Fix remaining console statements in fetchGamePackages
   const fetchGamePackages = useCallback(async (gameId: string) => {
     try {
       setLoadingPackages(true);
@@ -157,11 +189,11 @@ export default function CategoryDashboardPage() {
         const packages = Array.isArray(res.data) ? res.data : [];
         setGamePackages(packages);
       } else {
-        console.warn('Failed to fetch packages');
+        logger.warn('Failed to fetch packages');
         setGamePackages([]);
       }
     } catch (error) {
-      console.error('Error fetching packages:', error);
+      logger.error('Error fetching packages:', error);
       setGamePackages([]);
     } finally {
       setLoadingPackages(false);
@@ -183,41 +215,11 @@ export default function CategoryDashboardPage() {
 
   // Handle WhatsApp purchase
   const handleWhatsAppPurchase = useCallback((game: Game) => {
-    const message = `مرحباً! 🌟
+    const whatsappUrl = generateWhatsAppPurchaseLink(game)
+    window.open(whatsappUrl, '_blank')
+  }, [])
 
-أريد شراء اللعبة التالية:
 
-🎮 اسم اللعبة: ${game.name}
-💰 السعر: ${game.price} EGP
-${game.description ? `📝 الوصف: ${game.description}` : ''}
-${game.category ? `📂 الفئة: ${game.category}` : ''}
-
-هل يمكنني الحصول على مزيد من التفاصيل حول عملية الشراء؟`;
-
-    const encodedMessage = encodeURIComponent(message);
-    const whatsappUrl = `https://wa.me/201010666002?text=${encodedMessage}`;
-    
-    window.open(whatsappUrl, '_blank');
-  }, []);
-
-  // Filter and sort games
-  const filteredAndSortedGames = categoryGames
-    .filter(game => 
-      game.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      game.description?.toLowerCase().includes(searchTerm.toLowerCase())
-    )
-    .sort((a, b) => {
-      switch (sortBy) {
-        case 'name':
-          return a.name.localeCompare(b.name);
-        case 'popular':
-          return (b.isPopular ? 1 : 0) - (a.isPopular ? 1 : 0);
-        case 'newest':
-          return new Date(b.createdAt || 0).getTime() - new Date(a.createdAt || 0).getTime();
-        default:
-          return 0;
-      }
-    });
 
   if (loading) {
     return (

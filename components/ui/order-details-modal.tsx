@@ -3,79 +3,28 @@
 import React from 'react';
 import { X, Package, Calendar, CreditCard, Banknote, User, Clock, CheckCircle, XCircle, AlertTriangle } from 'lucide-react';
 import Image from 'next/image';
-
-interface Order {
-  _id: string;
-  gameId: {
-    _id: string;
-    name: string;
-    image: {
-      secure_url: string;
-    };
-  };
-  packageId: {
-    _id: string;
-    title: string;
-    price: number;
-    currency: string;
-  };
-  accountInfo: { fieldName: string; value: string }[];
-  status: 'pending' | 'paid' | 'delivered' | 'rejected';
-  paymentMethod: 'card' | 'cash';
-  totalAmount: number;
-  adminNote?: string;
-  createdAt: string;
-  paidAt?: string;
-  refundAmount?: number;
-  refundDate?: string;
-}
+import type { Order } from '@/lib/types';
+import { ORDER_STATUS_CONFIG } from '@/lib/types';
 
 interface OrderDetailsModalProps {
   order: Order;
   onClose: () => void;
 }
 
-const statusConfig = {
-  pending: {
-    color: 'text-yellow-400',
-    bgColor: 'bg-yellow-400/10',
-    borderColor: 'border-yellow-400/20',
-    icon: Clock,
-    label: 'قيد الانتظار',
-    description: 'طلبك قيد المراجعة وسيتم معالجته قريباً'
-  },
-  paid: {
-    color: 'text-blue-400',
-    bgColor: 'bg-blue-400/10',
-    borderColor: 'border-blue-400/20',
-    icon: CheckCircle,
-    label: 'مدفوع',
-    description: 'تم استلام الدفع وجاري معالجة الطلب'
-  },
-  delivered: {
-    color: 'text-green-400',
-    bgColor: 'bg-green-400/10',
-    borderColor: 'border-green-400/20',
-    icon: CheckCircle,
-    label: 'تم التسليم',
-    description: 'تم تسليم طلبك بنجاح'
-  },
-  rejected: {
-    color: 'text-red-400',
-    bgColor: 'bg-red-400/10',
-    borderColor: 'border-red-400/20',
-    icon: XCircle,
-    label: 'مرفوض',
-    description: 'تم رفض أو إلغاء الطلب'
-  }
+// Icon mapping for order status
+const statusIconMap = {
+  pending: Clock,
+  paid: CheckCircle,
+  delivered: CheckCircle,
+  rejected: XCircle
 };
 
-export const OrderDetailsModal: React.FC<OrderDetailsModalProps> = ({
+const OrderDetailsModalComponent: React.FC<OrderDetailsModalProps> = ({
   order,
   onClose
 }) => {
-  const statusInfo = statusConfig[order.status];
-  const StatusIcon = statusInfo.icon;
+  const statusInfo = ORDER_STATUS_CONFIG[order.status];
+  const StatusIcon = statusIconMap[order.status];
 
   const formatDate = (dateString: string) => {
     return new Date(dateString).toLocaleDateString('ar-EG', {
@@ -121,7 +70,7 @@ export const OrderDetailsModal: React.FC<OrderDetailsModalProps> = ({
 
           {/* Game and Package Info */}
           <div className="bg-[#232329] rounded-xl p-4">
-            <h3 className="text-lg font-bold text-white mb-4">معلومات المنتج</h3>
+            <h3 className="text-lg font-bold text_WHITE mb-4">معلومات المنتج</h3>
             <div className="flex items-center gap-4">
               <Image
                 src={order.gameId.image.secure_url}
@@ -186,7 +135,7 @@ export const OrderDetailsModal: React.FC<OrderDetailsModalProps> = ({
               </div>
 
               {order.paidAt && (
-                <div className="flex items-center gap-3">
+                <div className="flex items_center gap-3">
                   <div className="w-3 h-3 bg-blue-500 rounded-full"></div>
                   <div className="flex-1">
                     <p className="text-white font-medium">تم الدفع</p>
@@ -238,7 +187,7 @@ export const OrderDetailsModal: React.FC<OrderDetailsModalProps> = ({
                     {order.refundAmount} {order.packageId.currency}
                   </span>
                 </div>
-                <div className="flex justify-between">
+                <div className="flex justify_between">
                   <span className="text-gray-400">تاريخ الاسترداد:</span>
                   <span className="text-gray-300">{formatDate(order.refundDate)}</span>
                 </div>
@@ -266,3 +215,6 @@ export const OrderDetailsModal: React.FC<OrderDetailsModalProps> = ({
     </div>
   );
 };
+
+export const OrderDetailsModal = React.memo(OrderDetailsModalComponent);
+OrderDetailsModal.displayName = 'OrderDetailsModal';

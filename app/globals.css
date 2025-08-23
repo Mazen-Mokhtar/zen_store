@@ -281,12 +281,36 @@
   background: transparent;
 }
 
-.input:focus, .input:valid {
+.input:focus {
   outline: none;
   border: 1.5px solid #1a73e8;
 }
 
-.input:focus ~ .user-label, .input:valid ~ .user-label {
+.input:focus ~ .user-label {
+  transform: translateY(-50%) scale(0.8);
+  background-color: #212121;
+  padding: 0 .2em;
+  color: #2196f3;
+}
+
+/* Only apply blue styling to required fields when they have content */
+.input[required]:valid {
+  border: 1.5px solid #1a73e8;
+}
+
+.input[required]:valid ~ .user-label {
+  transform: translateY(-50%) scale(0.8);
+  background-color: #212121;
+  padding: 0 .2em;
+  color: #2196f3;
+}
+
+/* For optional fields, only apply styling when focused or when they have actual content */
+.input:not([required]):not(:placeholder-shown) {
+  border: 1.5px solid #1a73e8;
+}
+
+.input:not([required]):not(:placeholder-shown) ~ .user-label {
   transform: translateY(-50%) scale(0.8);
   background-color: #212121;
   padding: 0 .2em;

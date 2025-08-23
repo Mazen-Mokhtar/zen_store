@@ -1,0 +1,69 @@
+// Shared types and configurations for the ZenStore application
+
+export interface Order {
+  _id: string;
+  gameId: {
+    _id: string;
+    name: string;
+    image: {
+      secure_url: string;
+    };
+  };
+  packageId: {
+    _id: string;
+    title: string;
+    price: number;
+    currency: string;
+  };
+  accountInfo: { fieldName: string; value: string }[];
+  status: 'pending' | 'paid' | 'delivered' | 'rejected';
+  paymentMethod: 'card' | 'cash';
+  totalAmount: number;
+  adminNote?: string;
+  createdAt: string;
+  paidAt?: string;
+  refundAmount?: number;
+  refundDate?: string;
+}
+
+export interface CreateOrderData {
+  gameId: string;
+  packageId: string;
+  accountInfo: { fieldName: string; value: string }[];
+  paymentMethod: 'card' | 'cash';
+  note?: string;
+}
+
+// Order status configuration with visual styling and labels
+export const ORDER_STATUS_CONFIG = {
+  pending: {
+    color: 'text-yellow-400',
+    bgColor: 'bg-yellow-400/10',
+    borderColor: 'border-yellow-400/20',
+    label: 'قيد الانتظار',
+    description: 'طلبك قيد المراجعة وسيتم معالجته قريباً'
+  },
+  paid: {
+    color: 'text-blue-400',
+    bgColor: 'bg-blue-400/10',
+    borderColor: 'border-blue-400/20',
+    label: 'مدفوع',
+    description: 'تم استلام الدفع وجاري معالجة الطلب'
+  },
+  delivered: {
+    color: 'text-green-400',
+    bgColor: 'bg-green-400/10',
+    borderColor: 'border-green-400/20',
+    label: 'تم التسليم',
+    description: 'تم تسليم طلبك بنجاح'
+  },
+  rejected: {
+    color: 'text-red-400',
+    bgColor: 'bg-red-400/10',  
+    borderColor: 'border-red-400/20',
+    label: 'مرفوض',
+    description: 'تم رفض أو إلغاء الطلب'
+  }
+} as const;
+
+export type OrderStatus = keyof typeof ORDER_STATUS_CONFIG;

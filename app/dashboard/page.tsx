@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, memo, useMemo } from "react";
 import { useSearchParams, useRouter } from "next/navigation";
 import { Search, Bell, HelpCircle } from 'lucide-react';
 import { Footer } from '@/components/ui/footer-section';
@@ -9,11 +9,13 @@ import { ErrorMessage } from '@/components/ui/error-message';
 import { NotificationToast } from '@/components/ui/notification-toast';
 import { LanguageSelector } from '@/components/ui/language-selector';
 import Image from 'next/image';
-import { apiService, Game } from '@/lib/api';
+import { apiService } from '@/lib/api';
+import type { Game } from '@/lib/api';
 import { handleApiError } from '@/lib/api-error';
 
 import { useTranslation } from '@/lib/i18n';
 import { authService } from '@/lib/auth';
+import { logger } from '@/lib/utils'
 
 // صور خلفية داكنة بسيطة بدون نصوص
 const heroImages = [
@@ -57,7 +59,7 @@ export default function EndexHeroPage() {
       setLoading(true);
       setError(null);
       
-      console.log('🚀 fetchData called with category:', selectedCategory);
+      logger.debug('🚀 fetchData called with category:', selectedCategory)
       
       let gamesData;
       let popularGames;
@@ -65,43 +67,43 @@ export default function EndexHeroPage() {
       // Always use a category - if none provided, use ALL_GAMES_CATEGORY_ID
       const categoryToUse = selectedCategory || ALL_GAMES_CATEGORY_ID;
       
-      console.log('🎮 جلب الفئة مع الباقات:', categoryToUse);
+      logger.debug('🎮 جلب الفئة مع الباقات:', categoryToUse)
       const withPackages = await apiService.getCategoryWithPackages(categoryToUse);
       gamesData = { success: withPackages.success, data: withPackages.data } as { success: boolean; data: Game[] };
       popularGames = withPackages.data.filter(game => game.isPopular);
       
-      console.log('📊 Setting popularItems:', { 
-        popularGames: popularGames?.length || 0,
-        category: categoryToUse
-      });
+      logger.debug('📊 Setting popularItems:', { 
+         popularGames: popularGames?.length || 0,
+         category: categoryToUse
+      })
       
       setPopularItems({
         games: popularGames || [],
         packages: (withPackages as any).packages || []
       });
       
-      console.log('📊 Setting mobileGames:', { 
-        games: gamesData.data?.length || 0,
-        category: categoryToUse
-      });
+      logger.debug('📊 Setting mobileGames:', { 
+         games: gamesData.data?.length || 0,
+         category: categoryToUse
+      })
       
       setMobileGames(gamesData.data || []);
 
       // Check if no data was returned
       if (!gamesData.success) {
-        console.warn('⚠️ API returned success: false');
-        setError('Failed to fetch games data');
+        logger.warn('⚠️ API returned success: false')
+        setError(t('errors.dataLoadFailed'));
       } else if (gamesData.data.length === 0) {
-        console.warn('⚠️ No games found in category:', categoryToUse);
+        logger.warn('⚠️ No games found in category:', categoryToUse)
       }
 
     } catch (err) {
-      console.error('Error fetching data:', err);
+      logger.error('Error fetching data:', err)
       setError(handleApiError(err));
     } finally {
       setLoading(false);
     }
-  }, [ALL_GAMES_CATEGORY_ID]);
+  }, [ALL_GAMES_CATEGORY_ID, t]);
 
   // Main data fetching effect
   useEffect(() => {
@@ -335,97 +337,97 @@ export default function EndexHeroPage() {
 }
 
 // إضافة مكون PopularesSection في نفس الملف
-function PopularesSection({ items }: { items: Game[] }) {
-  const { t } = useTranslation();
-  const router = useRouter();
+const PopularesSection = memo(function PopularesSection({ items }: { items: Game[] }) {
+   const { t } = useTranslation();
+   const router = useRouter();
 
-  // إذا لم تكن هناك عناصر، لا تعرض القسم
-  if (!items || items.length === 0) {
-    return null;
-  }
+   // إذا لم تكن هناك عناصر، لا تعرض القسم
+   if (!items || items.length === 0) {
+     return null;
+   }
 
-  const handleGameClick = (game: Game) => {
-    router.push(`/packages?gameId=${game._id}&gameName=${encodeURIComponent(game.name)}`);
-  };
+   const handleGameClick = (game: Game) => {
+     router.push(`/packages?gameId=${game._id}&gameName=${encodeURIComponent(game.name)}`);
+   };
 
-  return (
-    <section className="max-w-6xl mx-auto mt-10 rounded-3xl bg-[#232329] shadow-lg px-6 py-6">
-      <h2 className="text-2xl font-bold text-white mb-6">{t('dashboard.popular')}</h2>
-      
-      {/* العناصر بدون أسكرول */}
-      <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-4">
-        {items.map((item) => (
-          <div
-            key={item._id}
-            onClick={() => handleGameClick(item)}
-            className="w-48 min-w-[180px] h-72 bg-[#18181c] rounded-2xl shadow flex flex-col items-stretch relative overflow-hidden cursor-pointer hover:scale-105 transition-transform"
-          >
-            <Image
-              src={item.image.secure_url}
-              alt={item.name}
-              width={200}
-              height={200}
-              className="w-full h-full object-cover rounded-2xl"
-              unoptimized
-            />
-            <div className="absolute bottom-0 left-0 right-0 px-3 py-4 bg-gradient-to-t from-black/80 via-black/40 to-transparent">
-              <span className="text-white font-semibold text-base drop-shadow text-center block">{item.name}</span>
-            </div>
-            {item.offer && (
-              <div className="absolute top-3 left-3 bg-green-400 text-black text-xs font-bold px-2 py-1 rounded">
-                {item.offer}
-              </div>
-            )}
-          </div>
-        ))}
-      </div>
-    </section>
+   return (
+     <section className="max-w-6xl mx-auto mt-10 rounded-3xl bg-[#232329] shadow-lg px-6 py-6">
+       <h2 className="text-2xl font-bold text-white mb-6">{t('dashboard.popular')}</h2>
+       
+       {/* العناصر بدون أسكرول */}
+       <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-4">
+         {items.map((item) => (
+           <div
+             key={item._id}
+             onClick={() => handleGameClick(item)}
+             className="w-48 min-w-[180px] h-72 bg-[#18181c] rounded-2xl shadow flex flex-col items-stretch relative overflow-hidden cursor-pointer hover:scale-105 transition-transform"
+           >
+             <Image
+               src={item.image.secure_url}
+               alt={item.name}
+               width={200}
+               height={200}
+               className="w-full h-full object-cover rounded-2xl"
+               unoptimized
+             />
+             <div className="absolute bottom-0 left-0 right-0 px-3 py-4 bg-gradient-to-t from-black/80 via-black/40 to-transparent">
+               <span className="text-white font-semibold text-base drop-shadow text-center block">{item.name}</span>
+             </div>
+             {item.offer && (
+               <div className="absolute top-3 left-3 bg-green-400 text-black text-xs font-bold px-2 py-1 rounded">
+                 {item.offer}
+               </div>
+             )}
+           </div>
+         ))}
+       </div>
+     </section>
   );
-}
+})
 
 // إضافة مكون MobileGamesSection في نفس الملف
-function MobileGamesSection({ games }: { games: Game[] }) {
-  const { t } = useTranslation();
-  const router = useRouter();
+const MobileGamesSection = memo(function MobileGamesSection({ games }: { games: Game[] }) {
+   const { t } = useTranslation();
+   const router = useRouter();
 
-  // إذا لم تكن هناك ألعاب، لا تعرض القسم
-  if (!games || games.length === 0) {
-    return null;
-  }
+   // إذا لم تكن هناك ألعاب، لا تعرض القسم
+   if (!games || games.length === 0) {
+     return null;
+   }
 
-  const handleGameClick = (game: Game) => {
-    router.push(`/packages?gameId=${game._id}&gameName=${encodeURIComponent(game.name)}`);
-  };
+   const handleGameClick = (game: Game) => {
+     router.push(`/packages?gameId=${game._id}&gameName=${encodeURIComponent(game.name)}`);
+   };
 
-  return (
-    <section className="max-w-6xl mx-auto mt-10 rounded-3xl bg-[#232329] shadow-lg px-6 py-6">
-      <h2 className="text-2xl font-bold text-white mb-6">{t('dashboard.mobileGames')}</h2>
-      <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-5">
-        {games.map((game) => (
-          <div 
-            key={game._id} 
-            onClick={() => handleGameClick(game)}
-            className="w-full h-56 bg-[#18181c] rounded-2xl shadow flex flex-col items-stretch relative overflow-hidden cursor-pointer hover:scale-105 transition-transform"
-          >
-            <Image src={game.image.secure_url} alt={game.name} width={200} height={200} className="w-full h-full object-cover rounded-2xl" unoptimized />
-            <div className="absolute bottom-0 left-0 right-0 px-3 py-4 bg-gradient-to-t from-black/80 via-black/40 to-transparent">
-              <span className="text-white font-semibold text-sm drop-shadow text-center block">{game.name}</span>
-            </div>
-            {game.offer && (
-              <div className="absolute top-3 left-3 bg-green-400 text-black text-xs font-bold px-2 py-1 rounded">
-                {game.offer}
-              </div>
-            )}
-          </div>
-        ))}
-      </div>
-      <div className="flex justify-center mt-8">
-        <button 
-          className="px-8 py-2 rounded-full border border-gray-400 text-white bg-[#232329] hover:bg-[#18181c] transition font-semibold"
-        >
-          {t('dashboard.seeAll')}
-        </button>
-      </div>
-    </section>
+   return (
+     <section className="max-w-6xl mx-auto mt-10 rounded-3xl bg-[#232329] shadow-lg px-6 py-6">
+       <h2 className="text-2xl font-bold text-white mb-6">{t('dashboard.mobileGames')}</h2>
+       <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-5">
+         {games.map((game) => (
+           <div 
+             key={game._id} 
+             onClick={() => handleGameClick(game)}
+             className="w-full h-56 bg-[#18181c] rounded-2xl shadow flex flex-col items-stretch relative overflow-hidden cursor-pointer hover:scale-105 transition-transform"
+           >
+             <Image src={game.image.secure_url} alt={game.name} width={200} height={200} className="w-full h-full object-cover rounded-2xl" unoptimized />
+             <div className="absolute bottom-0 left-0 right-0 px-3 py-4 bg-gradient-to-t from-black/80 via-black/40 to-transparent">
+               <span className="text-white font-semibold text-sm drop-shadow text-center block">{game.name}</span>
+             </div>
+             {game.offer && (
+               <div className="absolute top-3 left-3 bg-green-400 text-black text-xs font-bold px-2 py-1 rounded">
+                 {game.offer}
+               </div>
+             )}
+           </div>
+         ))}
+       </div>
+       <div className="flex justify-center mt-8">
+         <button 
+           className="px-8 py-2 rounded-full border border-gray-400 text-white bg-[#232329] hover:bg-[#18181c] transition font-semibold"
+         >
+           {t('dashboard.seeAll')}
+         </button>
+       </div>
+     </section>
   );
-}
+})
