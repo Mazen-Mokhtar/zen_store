@@ -73,6 +73,23 @@ class NotificationService {
   info(title: string, message: string, options?: Partial<Notification>) {
     return this.add({ type: 'info', title, message, ...options });
   }
+
+  // Helper methods for single message parameter
+  showSuccess(message: string, options?: Partial<Notification>) {
+    return this.success('نجح', message, options);
+  }
+
+  showError(message: string, options?: Partial<Notification>) {
+    return this.error('خطأ', message, options);
+  }
+
+  showWarning(message: string, options?: Partial<Notification>) {
+    return this.warning('تحذير', message, options);
+  }
+
+  showInfo(message: string, options?: Partial<Notification>) {
+    return this.info('معلومات', message, options);
+  }
 }
 
 export const notificationService = new NotificationService();

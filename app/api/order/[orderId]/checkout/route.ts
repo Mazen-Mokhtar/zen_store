@@ -34,6 +34,25 @@ export async function POST(request: Request, context: { params: Promise<{ orderI
 
     if (!res.ok) {
       const txt = await res.text().catch(() => '');
+      
+      // Special handling for 401 Unauthorized - authentication required
+       if (res.status === 401) {
+         // Check if it's invalid token or missing token
+         const isInvalidToken = txt && (txt.includes('invalid token') || txt.includes('expired'));
+         const message = isInvalidToken ? 'انتهت صلاحية الجلسة' : 'مطلوب تسجيل الدخول';
+         
+         return NextResponse.json(
+           { 
+             error: message, 
+             details: txt,
+             requiresAuth: true,
+             redirectTo: '/signin',
+             isTokenExpired: isInvalidToken
+           },
+           { status: 401 }
+         );
+       }
+      
       return NextResponse.json({ error: 'Failed to checkout', details: txt }, { status: res.status });
     }
 

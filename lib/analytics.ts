@@ -103,7 +103,6 @@ class AnalyticsManager {
     };
 
     this.pageViews.push(pageView);
-    logger.log('Page View:', pageView);
   }
 
   // Track user interactions
@@ -267,7 +266,7 @@ class AnalyticsManager {
       //   body: JSON.stringify(data)
       // });
 
-      logger.log('Analytics data flushed:', data);
+      // Data flushed successfully
       
       // Clear local data after successful flush
       this.events = [];

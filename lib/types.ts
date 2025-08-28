@@ -9,7 +9,7 @@ export interface Order {
       secure_url: string;
     };
   };
-  packageId: {
+  packageId?: {
     _id: string;
     title: string;
     price: number;
@@ -28,7 +28,7 @@ export interface Order {
 
 export interface CreateOrderData {
   gameId: string;
-  packageId: string;
+  packageId?: string;
   accountInfo: { fieldName: string; value: string }[];
   paymentMethod: 'card' | 'cash';
   note?: string;
@@ -67,3 +67,46 @@ export const ORDER_STATUS_CONFIG = {
 } as const;
 
 export type OrderStatus = keyof typeof ORDER_STATUS_CONFIG;
+
+// Steam Game Types
+export interface SteamGame {
+  _id: string;
+  slug: string;
+  name: string;
+  description: string;
+  type: 'steam';
+  price?: number;
+  isOffer?: boolean;
+  originalPrice?: number;
+  finalPrice?: number;
+  discountPercentage?: number;
+  image: {
+    secure_url: string;
+    public_id: string;
+  };
+  images?: {
+    secure_url: string;
+    public_id: string;
+  }[];
+  video?: {
+    secure_url: string;
+    public_id: string;
+  };
+  backgroundImage?: {
+    secure_url: string;
+    public_id: string;
+  };
+  accountInfoFields: { fieldName: string; isRequired: boolean }[];
+  categoryId: string;
+  isActive: boolean;
+  isPopular: boolean;
+  createdAt: string;
+  tags?: string[];
+}
+
+export interface SteamGamePrice {
+  amount: number;
+  currency: string;
+  discount?: number;
+  originalAmount?: number;
+}

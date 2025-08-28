@@ -120,6 +120,3 @@ backend/node_modules/
 backend/.env
 backend/logs/
 backend/coverage/
-
-# Local debug/session artifacts (do not commit sensitive cookies)
-cookies.txt

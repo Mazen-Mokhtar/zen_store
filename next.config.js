@@ -46,7 +46,7 @@ const nextConfig = {
               "script-src 'self' 'unsafe-inline' 'unsafe-eval' https://vercel.live",
               "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com",
               "img-src 'self' data: blob: https://res.cloudinary.com https://vercel.live https://images.unsplash.com",
-              "media-src 'self' https://videos.pexels.com",
+              "media-src 'self' https://videos.pexels.com https://res.cloudinary.com",
               "font-src 'self' https://fonts.gstatic.com",
               "connect-src 'self' https://vercel.live ws://localhost:* wss://localhost:* " + (process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3000'),
               "frame-ancestors 'none'",

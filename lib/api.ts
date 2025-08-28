@@ -14,19 +14,37 @@ export interface ApiResponse<T> {
 export interface Game {
   _id: string;
   name: string;
+  slug?: string;
+  type?: 'steam' | 'games' | 'subscription';
   image: {
+    secure_url: string;
+    public_id: string;
+  };
+  images?: {
+    secure_url: string;
+    public_id: string;
+  }[];
+  video?: {
+    secure_url: string;
+    public_id: string;
+  };
+  backgroundImage?: {
     secure_url: string;
     public_id: string;
   };
   description?: string;
   price?: number;
   originalPrice?: number;
+  isOffer?: boolean;
+  finalPrice?: number;
+  discountPercentage?: number;
   category?: string;
   isPopular?: boolean;
   offer?: string;
   isActive?: boolean;
   createdAt?: string;
   accountInfoFields?: { fieldName: string; isRequired: boolean }[];
+  tags?: string[];
 }
 
 export interface Package {
@@ -195,13 +213,15 @@ class ApiService {
     logger.warn(`Authentication error ${status}:`, errorData);
     
     if (status === 401) {
-      // Session expired - clear auth and redirect
-      notificationService.warning(
-        'انتهت الجلسة',
-        'انتهت صلاحية الجلسة، يرجى تسجيل الدخول مرة أخرى'
-      );
-      
+      // Clear auth and redirect immediately without notifications
       authService.logout();
+      
+      // Redirect to signin page if we're in browser
+      if (typeof window !== 'undefined') {
+        const currentPath = window.location.pathname;
+        const returnUrl = encodeURIComponent(currentPath + window.location.search);
+        window.location.replace(`/signin?returnUrl=${returnUrl}`);
+      }
     } else if (status === 403) {
       // Access denied - don't clear auth, just notify
       notificationService.error(
@@ -253,6 +273,12 @@ class ApiService {
     const { authService } = await import('./auth');
     
     if (!authService.isAuthenticated()) {
+      // Redirect to signin immediately without showing error message
+      if (typeof window !== 'undefined') {
+        const currentPath = window.location.pathname;
+        const returnUrl = encodeURIComponent(currentPath + window.location.search);
+        window.location.replace(`/signin?returnUrl=${returnUrl}`);
+      }
       throw new ApiError(401, 'Authentication required');
     }
 
@@ -397,6 +423,25 @@ class ApiService {
   async getGamePackages(gameId: string): Promise<any> {
     return this.getPublic(`/game/${gameId}/packages`);
   }
+
+  // Steam game specific methods
+  async getSteamGameBySlug(slug: string): Promise<{ success: boolean; data: any }> {
+    try {
+      return await this.getPublic<{ success: boolean; data: any }>(`/game/steam/${slug}`);
+    } catch (error) {
+      logger.error('Failed to get Steam game by slug:', error);
+      return { success: false, data: null };
+    }
+  }
+
+  async getSteamGameById(gameId: string): Promise<{ success: boolean; data: any }> {
+    try {
+      return await this.getPublic<{ success: boolean; data: any }>(`/game/steam/${gameId}`);
+    } catch (error) {
+      logger.error('Failed to get Steam game by id:', error);
+      return { success: false, data: null };
+    }
+  }
 }
 
 // Order-specific API service
@@ -430,6 +475,13 @@ class OrderApiService {
       return response;
     } catch (error) {
       logger.error('Failed to get user orders:', error);
+      
+      // Handle authentication errors - redirect handled by authenticatedRequest
+      if (error instanceof ApiError && error.status === 401) {
+        // Silent handling - redirect already handled
+        return { success: false, data: [] };
+      }
+      
       return { success: false, data: [] };
     }
   }
@@ -456,6 +508,26 @@ class OrderApiService {
       return { success: true, data: response.data || response };
     } catch (error) {
       logger.error('Failed to create order:', error);
+      
+      // Handle authentication errors - redirect handled by authenticatedRequest
+      if (error instanceof ApiError && error.status === 401) {
+        // Silent return - redirect already handled
+        return {
+          success: false,
+          error: ''
+        };
+      }
+      
+      // Handle validation errors (400 Bad Request)
+      if (error instanceof ApiError && error.status === 400) {
+        // Check if the error data contains validation error info
+        const errorMessage = error.data?.error || error.message;
+        return {
+          success: false,
+          error: errorMessage
+        };
+      }
+      
       return {
         success: false,
         error: error instanceof Error ? error.message : 'حدث خطأ غير متوقع'
@@ -509,9 +581,76 @@ class OrderApiService {
       return response;
     } catch (error) {
       logger.error('Failed to checkout:', error);
+      
+      // Handle authentication errors - redirect handled by authenticatedRequest
+       if (error instanceof ApiError && error.status === 401) {
+         // Silent return - redirect already handled
+         return {
+           success: false,
+           error: ''
+         };
+       }
+      
       return {
         success: false,
         error: error instanceof Error ? error.message : 'فشل في إتمام الدفع'
+      };
+    }
+  }
+
+  async createSteamOrder(gameId: string, accountInfo: { fieldName: string; value: string }[]): Promise<{ success: boolean; data?: any; error?: string }> {
+    try {
+      const orderData = {
+        gameId,
+        accountInfo,
+        paymentMethod: 'card',
+        note: 'Steam game purchase'
+        // packageId is intentionally omitted for Steam games
+      };
+
+      const response = await this.api.authenticatedRequest<any>('/api/order', {
+        method: 'POST',
+        body: JSON.stringify(orderData),
+      });
+
+      // Invalidate user orders cache after creating an order
+      try {
+        const { authService } = await import('./auth');
+        const user = authService.getUser();
+        if (user) {
+          const cacheKey = `user-orders:${user._id}`;
+          invalidateCache(cacheKey);
+        }
+      } catch (e) {
+        logger.warn('Failed to invalidate user orders cache after createSteamOrder:', e);
+      }
+
+      return { success: true, data: response.data || response };
+    } catch (error) {
+      logger.error('Failed to create Steam order:', error);
+      
+      // Handle authentication errors - redirect handled by authenticatedRequest
+      if (error instanceof ApiError && error.status === 401) {
+        // Silent return - redirect already handled
+        return {
+          success: false,
+          error: ''
+        };
+      }
+      
+      // Handle validation errors (400 Bad Request)
+      if (error instanceof ApiError && error.status === 400) {
+        // Check if the error data contains validation error info
+        const errorMessage = error.data?.error || error.message;
+        return {
+          success: false,
+          error: errorMessage
+        };
+      }
+      
+      return {
+        success: false,
+        error: error instanceof Error ? error.message : 'حدث خطأ غير متوقع'
       };
     }
   }

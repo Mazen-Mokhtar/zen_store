@@ -74,7 +74,7 @@ const OrderItem = React.memo<{
             {order.gameId.name}
           </h3>
           <p className="text-gray-400 text-xs">
-            {order.packageId.title}
+            {order.packageId ? order.packageId.title : 'Steam Game'}
           </p>
         </div>
       </div>
@@ -99,7 +99,7 @@ const OrderItem = React.memo<{
 
       {/* Price */}
       <div className="text-center font-bold text-green-400">
-        {order.totalAmount} {order.packageId.currency}
+        {order.totalAmount} {order.packageId ? order.packageId.currency : 'USD'}
       </div>
     </div>
   );

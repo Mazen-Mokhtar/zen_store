@@ -16,6 +16,8 @@ import { ErrorMessage } from '@/components/ui/error-message';
 import { authService } from '@/lib/auth';
 import { AuthStatus } from '@/components/ui/auth-status';
 import { LoginRequiredModal } from '@/components/ui/login-required-modal';
+import { NotificationToast } from '@/components/ui/notification-toast';
+import { notificationService } from '@/lib/notifications';
 import { logger } from '@/lib/utils';
 
 export default function PackagesPage() {
@@ -85,22 +87,42 @@ export default function PackagesPage() {
     }
 
     if (!selected || !game) {
-      alert('يرجى اختيار باقة أولاً');
+      notificationService.showWarning('يرجى اختيار باقة أولاً');
       return;
     }
 
-    // التحقق من الحقول المطلوبة
+    // التحقق من الحقول المطلوبة وتنسيق الإيميل
     const missingFields: string[] = [];
+    const invalidEmailFields: string[] = [];
+    const emailRegex = /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/;
+    
     if (game.accountInfoFields) {
       game.accountInfoFields.forEach(field => {
-        if (field.isRequired && (!accountInfo[field.fieldName] || accountInfo[field.fieldName].trim() === '')) {
+        const fieldValue = accountInfo[field.fieldName];
+        const fieldNameLower = field.fieldName.toLowerCase();
+        
+        // التحقق من الحقول المطلوبة
+        if (field.isRequired && (!fieldValue || fieldValue.trim() === '')) {
           missingFields.push(field.fieldName);
+        }
+        
+        // التحقق من تنسيق الإيميل للحقول التي تحتوي على email أو gmail
+        if (fieldValue && fieldValue.trim() !== '' && 
+            (fieldNameLower.includes('email') || fieldNameLower.includes('gmail'))) {
+          if (!emailRegex.test(fieldValue.trim())) {
+            invalidEmailFields.push(field.fieldName);
+          }
         }
       });
     }
 
     if (missingFields.length > 0) {
-      alert(`يرجى ملء الحقول المطلوبة: ${missingFields.join(', ')}`);
+      notificationService.showWarning(`يرجى ملء الحقول المطلوبة: ${missingFields.join(', ')}`);
+      return;
+    }
+    
+    if (invalidEmailFields.length > 0) {
+      notificationService.showError(`تنسيق البريد الإلكتروني غير صحيح في الحقول: ${invalidEmailFields.join(', ')}`);
       return;
     }
 
@@ -128,7 +150,7 @@ export default function PackagesPage() {
       logger.log('📥 Order creation response:', response);
 
       if (response.success) {
-        alert('تم إنشاء الطلب بنجاح!');
+        notificationService.showSuccess('تم إنشاء الطلب بنجاح!');
         
         try {
           logger.log('🔄 Redirecting to checkout...');
@@ -140,16 +162,16 @@ export default function PackagesPage() {
           } else {
             const errorMsg = checkoutResponse.error || 'فشل في إنشاء جلسة الدفع';
             logger.error('❌ Checkout failed:', errorMsg);
-            alert(errorMsg);
+            notificationService.showError(errorMsg);
           }
         } catch (checkoutError) {
           logger.error('❌ Error during checkout:', checkoutError);
-          alert('حدث خطأ أثناء توجيهك إلى صفحة الدفع');
+          notificationService.showError('حدث خطأ أثناء توجيهك إلى صفحة الدفع');
         }
       } else {
         const errorMsg = response.error || 'فشل في إنشاء الطلب';
         logger.error('❌ Order creation failed:', errorMsg);
-        alert(errorMsg);
+        notificationService.showError(errorMsg);
       }
     } catch (error) {
       logger.error('❌ Error in handleCreateOrder:', {
@@ -162,7 +184,7 @@ export default function PackagesPage() {
       if (error instanceof Error) {
         errorMessage += `: ${error.message}`;
       }
-      alert(errorMessage);
+      notificationService.showError(errorMessage);
     } finally {
       setIsCreatingOrder(false);
     }
@@ -394,6 +416,7 @@ export default function PackagesPage() {
           </div>
         </aside>
       </main>
+      <NotificationToast />
     </div>
   );
 }

@@ -1,3 +1,4 @@
+'use client';
 // إدارة حالة تسجيل الدخول والتوكن
 import { useState, useEffect } from 'react';
 import { logger } from './utils';

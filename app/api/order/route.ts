@@ -50,8 +50,50 @@ export async function POST(request: Request) {
 
     // Handle non-OK responses
     if (!response.ok) {
-      const errorData = await response.text().catch(() => ({}));
+      const errorData = await response.text().catch(() => '');
       logger.error('❌ Error from API:', response.status, response.statusText, errorData)
+      
+      // Special handling for 401 Unauthorized - authentication required
+      if (response.status === 401) {
+        // Check if it's invalid token or missing token
+        const isInvalidToken = errorData && (errorData.includes('invalid token') || errorData.includes('expired'));
+        const message = isInvalidToken ? 'انتهت صلاحية الجلسة' : 'مطلوب تسجيل الدخول';
+        
+        return NextResponse.json(
+          { 
+            error: message, 
+            details: errorData,
+            requiresAuth: true,
+            redirectTo: '/signin',
+            isTokenExpired: isInvalidToken
+          },
+          { status: 401 }
+        );
+      }
+      
+      // Special handling for 400 Bad Request - validation errors
+      if (response.status === 400) {
+        // Log the validation error
+        logger.error('❌ Validation error from backend API:', {
+          status: response.status,
+          error: errorData,
+          message: 'Account info validation failed'
+        });
+        
+        // Check if it's email validation error
+        const isEmailError = errorData && (errorData.includes('email') || errorData.includes('Account info validation failed'));
+        const message = isEmailError ? 'يرجى إدخال بريد إلكتروني صحيح' : 'بيانات غير صحيحة';
+        
+        return NextResponse.json(
+          { 
+            error: message, 
+            details: errorData,
+            validationError: true
+          },
+          { status: 400 }
+        );
+      }
+      
       return NextResponse.json(
         { error: 'Failed to create order', details: errorData },
         { status: response.status }
@@ -84,7 +126,26 @@ export async function GET(request: Request) {
     });
 
     if (!response.ok) {
-      const errorData = await response.text().catch(() => ({}));
+      const errorData = await response.text().catch(() => '');
+      
+      // Special handling for 401 Unauthorized - authentication required
+      if (response.status === 401) {
+        // Check if it's invalid token or missing token
+        const isInvalidToken = errorData && (errorData.includes('invalid token') || errorData.includes('expired'));
+        const message = isInvalidToken ? 'انتهت صلاحية الجلسة' : 'مطلوب تسجيل الدخول';
+        
+        return NextResponse.json(
+          { 
+            error: message, 
+            details: errorData,
+            requiresAuth: true,
+            redirectTo: '/signin',
+            isTokenExpired: isInvalidToken
+          },
+          { status: 401 }
+        );
+      }
+      
       return NextResponse.json(
         { error: 'Failed to fetch orders', details: errorData },
         { status: response.status }

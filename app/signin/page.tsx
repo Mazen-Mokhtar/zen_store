@@ -6,6 +6,8 @@ import { useState, useRef } from "react";
 import { useRouter } from "next/navigation";
 import { authService } from "@/lib/auth";
 import GuestGuard from "@/components/guards/GuestGuard";
+import { NotificationToast } from "@/components/ui/notification-toast";
+import { notificationService } from "@/lib/notifications";
 import { logger } from "@/lib/utils";
 
 const sampleTestimonials: Testimonial[] = [
@@ -125,11 +127,11 @@ export default function SignInPageDemo() {
 
 const handleGoogleSignIn = () => {
   logger.log("Continue with Google clicked");
-  alert("Continue with Google clicked");
+  notificationService.showInfo("Continue with Google clicked");
 };
   
   const handleResetPassword = () => {
-    alert("Reset Password clicked");
+    notificationService.showInfo("Reset Password clicked");
   }
 
   const handleCreateAccount = () => {
@@ -150,6 +152,7 @@ const handleGoogleSignIn = () => {
           onCreateAccount={handleCreateAccount}
         />
         {loading && <div className="text-center text-blue-500 mt-4">جاري تسجيل الدخول...</div>}
+        <NotificationToast />
       </div>
     </GuestGuard>
   );
