@@ -40,7 +40,6 @@
     "express-rate-limit": "^7.1.5",
     "google-auth-library": "^10.1.0",
     "helmet": "^7.1.0",
-    "jose": "^6.0.12",
     "jsonwebtoken": "^9.0.2",
     "mongoose": "^8.15.2",
     "multer": "^2.0.1",

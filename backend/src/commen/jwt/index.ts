@@ -39,7 +39,6 @@ export class TokenService {
         switch (role) {
             case RoleTypes.ADMIN:
                 accessToken = process.env.SIGNATURE_ADMIN as string
-                break;
             case RoleTypes.SUPER_ADMIN:
                 accessToken = process.env.SIGNATURE_SUPER_ADMIN as string
                 break;

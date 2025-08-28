@@ -347,7 +347,12 @@ const PopularesSection = memo(function PopularesSection({ items }: { items: Game
    }
 
    const handleGameClick = (game: Game) => {
-     router.push(`/packages?gameId=${game._id}&gameName=${encodeURIComponent(game.name)}`);
+     // Check if it's a Steam game
+     if (game.type === 'steam') {
+       router.push(`/steam/${game.slug || game._id}`);
+     } else {
+       router.push(`/packages?gameId=${game._id}&gameName=${encodeURIComponent(game.name)}`);
+     }
    };
 
    return (
@@ -396,7 +401,12 @@ const MobileGamesSection = memo(function MobileGamesSection({ games }: { games: 
    }
 
    const handleGameClick = (game: Game) => {
-     router.push(`/packages?gameId=${game._id}&gameName=${encodeURIComponent(game.name)}`);
+     // Check if it's a Steam game
+     if (game.type === 'steam') {
+       router.push(`/steam/${game.slug || game._id}`);
+     } else {
+       router.push(`/packages?gameId=${game._id}&gameName=${encodeURIComponent(game.name)}`);
+     }
    };
 
    return (

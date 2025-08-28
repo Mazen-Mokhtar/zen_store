@@ -521,6 +521,7 @@ function PopularesSection({
   onWhatsAppPurchase: (game: Game) => void;
 }) {
   const { t } = useTranslation();
+  const router = useRouter();
 
   if (!items || items.length === 0) {
     return null;
@@ -547,7 +548,7 @@ function PopularesSection({
               }`}
             >
               <Image
-                src={item.image.secure_url}
+                src={item.image?.secure_url || '/placeholder-game.svg'}
                 alt={item.name}
                 width={200}
                 height={200}
@@ -606,15 +607,27 @@ function PopularesSection({
                     <div className="text-lg font-bold mb-2">
                       {item.price} EGP
                     </div>
-                    <button 
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        onWhatsAppPurchase(item);
-                      }}
-                      className="bg-green-500 hover:bg-green-600 text-white font-bold py-2 px-6 rounded-full transition-colors transform hover:scale-105"
-                    >
-                      {t('dashboard.buyNow')}
-                    </button>
+                    {item.type === 'steam' ? (
+                      <button 
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          router.push(`/steam/${item.slug || item._id}`);
+                        }}
+                        className="bg-blue-500 hover:bg-blue-600 text-white font-bold py-2 px-6 rounded-full transition-colors transform hover:scale-105"
+                      >
+                        View Details
+                      </button>
+                    ) : (
+                      <button 
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          onWhatsAppPurchase(item);
+                        }}
+                        className="bg-green-500 hover:bg-green-600 text-white font-bold py-2 px-6 rounded-full transition-colors transform hover:scale-105"
+                      >
+                        {t('dashboard.buyNow')}
+                      </button>
+                    )}
                   </div>
                 </div>
               )}
@@ -645,6 +658,7 @@ function CategoryGamesSection({
   onWhatsAppPurchase: (game: Game) => void;
 }) {
   const { t } = useTranslation();
+  const router = useRouter();
 
   if (!games || games.length === 0) {
     return null;
@@ -672,7 +686,7 @@ function CategoryGamesSection({
               }`}
             >
               <Image 
-                src={game.image.secure_url} 
+                src={game.image?.secure_url || '/placeholder-game.svg'} 
                 alt={game.name} 
                 width={200} 
                 height={200} 
@@ -731,15 +745,27 @@ function CategoryGamesSection({
                     <div className="text-lg font-bold mb-2">
                       {game.price} EGP
                     </div>
-                    <button 
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        onWhatsAppPurchase(game);
-                      }}
-                      className="bg-green-500 hover:bg-green-600 text-white font-bold py-2 px-6 rounded-full transition-colors transform hover:scale-105"
-                    >
-                      {t('dashboard.buyNow')}
-                    </button>
+                    {game.type === 'steam' ? (
+                      <button 
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          router.push(`/steam/${game.slug || game._id}`);
+                        }}
+                        className="bg-blue-500 hover:bg-blue-600 text-white font-bold py-2 px-6 rounded-full transition-colors transform hover:scale-105"
+                      >
+                        View Details
+                      </button>
+                    ) : (
+                      <button 
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          onWhatsAppPurchase(game);
+                        }}
+                        className="bg-green-500 hover:bg-green-600 text-white font-bold py-2 px-6 rounded-full transition-colors transform hover:scale-105"
+                      >
+                        {t('dashboard.buyNow')}
+                      </button>
+                    )}
                   </div>
                 </div>
               )}

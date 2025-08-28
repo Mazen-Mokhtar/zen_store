@@ -70,6 +70,7 @@ export class CreateGameDto {
     price?: number;
 
     // Offer fields for Steam games
+    @IsOptional()
     @ValidateIf(o => o.type === GameType.STEAM)
     @Type(() => Boolean)
     @IsBoolean()
@@ -98,6 +99,22 @@ export class CreateGameDto {
     @ValidateNested()
     @Type(() => AttachmentDto)
     image?: AttachmentDto;       // اختياري - يمكن أن تأتي الصورة من file upload
+
+    @IsOptional()
+    @IsArray()
+    @ValidateNested({ each: true })
+    @Type(() => AttachmentDto)
+    images?: AttachmentDto[];    // مصفوفة صور للألعاب من نوع Steam
+
+    @IsOptional()
+    @ValidateNested()
+    @Type(() => AttachmentDto)
+    video?: AttachmentDto;       // فيديو اختياري للألعاب من نوع Steam
+
+    @IsOptional()
+    @ValidateNested()
+    @Type(() => AttachmentDto)
+    backgroundImage?: AttachmentDto; // صورة خلفية للألعاب من نوع Steam
 
     @IsMongoId()
     @IsNotEmpty()

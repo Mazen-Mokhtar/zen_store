@@ -28,10 +28,6 @@ export class AuthService {
     user.code = generateHash(generateOTP)
     user.codeExpiration = new Date(Date.now() + 3 * 60 * 1000)
     await user.save()
-    // In development, return OTP for testing
-    if (process.env.NODE_ENV !== 'production') {
-      return { data: "Email is created but active frist", devOtp: generateOTP };
-    }
     return { data: "Email is created but active frist" };
   }
   async reSendCode(body: ReSendCodeDTO) {
@@ -43,10 +39,6 @@ export class AuthService {
     user.code = generateHash(generateOTP)
     user.codeExpiration = new Date(Date.now() + 3 * 60 * 1000)
     await user.save()
-    // In development, return OTP for testing
-    if (process.env.NODE_ENV !== 'production') {
-      return { success: true, data: messageSystem.user.resetCode, devOtp: generateOTP };
-    }
     return { success: true, data: messageSystem.user.resetCode };
   }
   async confrim(body: ConfirmDTO) {

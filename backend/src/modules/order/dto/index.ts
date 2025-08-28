@@ -2,6 +2,8 @@ import { Type } from "class-transformer";
 import { IsEnum, IsMongoId, IsNumber, IsOptional, IsPositive, IsString, Matches, Max, MaxLength, MinLength, IsArray, ValidateNested } from "class-validator";
 import { Types } from "mongoose";
 import { OrderStatus } from "src/DB/models/Order/order.schema";
+import { IsSteamGameValidation } from "../validators/steam-game.validator";
+import { IsValidAccountInfo } from "../validators/account-info.validator";
 
 export class AccountInfoDTO {
     @IsString()
@@ -20,11 +22,18 @@ export class CreateOrderDTO {
     gameId: Types.ObjectId;
 
     @IsMongoId()
-    packageId: Types.ObjectId;
+    @IsOptional()
+    @IsSteamGameValidation({
+        message: 'Steam games should not have packageId, while non-Steam games require packageId'
+    })
+    packageId?: Types.ObjectId;
 
     @IsArray()
     @ValidateNested({ each: true })
     @Type(() => AccountInfoDTO)
+    @IsValidAccountInfo({
+        message: 'Account info validation failed. Please ensure all required fields are provided and email format is correct.'
+    })
     accountInfo: AccountInfoDTO[];
 
     @IsString()
