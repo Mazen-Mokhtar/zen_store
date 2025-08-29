@@ -149,7 +149,7 @@ export function AuthStatus({ className = "", variant = 'default', avatarUrl }: A
               {user.name || user.email}
             </div>
             <div className="text-xs text-gray-400">
-              {user.role === 'user' ? 'مستخدم' : 'مدير'}
+              {user.role === 'admin' || user.role === 'superAdmin' ? 'مدير' : (user.name || user.email || 'مستخدم')}
             </div>
           </div>
         </div>

@@ -2,6 +2,7 @@ import { notificationService } from './notifications';
 import { getCachedData, setCachedData, CACHE_TTL, invalidateCache } from './cache';
 import type { Order, CreateOrderData } from './types';
 import { logger } from './utils';
+import { securityManager } from './security';
 
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3000';
 
@@ -91,6 +92,31 @@ class ApiService {
   private readonly retryAttempts = 3;
   private readonly retryDelay = 1000; // 1 second
 
+  // Get CSRF token from session storage or generate new one
+  private getCSRFToken(): string {
+    if (typeof window !== 'undefined') {
+      let token = sessionStorage.getItem('csrf_token');
+      const generatedAt = sessionStorage.getItem('csrf_generated_at');
+      
+      // Check if token exists and is not expired (30 minutes)
+      if (token && generatedAt) {
+        const tokenAge = Date.now() - parseInt(generatedAt);
+        if (tokenAge < 30 * 60 * 1000) { // 30 minutes
+          return token;
+        }
+      }
+      
+      // Generate new token
+      token = Math.random().toString(36).substring(2, 15) + Math.random().toString(36).substring(2, 15);
+      sessionStorage.setItem('csrf_token', token);
+      sessionStorage.setItem('csrf_generated_at', Date.now().toString());
+      return token;
+    }
+    
+    // Fallback for server-side rendering
+    return Math.random().toString(36).substring(2, 15) + Math.random().toString(36).substring(2, 15);
+  }
+
   // Base request method with timeout and error handling
   private async request<T>(
     endpoint: string, 
@@ -99,15 +125,17 @@ class ApiService {
     const { timeout = this.timeout, retry = 0, skipAuth = false, ...fetchOptions } = options;
     
     const controller = new AbortController();
-    const timeoutId = setTimeout(() => controller.abort(), timeout);
+      const timeoutId = setTimeout(() => controller.abort(), timeout);
 
-    try {
-      // Prefer Next.js API proxy for same-origin cookie forwarding when using relative '/api' endpoints
-      let url = endpoint.startsWith('http') ? endpoint : (endpoint.startsWith('/api') ? endpoint : `${API_BASE_URL}${endpoint}`);
-      
-      const headers = new Headers({
-        'Content-Type': 'application/json',
-      });
+      try {
+        // Prefer Next.js API proxy for same-origin cookie forwarding when using relative '/api' endpoints
+        let url = endpoint.startsWith('http') ? endpoint : (endpoint.startsWith('/api') ? endpoint : `${API_BASE_URL}${endpoint}`);
+        
+        const headers = new Headers({
+          'Content-Type': 'application/json',
+          'X-CSRF-Token': this.getCSRFToken(),
+          'X-Requested-With': 'XMLHttpRequest',
+        });
 
       if (fetchOptions.headers) {
         const incoming = new Headers(fetchOptions.headers as HeadersInit);
@@ -181,19 +209,6 @@ class ApiService {
 
     // Handle authentication errors
     if (response.status === 401 || response.status === 403) {
-      // On 401, try to extend session once before handling as auth error
-      if (response.status === 401 && retry === 0) {
-        try {
-          const { authService } = await import('./auth');
-          const refreshed = await authService.extendSession();
-          if (refreshed) {
-            // Retry original request with incremented retry to avoid loops
-            return this.request(endpoint, { ...options, retry: retry + 1 });
-          }
-        } catch (e) {
-          // ignore and fall through to default auth error handling
-        }
-      }
       await this.handleAuthError(response.status, errorData);
     }
 
@@ -299,23 +314,42 @@ class ApiService {
   }
 
   async post<T>(endpoint: string, data?: any, options?: RequestOptions): Promise<T> {
+    // Add CSRF token to request body for POST requests
+    const requestData = {
+      ...data,
+      csrf_token: this.getCSRFToken()
+    };
+    
     return this.request<T>(endpoint, {
       ...options,
       method: 'POST',
-      body: data ? JSON.stringify(data) : undefined,
+      body: requestData ? JSON.stringify(requestData) : undefined,
     });
   }
 
   async put<T>(endpoint: string, data?: any, options?: RequestOptions): Promise<T> {
+    // Add CSRF token to request body for PUT requests
+    const requestData = {
+      ...data,
+      csrf_token: this.getCSRFToken()
+    };
+    
     return this.request<T>(endpoint, {
       ...options,
       method: 'PUT',
-      body: data ? JSON.stringify(data) : undefined,
+      body: requestData ? JSON.stringify(requestData) : undefined,
     });
   }
 
   async delete<T>(endpoint: string, options?: RequestOptions): Promise<T> {
-    return this.request<T>(endpoint, { ...options, method: 'DELETE' });
+    return this.request<T>(endpoint, {
+      method: 'DELETE',
+      headers: {
+        'X-CSRF-Token': this.getCSRFToken(),
+        ...options?.headers
+      },
+      ...options,
+    });
   }
 
   // Public methods for unauthenticated endpoints

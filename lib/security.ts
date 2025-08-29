@@ -115,11 +115,163 @@ class SecurityManager {
 
   // Input sanitization
   sanitizeInput(input: string): string {
+    if (!input || typeof input !== 'string') {
+      return '';
+    }
+
+    // Enhanced XSS prevention with comprehensive character encoding
     return input
-      .replace(/[<>]/g, '') // Remove < and >
-      .replace(/javascript:/gi, '') // Remove javascript: protocol
-      .replace(/on\w+=/gi, '') // Remove event handlers
+      .replace(/[<>"'&\/\\]/g, (match) => {
+        const entities: { [key: string]: string } = {
+          '<': '&lt;',
+          '>': '&gt;',
+          '"': '&quot;',
+          "'": '&#x27;',
+          '&': '&amp;',
+          '/': '&#x2F;',
+          '\\': '&#x5C;'
+        };
+        return entities[match] || match;
+      })
+      // Remove null bytes and control characters
+      .replace(/[\x00-\x08\x0B\x0C\x0E-\x1F\x7F]/g, '')
+      // Remove potential script injection patterns
+      .replace(/javascript:/gi, 'blocked:')
+      .replace(/vbscript:/gi, 'blocked:')
+      .replace(/data:/gi, 'blocked:')
+      .replace(/on\w+\s*=/gi, 'blocked=')
+      // Limit length to prevent DoS
+      .substring(0, 10000);
+  }
+
+  /**
+   * Enhanced input sanitization for different contexts
+   */
+  sanitizeForContext(input: string, context: 'html' | 'attribute' | 'url' | 'css' | 'js'): string {
+    if (!input || typeof input !== 'string') {
+      return '';
+    }
+
+    let sanitized = this.sanitizeInput(input);
+
+    switch (context) {
+      case 'html':
+        // Additional HTML context sanitization
+        sanitized = sanitized
+          .replace(/<script[^>]*>[\s\S]*?<\/script>/gi, '')
+          .replace(/<iframe[^>]*>[\s\S]*?<\/iframe>/gi, '')
+          .replace(/<object[^>]*>[\s\S]*?<\/object>/gi, '')
+          .replace(/<embed[^>]*>/gi, '')
+          .replace(/<link[^>]*>/gi, '')
+          .replace(/<meta[^>]*>/gi, '');
+        break;
+
+      case 'attribute':
+        // Strict attribute sanitization
+        sanitized = sanitized
+          .replace(/["'`]/g, '')
+          .replace(/[\r\n\t]/g, ' ');
+        break;
+
+      case 'url':
+        // URL sanitization
+        try {
+          const url = new URL(sanitized);
+          if (!['http:', 'https:', 'mailto:'].includes(url.protocol)) {
+            return '';
+          }
+          sanitized = url.toString();
+        } catch {
+          return '';
+        }
+        break;
+
+      case 'css':
+        // CSS sanitization
+        sanitized = sanitized
+          .replace(/expression\s*\(/gi, 'blocked(')
+          .replace(/javascript:/gi, 'blocked:')
+          .replace(/vbscript:/gi, 'blocked:')
+          .replace(/import/gi, 'blocked')
+          .replace(/@import/gi, 'blocked');
+        break;
+
+      case 'js':
+        // JavaScript context - very restrictive
+        sanitized = sanitized
+          .replace(/[<>"'&\/\\(){}\[\];]/g, '')
+          .replace(/\b(eval|function|setTimeout|setInterval|alert|confirm|prompt)\b/gi, 'blocked');
+        break;
+    }
+
+    return sanitized;
+  }
+
+  /**
+   * SQL Injection prevention for search queries
+   */
+  sanitizeForDatabase(input: string): string {
+    if (!input || typeof input !== 'string') {
+      return '';
+    }
+
+    return input
+      // Remove SQL injection patterns
+      .replace(/['"`;\\]/g, '')
+      .replace(/\b(SELECT|INSERT|UPDATE|DELETE|DROP|CREATE|ALTER|EXEC|UNION|SCRIPT)\b/gi, '')
+      .replace(/--/g, '')
+      .replace(/\/\*/g, '')
+      .replace(/\*\//g, '')
+      .replace(/;/g, '')
+      // Remove null bytes
+      .replace(/\x00/g, '')
+      // Limit length
+      .substring(0, 1000)
       .trim();
+  }
+
+  /**
+   * Sanitize file names and paths
+   */
+  sanitizeFileName(fileName: string): string {
+    if (!fileName || typeof fileName !== 'string') {
+      return '';
+    }
+
+    return fileName
+      // Remove dangerous characters
+      .replace(/[<>:"\/\\|?*\x00-\x1f]/g, '')
+      // Remove leading/trailing dots and spaces
+      .replace(/^[\.\s]+|[\.\s]+$/g, '')
+      // Remove reserved Windows names
+      .replace(/^(CON|PRN|AUX|NUL|COM[1-9]|LPT[1-9])$/i, 'file')
+      // Limit length
+      .substring(0, 255);
+  }
+
+  /**
+   * Validate and sanitize phone numbers
+   */
+  sanitizePhoneNumber(phone: string): string {
+    if (!phone || typeof phone !== 'string') {
+      return '';
+    }
+
+    // Remove all non-digit characters except + at the beginning
+    let sanitized = phone.replace(/[^\d+]/g, '');
+    
+    // Ensure + is only at the beginning
+    if (sanitized.includes('+')) {
+      const parts = sanitized.split('+');
+      sanitized = '+' + parts.join('');
+    }
+
+    // Validate length (international format)
+    if (sanitized.length < 7 || sanitized.length > 15) {
+      return '';
+    }
+
+    return sanitized;
   }
 
   // HTML sanitization

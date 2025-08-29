@@ -8,6 +8,8 @@ import { cva, type VariantProps } from "class-variance-authority";
 import * as LabelPrimitive from "@radix-ui/react-label";
 import * as SeparatorPrimitive from "@radix-ui/react-separator";
 import Link from "next/link";
+import InputSanitizer, { useInputValidation } from '../security/InputSanitizer';
+import CSRFProtection from '../security/CSRFProtection';
 
 function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs));
@@ -126,6 +128,7 @@ function FormLayout01() {
   });
   const [error, setError] = React.useState("");
   const [success, setSuccess] = React.useState("");
+  const { errors, validateInput, clearErrors, hasErrors } = useInputValidation();
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setForm({ ...form, [e.target.name]: e.target.value });
   };
@@ -133,8 +136,55 @@ function FormLayout01() {
     e.preventDefault();
     setError("");
     setSuccess("");
-    if (form.password !== form.cPassword) {
-      setError("Passwords do not match");
+    clearErrors();
+    
+    // Validate all inputs
+    const isUserNameValid = validateInput('userName', form.userName, {
+      required: true,
+      minLength: 3,
+      maxLength: 30,
+      pattern: /^[a-zA-Z0-9_]+$/,
+      custom: (value) => {
+        if (value.includes('admin') || value.includes('root')) {
+          return 'اسم المستخدم غير مسموح';
+        }
+        return null;
+      }
+    });
+    
+    const isEmailValid = validateInput('email', form.email, {
+      required: true,
+      pattern: /^[^\s@]+@[^\s@]+\.[^\s@]+$/
+    });
+    
+    const isPhoneValid = validateInput('phone', form.phone, {
+      required: true,
+      pattern: /^[+]?[0-9]{10,15}$/
+    });
+    
+    const isPasswordValid = validateInput('password', form.password, {
+      required: true,
+      minLength: 8,
+      custom: (value) => {
+        if (!/(?=.*[a-z])(?=.*[A-Z])(?=.*\d)/.test(value)) {
+          return 'كلمة المرور يجب أن تحتوي على حرف كبير وصغير ورقم';
+        }
+        return null;
+      }
+    });
+    
+    const isConfirmPasswordValid = validateInput('cPassword', form.cPassword, {
+      required: true,
+      custom: (value) => {
+        if (value !== form.password) {
+          return 'كلمات المرور غير متطابقة';
+        }
+        return null;
+      }
+    });
+    
+    if (!isUserNameValid || !isEmailValid || !isPhoneValid || !isPasswordValid || !isConfirmPasswordValid) {
+      setError("يرجى تصحيح الأخطاء أعلاه");
       return;
     }
     try {
@@ -159,27 +209,53 @@ function FormLayout01() {
         <p className="mt-1 text-sm text-muted-foreground dark:text-muted-foreground">
           Take a few moments to register for your company&apos;s workspace
         </p>
-        <form onSubmit={handleSubmit} className="mt-8">
+        <CSRFProtection onTokenGenerated={(token) => console.log('CSRF token generated:', token)}>
+          <form onSubmit={handleSubmit} className="mt-8">
           <div className="grid grid-cols-1 gap-y-6">
             <div>
               <Label htmlFor="userName">Username <span className="text-red-500">*</span></Label>
-              <Input type="text" id="userName" name="userName" autoComplete="username" placeholder="Username" className="mt-2" required value={form.userName} onChange={handleChange} />
+              <InputSanitizer context="html" maxLength={30}>
+                <Input type="text" id="userName" name="userName" autoComplete="username" placeholder="Username" className="mt-2" required value={form.userName} onChange={handleChange} />
+              </InputSanitizer>
+              {errors.userName && (
+                <div className="text-red-500 text-sm mt-1">{errors.userName}</div>
+              )}
             </div>
             <div>
               <Label htmlFor="email">Email <span className="text-red-500">*</span></Label>
-              <Input type="email" id="email" name="email" autoComplete="email" placeholder="Email" className="mt-2" required value={form.email} onChange={handleChange} />
+              <InputSanitizer context="html">
+                <Input type="email" id="email" name="email" autoComplete="email" placeholder="Email" className="mt-2" required value={form.email} onChange={handleChange} />
+              </InputSanitizer>
+              {errors.email && (
+                <div className="text-red-500 text-sm mt-1">{errors.email}</div>
+              )}
             </div>
             <div>
               <Label htmlFor="phone">Phone <span className="text-red-500">*</span></Label>
-              <Input type="text" id="phone" name="phone" autoComplete="tel" placeholder="Phone" className="mt-2" required value={form.phone} onChange={handleChange} />
+              <InputSanitizer context="phone">
+                <Input type="text" id="phone" name="phone" autoComplete="tel" placeholder="Phone" className="mt-2" required value={form.phone} onChange={handleChange} />
+              </InputSanitizer>
+              {errors.phone && (
+                <div className="text-red-500 text-sm mt-1">{errors.phone}</div>
+              )}
             </div>
             <div>
               <Label htmlFor="password">Password <span className="text-red-500">*</span></Label>
-              <Input type="password" id="password" name="password" autoComplete="new-password" placeholder="Password" className="mt-2" required value={form.password} onChange={handleChange} />
+              <InputSanitizer context="html" maxLength={128}>
+                <Input type="password" id="password" name="password" autoComplete="new-password" placeholder="Password" className="mt-2" required value={form.password} onChange={handleChange} />
+              </InputSanitizer>
+              {errors.password && (
+                <div className="text-red-500 text-sm mt-1">{errors.password}</div>
+              )}
             </div>
             <div>
               <Label htmlFor="cPassword">Confirm Password <span className="text-red-500">*</span></Label>
-              <Input type="password" id="cPassword" name="cPassword" autoComplete="new-password" placeholder="Confirm Password" className="mt-2" required value={form.cPassword} onChange={handleChange} />
+              <InputSanitizer context="html" maxLength={128}>
+                <Input type="password" id="cPassword" name="cPassword" autoComplete="new-password" placeholder="Confirm Password" className="mt-2" required value={form.cPassword} onChange={handleChange} />
+              </InputSanitizer>
+              {errors.cPassword && (
+                <div className="text-red-500 text-sm mt-1">{errors.cPassword}</div>
+              )}
             </div>
           </div>
           <Separator className="my-6" />
@@ -194,6 +270,7 @@ function FormLayout01() {
             </Button>
           </div>
         </form>
+        </CSRFProtection>
         <div className="mt-6 text-center text-sm text-muted-foreground">
           Already have an account?{' '}
           <Link href="/signin" className="text-violet-400 hover:underline transition-colors">

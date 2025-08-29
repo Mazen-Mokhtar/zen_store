@@ -120,3 +120,13 @@ backend/node_modules/
 backend/.env
 backend/logs/
 backend/coverage/
+
+# Security - Sensitive files
+cookies.txt
+test_login.json
+test_signup.json
+*.log
+*.key
+*.pem
+*.p12
+*.pfx

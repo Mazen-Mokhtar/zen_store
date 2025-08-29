@@ -1,4 +1,4 @@
-import { Body, Controller, Get, HttpCode, Post, UseGuards, UsePipes, ValidationPipe } from '@nestjs/common';
+import { BadRequestException, Body, Controller, Get, HttpCode, Post, UseGuards, UsePipes, ValidationPipe } from '@nestjs/common';
 import { AuthService } from './auth.service';
 import { ConfirmDTO, confrimForgetPasswordDTO, ForgetPasswordDTO, GoogleLoginDTO, loginDTO, RefreshTokenDTO, ReSendCodeDTO, ResetPasswordDTO, SignupDTO } from './dto';
 import { UserRepository } from 'src/DB/models/User/user.repository';
@@ -37,6 +37,7 @@ export class AuthController {
   async googleLogin(@Body() googleLoginDTO: GoogleLoginDTO) {
     return await this.AuthService.googleLogin(googleLoginDTO.idToken);
   }
+
   @HttpCode(200)
   @Post('forget-password')
   async forgetPassword(@Body() forgetPasswordDTO: ForgetPasswordDTO) {
@@ -62,5 +63,19 @@ export class AuthController {
   @Post('refresh-token')
   async refreshToken(@Body() refreshTokenDTO: RefreshTokenDTO) {
     return await this.AuthService.refreshToken(refreshTokenDTO.refreshToken);
+  }
+
+  @HttpCode(200)
+  @UseGuards(AuthGuard)
+  @Get('session')
+  async getSession(@User() user: TUser) {
+    return await this.AuthService.getSession(user);
+  }
+
+  @HttpCode(200)
+  @UseGuards(AuthGuard)
+  @Post('logout')
+  async logout(@User() user: TUser) {
+    return await this.AuthService.logout(user);
   }
 }

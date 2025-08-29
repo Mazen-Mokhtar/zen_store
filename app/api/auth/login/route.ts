@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { cookies } from 'next/headers';
-import { logger } from '@/lib/utils';
+import { logger, decodeJWT } from '@/lib/utils';
+import { sessionManager } from '@/lib/sessionManager';
 
 export const dynamic = "force-dynamic";
 
@@ -27,8 +28,11 @@ export async function POST(request: NextRequest) {
     });
 
     const data = await response.json();
+    console.log('🔍 Backend response status:', response.status);
+    console.log('🔍 Backend response data:', JSON.stringify(data, null, 2));
 
     if (!response.ok) {
+      console.log('❌ Backend login failed:', data.message);
       return NextResponse.json(
         { success: false, message: data.message || 'Login failed' },
         { status: response.status }
@@ -37,7 +41,9 @@ export async function POST(request: NextRequest) {
 
     // Extract token and user from backend response
     const accessToken = data.data?.accessToken;
-    const user = data.data?.user;
+    let user = data.data?.user;
+    console.log('🔍 Extracted accessToken:', accessToken ? 'exists' : 'missing');
+    console.log('🔍 Extracted user from response:', user ? JSON.stringify(user, null, 2) : 'missing');
 
     if (!accessToken) {
       return NextResponse.json(
@@ -46,7 +52,34 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Set secure httpOnly cookie
+    // If user data is not in response, extract it from JWT token
+    if (!user && accessToken) {
+      const jwtPayload = decodeJWT(accessToken);
+      console.log('🔍 JWT payload:', jwtPayload);
+      
+      if (jwtPayload) {
+        user = {
+          id: jwtPayload.userId,
+          _id: jwtPayload.userId,
+          email: jwtPayload.email || 'unknown@example.com',
+          name: jwtPayload.name || 'Unknown User',
+          role: jwtPayload.role || 'user'
+        };
+        console.log('🔧 Created user from JWT:', JSON.stringify(user, null, 2));
+      }
+    }
+
+    if (!user) {
+      return NextResponse.json(
+        { success: false, message: 'No user data received and could not extract from token' },
+        { status: 500 }
+      );
+    }
+
+    // No need for local session management - backend handles everything
+    console.log('✅ Login successful, backend manages session via JWT');
+
+    // Set auth_token from backend
     const cookieStore = await cookies();
     cookieStore.set('auth_token', accessToken, {
       httpOnly: true,
@@ -55,6 +88,7 @@ export async function POST(request: NextRequest) {
       maxAge: 24 * 60 * 60, // 24 hours
       path: '/',
     });
+    console.log('🍪 Auth token cookie set from backend');
 
     // Return success response with user data (not token)
     return NextResponse.json({
