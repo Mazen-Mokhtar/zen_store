@@ -40,7 +40,7 @@ export const LanguageSelector: React.FC = () => {
       {isOpen && (
         <div className="absolute top-full right-0 mt-2 w-48 bg-[#1A1B20] border border-gray-700 rounded-lg shadow-lg z-50">
           <div className="py-2">
-            {supportedLanguages.map((language) => (
+            {supportedLanguages.map((language: any) => (
               <button
                 key={language.code}
                 onClick={() => handleLanguageSelect(language.code)}
@@ -62,4 +62,4 @@ export const LanguageSelector: React.FC = () => {
       )}
     </div>
   );
-}; 
+};

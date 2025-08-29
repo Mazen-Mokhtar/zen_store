@@ -34,6 +34,30 @@ ${game.category ? `📂 الفئة: ${game.category}` : ''}
 }
 
 /**
+ * Decode JWT token to extract user data
+ */
+export function decodeJWT(token: string): any {
+  try {
+    // Remove 'admin ' prefix if it exists
+    const cleanToken = token.replace(/^admin\s+/, '');
+    
+    // Split the token and get the payload
+    const parts = cleanToken.split('.');
+    if (parts.length !== 3) {
+      throw new Error('Invalid JWT format');
+    }
+    
+    // Decode the payload (base64url)
+    const payload = parts[1];
+    const decoded = Buffer.from(payload, 'base64url').toString('utf8');
+    return JSON.parse(decoded);
+  } catch (error) {
+    console.error('Error decoding JWT:', error);
+    return null;
+  }
+}
+
+/**
  * Production-safe logger to replace console.log statements
  */
 export const logger = {

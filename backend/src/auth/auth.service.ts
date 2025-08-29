@@ -74,7 +74,20 @@ export class AuthService {
       role: user.role as RoleTypes,
       expiresIn: "7d"
     })
-    return { data: { accessToken: `${user.role} ${accessToken}`, refreshToken } }
+    return { 
+      data: { 
+        accessToken: `${user.role} ${accessToken}`, 
+        refreshToken,
+        expiresAt: new Date(Date.now() + 24 * 60 * 60 * 1000), // 1 day from now
+        user: {
+          id: user._id,
+          email: user.email,
+          name: user.userName,
+          role: user.role,
+          profileImage: user.profileImage?.secure_url
+        }
+      } 
+    }
   }
   async googleLogin(idToken: string) {
     try {
@@ -119,12 +132,44 @@ export class AuthService {
         role: user.role as RoleTypes,
         expiresIn: "7d"
       })
-      return { data: { accessToken: `${user.role} ${accessToken}`, refreshToken } }
+      const responseData = { 
+        data: {
+          accessToken: accessToken, 
+          refreshToken: refreshToken,
+          expiresAt: new Date(Date.now() + 24 * 60 * 60 * 1000), // 1 day from now
+          user: {
+            id: user._id,
+            email: user.email,
+            name: user.userName,
+            role: user.role,
+            profileImage: user.profileImage?.secure_url
+          }
+        }
+      };
+
+      // Log the data sent from Google OAuth service with delay
+      setTimeout(() => {
+        console.log('=== GOOGLE OAUTH BACKEND DEBUG ===');
+        console.log('Full response data:', JSON.stringify(responseData, null, 2));
+        console.log('User info:', JSON.stringify(user, null, 2));
+        console.log('Generated accessToken length:', accessToken?.length || 0);
+        console.log('Generated refreshToken length:', refreshToken?.length || 0);
+        console.log('Response being sent to frontend:', JSON.stringify({
+          accessToken: accessToken ? `${accessToken.substring(0, 20)}...` : null,
+          refreshToken: refreshToken ? `${refreshToken.substring(0, 20)}...` : null,
+          user: user
+        }, null, 2));
+        console.log('=== END BACKEND DEBUG ===');
+      }, 500);
+
+      return responseData;
 
     } catch (error) {
       throw new BadRequestException("Failed to verify Google token: " + error.message);
     }
   }
+  
+
   async forgetPassword(body: ForgetPasswordDTO) {
     const user = await this.userRepository.findOne({ email: body.email, isConfirm: true })
     if (!user)
@@ -205,6 +250,48 @@ export class AuthService {
       expiresIn: "1d"
     })
     return { success: true, data: { accessToken } }
+  }
+
+  // Session management methods
+  async getSession(user: TUser) {
+    try {
+      // Return current session info
+      return {
+        success: true,
+        data: {
+          user: {
+            id: user._id,
+            email: user.email,
+            name: user.userName,
+            role: user.role,
+            profileImage: user.profileImage?.secure_url
+          },
+          session: {
+            userId: user._id,
+            loginTime: new Date(),
+            isActive: true,
+            expiresAt: new Date(Date.now() + 24 * 60 * 60 * 1000) // 24 hours
+          }
+        }
+      };
+    } catch (error) {
+      throw new BadRequestException('Failed to get session info');
+    }
+  }
+
+  async logout(user: TUser) {
+    try {
+      // In a real implementation, you might want to blacklist the token
+      // or store logout information in database
+      return {
+        success: true,
+        data: {
+          message: 'Logged out successfully'
+        }
+      };
+    } catch (error) {
+      throw new BadRequestException('Failed to logout');
+    }
   }
 }
 

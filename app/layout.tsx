@@ -3,7 +3,9 @@ import type { Metadata } from 'next';
 import { Inter } from 'next/font/google';
 import { ThemeProvider } from '@/components/theme-provider';
 import { ErrorBoundary } from '@/components/ui/error-boundary';
+import SessionManager from '@/components/SessionManager';
 import { Suspense } from 'react';
+import { Toaster } from 'sonner';
 
 const inter = Inter({ subsets: ['latin'] });
 
@@ -27,9 +29,12 @@ export default function RootLayout({
             enableSystem
             disableTransitionOnChange
           >
-            <Suspense fallback={null}>
-              {children}
-            </Suspense>
+            <SessionManager>
+              <Suspense fallback={null}>
+                {children}
+              </Suspense>
+              <Toaster position="top-right" richColors />
+            </SessionManager>
           </ThemeProvider>
         </ErrorBoundary>
       </body>

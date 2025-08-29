@@ -2,7 +2,7 @@
 
 import { SignInPage, Testimonial } from "@/components/ui/sign-in";
 import { ThemeToggle } from "@/components/ui/theme-toggle";
-import { useState, useRef } from "react";
+import { useState, useRef, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { authService } from "@/lib/auth";
 import GuestGuard from "@/components/guards/GuestGuard";
@@ -41,6 +41,14 @@ const errorMap: Record<string, string> = {
   "OTP has expired": "انتهت صلاحية رمز التحقق.",
   "User not found or already confrimed": "المستخدم غير موجود أو تم تفعيل البريد مسبقاً.",
   "Invalid or expired reset token": "رابط إعادة تعيين كلمة المرور غير صالح أو منتهي الصلاحية.",
+  // Google OAuth errors
+  "oauth_error": "حدث خطأ في تسجيل الدخول باستخدام Google.",
+  "no_code": "لم يتم استلام رمز التفويض من Google.",
+  "no_token": "لم يتم استلام رمز الوصول من Google.",
+  "email_not_verified": "البريد الإلكتروني غير مفعل في حساب Google.",
+  "backend_error": "حدث خطأ في الخادم أثناء تسجيل الدخول.",
+  "no_backend_token": "لم يتم استلام رمز المصادقة من الخادم.",
+  "oauth_callback_error": "حدث خطأ في معالجة استجابة Google.",
   // أضف المزيد حسب الحاجة
 };
 
@@ -53,8 +61,29 @@ function translateError(msg: string) {
 export default function SignInPageDemo() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
+  const [success, setSuccess] = useState("");
   const toastTimeout = useRef<NodeJS.Timeout | null>(null);
   const router = useRouter();
+
+  // Check for OAuth callback messages
+  useEffect(() => {
+    const urlParams = new URLSearchParams(window.location.search);
+    const errorParam = urlParams.get('error');
+    const successParam = urlParams.get('success');
+    
+    if (errorParam) {
+      showError(translateError(errorParam));
+      // Clean URL
+      window.history.replaceState({}, document.title, window.location.pathname);
+    }
+    
+    if (successParam === 'google_login') {
+      setSuccess('تم تسجيل الدخول بنجاح باستخدام Google!');
+      setTimeout(() => setSuccess(''), 3000);
+      // Clean URL
+      window.history.replaceState({}, document.title, window.location.pathname);
+    }
+  }, []);
 
   // Toast component
   const Toast = ({ message, type }: { message: string; type?: "error" | "success" }) => (
@@ -125,9 +154,23 @@ export default function SignInPageDemo() {
     }
   };
 
-const handleGoogleSignIn = () => {
-  logger.log("Continue with Google clicked");
-  notificationService.showInfo("Continue with Google clicked");
+const handleGoogleSignIn = async () => {
+  try {
+    setLoading(true);
+    logger.log("Initiating Google OAuth");
+    
+    // Get current return URL from query params
+    const urlParams = new URLSearchParams(window.location.search);
+    const returnUrl = urlParams.get('returnUrl') || '/category';
+    
+    // Redirect to Google OAuth endpoint
+    window.location.href = `/api/auth/google?returnUrl=${encodeURIComponent(returnUrl)}`;
+    
+  } catch (error) {
+    logger.error('Google OAuth initiation failed:', error);
+    showError('فشل في بدء تسجيل الدخول باستخدام Google');
+    setLoading(false);
+  }
 };
   
   const handleResetPassword = () => {
@@ -143,6 +186,7 @@ const handleGoogleSignIn = () => {
       <div className="bg-background text-foreground">
         <ThemeToggle />
         {error && <Toast message={error} type="error" />}
+        {success && <Toast message={success} type="success" />}
         <SignInPage
           heroImageSrc="https://images.unsplash.com/photo-1642615835477-d303d7dc9ee9?w=2160&q=80"
           testimonials={sampleTestimonials}

@@ -2,6 +2,8 @@
 import React, { useState } from 'react';
 import { Eye, EyeOff } from 'lucide-react';
 import Image from 'next/image';
+import InputSanitizer, { useInputValidation } from '../security/InputSanitizer';
+import CSRFProtection from '../security/CSRFProtection';
 
 // --- HELPER COMPONENTS (ICONS) ---
 
@@ -74,6 +76,8 @@ export const SignInPage: React.FC<SignInPageProps> = ({
   onCreateAccount,
 }) => {
   const [showPassword, setShowPassword] = useState(false);
+  const [formData, setFormData] = useState({ email: '', password: '' });
+  const { errors, validateInput, clearErrors } = useInputValidation();
 
   return (
     <div className="h-[100dvh] flex flex-col md:flex-row font-geist w-full">
@@ -84,24 +88,35 @@ export const SignInPage: React.FC<SignInPageProps> = ({
             <h1 className="animate-element animate-delay-100 text-4xl md:text-5xl font-semibold leading-tight">{title}</h1>
             <p className="animate-element animate-delay-200 text-muted-foreground">{description}</p>
 
-            <form className="space-y-5" onSubmit={onSignIn}>
+            <CSRFProtection onTokenGenerated={(token) => console.log('CSRF token generated:', token)}>
+              <form className="space-y-5" onSubmit={onSignIn}>
               <div className="animate-element animate-delay-300">
                 <label className="text-sm font-medium text-muted-foreground">Email Address</label>
                 <GlassInputWrapper>
-                  <input name="email" type="email" placeholder="Enter your email address" className="w-full bg-transparent text-sm p-4 rounded-2xl focus:outline-none" />
+                  <InputSanitizer context="html" onSanitized={(orig, clean) => console.log('Email sanitized:', { orig, clean })}>
+                    <input name="email" type="email" placeholder="Enter your email address" className="w-full bg-transparent text-sm p-4 rounded-2xl focus:outline-none" value={formData.email} onChange={(e) => setFormData(prev => ({ ...prev, email: e.target.value }))} />
+                  </InputSanitizer>
                 </GlassInputWrapper>
+                {errors.email && (
+                  <p className="text-red-500 text-sm mt-1">{errors.email}</p>
+                )}
               </div>
 
               <div className="animate-element animate-delay-400">
                 <label className="text-sm font-medium text-muted-foreground">Password</label>
                 <GlassInputWrapper>
                   <div className="relative">
-                    <input name="password" type={showPassword ? 'text' : 'password'} placeholder="Enter your password" className="w-full bg-transparent text-sm p-4 pr-12 rounded-2xl focus:outline-none" />
+                    <InputSanitizer context="html" maxLength={128}>
+                      <input name="password" type={showPassword ? 'text' : 'password'} placeholder="Enter your password" className="w-full bg-transparent text-sm p-4 pr-12 rounded-2xl focus:outline-none" value={formData.password} onChange={(e) => setFormData(prev => ({ ...prev, password: e.target.value }))} />
+                    </InputSanitizer>
                     <button type="button" onClick={() => setShowPassword(!showPassword)} className="absolute inset-y-0 right-3 flex items-center">
                       {showPassword ? <EyeOff className="w-5 h-5 text-muted-foreground hover:text-foreground transition-colors" /> : <Eye className="w-5 h-5 text-muted-foreground hover:text-foreground transition-colors" />}
                     </button>
                   </div>
                 </GlassInputWrapper>
+                {errors.password && (
+                  <p className="text-red-500 text-sm mt-1">{errors.password}</p>
+                )}
               </div>
 
               <div className="animate-element animate-delay-500 flex items-center justify-between text-sm">
@@ -116,6 +131,7 @@ export const SignInPage: React.FC<SignInPageProps> = ({
                 Sign In
               </button>
             </form>
+            </CSRFProtection>
 
             <div className="animate-element animate-delay-700 relative flex items-center justify-center">
               <span className="w-full border-t border-border"></span>
