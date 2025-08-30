@@ -1,5 +1,14 @@
 import { notificationService } from './notifications';
-import { getCachedData, setCachedData, CACHE_TTL, invalidateCache } from './cache';
+import { 
+  getCachedApiData, 
+  setCachedApiData, 
+  getCachedData, 
+  setCachedData, 
+  CACHE_TTL, 
+  CACHE_KEYS,
+  invalidateCache,
+  CachePriority 
+} from './cache';
 import type { Order, CreateOrderData } from './types';
 import { logger } from './utils';
 import { securityManager } from './security';
@@ -376,7 +385,13 @@ class ApiService {
   // Legacy compatibility methods for existing pages
   async getGameById(gameId: string): Promise<{ success: boolean; data: Game }> {
     try {
-      return await this.getPublic<{ success: boolean; data: Game }>(`/game/${gameId}`);
+      const cacheKey = `${CACHE_KEYS.GAMES}:${gameId}`;
+      const cached = getCachedApiData<{ success: boolean; data: Game }>(cacheKey);
+      if (cached) return cached;
+
+      const result = await this.getPublic<{ success: boolean; data: Game }>(`/game/${gameId}`);
+      setCachedApiData(cacheKey, result, CACHE_TTL.LONG);
+      return result;
     } catch (error) {
       logger.error('Failed to get game by id:', error);
       return { success: false, data: null as any };
@@ -385,7 +400,13 @@ class ApiService {
 
   async getPackagesByGameId(gameId: string): Promise<{ success: boolean; data: Package[] }> {
     try {
-      return await this.getPublic<{ success: boolean; data: Package[] }>(`/packages?gameId=${gameId}`);
+      const cacheKey = `${CACHE_KEYS.PACKAGES}:game:${gameId}`;
+      const cached = getCachedApiData<{ success: boolean; data: Package[] }>(cacheKey);
+      if (cached) return cached;
+
+      const result = await this.getPublic<{ success: boolean; data: Package[] }>(`/packages?gameId=${gameId}`);
+      setCachedApiData(cacheKey, result, CACHE_TTL.MEDIUM);
+      return result;
     } catch (error) {
       logger.error('Failed to get packages by game id:', error);
       return { success: false, data: [] };
@@ -449,13 +470,25 @@ class ApiService {
     }
   }
 
-  // Generic API methods
+  // Generic API methods with enhanced caching
   async getGames(): Promise<any> {
-    return this.getPublic('/game');
+    const cacheKey = CACHE_KEYS.GAMES;
+    const cached = getCachedApiData(cacheKey);
+    if (cached) return cached;
+
+    const result = await this.getPublic('/game');
+    setCachedApiData(cacheKey, result, CACHE_TTL.MEDIUM);
+    return result;
   }
 
   async getGamePackages(gameId: string): Promise<any> {
-    return this.getPublic(`/game/${gameId}/packages`);
+    const cacheKey = `${CACHE_KEYS.PACKAGES}:${gameId}`;
+    const cached = getCachedApiData(cacheKey);
+    if (cached) return cached;
+
+    const result = await this.getPublic(`/game/${gameId}/packages`);
+    setCachedApiData(cacheKey, result, CACHE_TTL.SHORT);
+    return result;
   }
 
   // Steam game specific methods

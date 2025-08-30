@@ -9,10 +9,7 @@ import { SuperAdminPackagesModule } from './modules/SuperAdmin/packages/packages
 import { PackagesModule } from './modules/packages/packages.module';
 import { categoryModule } from './modules/category/category.module';
 import { OrderModule } from './modules/order/order.module';
-import { RateLimitMiddleware, AuthRateLimitMiddleware } from './commen/middleware/rate-limit.middleware';
-import { HelmetMiddleware } from './commen/middleware/helmet.middleware';
-import { SanitizationMiddleware } from './commen/middleware/sanitization.middleware';
-import { CsrfMiddleware } from './commen/middleware/csrf.middleware';
+import { UnifiedSecurityMiddleware, BasicSecurityMiddleware } from './commen/middleware/unified-security.middleware';
 import { SecurityModule } from './commen/security/security.module';
 
 @Module({
@@ -40,25 +37,13 @@ import { SecurityModule } from './commen/security/security.module';
 })
 export class AppModule implements NestModule {
   configure(consumer: MiddlewareConsumer) {
-    // Apply helmet middleware to all routes
-    consumer.apply(HelmetMiddleware).forRoutes('*');
+    // Apply unified security middleware to all routes (includes helmet, sanitization, rate limiting, CSRF)
+    consumer.apply(UnifiedSecurityMiddleware).forRoutes('*');
     
-    // Apply sanitization middleware to all routes
-    consumer.apply(SanitizationMiddleware).forRoutes('*');
-    
-    // Apply general rate limiting to all routes
-    consumer.apply(RateLimitMiddleware).forRoutes('*');
-    
-    // Apply CSRF protection to all routes
-    consumer.apply(CsrfMiddleware).forRoutes('*');
-    
-    // Apply stricter rate limiting to authentication routes
-    consumer.apply(AuthRateLimitMiddleware).forRoutes(
-      { path: 'auth/login', method: RequestMethod.POST },
-      { path: 'auth/signup', method: RequestMethod.POST },
-      { path: 'auth/forget-password', method: RequestMethod.POST },
-      { path: 'auth/confirm-forget-password', method: RequestMethod.POST },
-      { path: 'auth/reset-password', method: RequestMethod.POST },
+    // Apply basic security middleware to health check and status endpoints
+    consumer.apply(BasicSecurityMiddleware).forRoutes(
+      { path: 'health', method: RequestMethod.GET },
+      { path: 'status', method: RequestMethod.GET },
     );
   }
 }

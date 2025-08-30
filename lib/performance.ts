@@ -1,4 +1,4 @@
-import { lazyAnalytics } from './lazy-analytics';
+import { lazyUnifiedMonitoring } from './lazy-unified-monitoring';
 import { logger } from './utils';
 
 export interface PerformanceMetric {
@@ -63,7 +63,7 @@ export interface MetricObserver {
           };
           
           this.recordMetric(metric);
-          void lazyAnalytics.trackPerformance('lcp', lastEntry.startTime);
+          void lazyUnifiedMonitoring.recordPerformanceMetric('lcp', lastEntry.startTime, 'ms');
         }
       });
       
@@ -94,7 +94,7 @@ export interface MetricObserver {
           };
           
           this.recordMetric(metric);
-          void lazyAnalytics.trackPerformance('fid', metric.value);
+          void lazyUnifiedMonitoring.recordPerformanceMetric('fid', metric.value, 'ms');
         });
       });
       
@@ -125,7 +125,7 @@ export interface MetricObserver {
         };
         
         this.recordMetric(metric);
-        void lazyAnalytics.trackPerformance('cls', clsValue);
+        void lazyUnifiedMonitoring.recordPerformanceMetric('cls', clsValue, 'score');
       });
       
       observer.observe({ entryTypes: ['layout-shift'] });
@@ -172,7 +172,7 @@ export interface MetricObserver {
         };
         
         this.recordMetric(metric);
-        void lazyAnalytics.trackPerformance('memory_usage', usedMemory);
+        void lazyUnifiedMonitoring.recordPerformanceMetric('memory_usage', usedMemory, 'MB');
       }, 30000); // Check every 30 seconds
     }
   }
@@ -190,7 +190,7 @@ export interface MetricObserver {
         };
         
         this.recordMetric(metric);
-        void lazyAnalytics.trackPerformance('network_type', metric.value);
+        void lazyUnifiedMonitoring.recordPerformanceMetric('network_type', metric.value);
       }
     }
   }
@@ -276,6 +276,12 @@ export interface MetricObserver {
   // Image optimization
   preloadImage(src: string): Promise<void> {
     return new Promise((resolve, reject) => {
+      if (typeof window === 'undefined') {
+        // Skip preloading during SSR
+        resolve();
+        return;
+      }
+      
       const img = new Image();
       img.onload = () => resolve();
       img.onerror = reject;
