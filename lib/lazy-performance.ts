@@ -82,11 +82,12 @@ export function preloadPerformance() {
   }
 }
 
-if (typeof window !== 'undefined') {
-  if (document.readyState === 'complete') {
-    preloadPerformance();
-  } else {
-    window.addEventListener('load', preloadPerformance);
-  }
-}
+// Disabled automatic preloading to prevent Image constructor errors
+// if (typeof window !== 'undefined') {
+//   if (document.readyState === 'complete') {
+//     preloadPerformance();
+//   } else {
+//     window.addEventListener('load', preloadPerformance);
+//   }
+// }
 import { logger } from './utils';

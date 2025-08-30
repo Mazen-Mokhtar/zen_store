@@ -84,7 +84,7 @@ export const DEFAULT_PREFERENCES: UserPreferences = {
 // Helper functions
 export const getUserPreferences = (): UserPreferences => {
   const prefs = storage.get(STORAGE_KEYS.USER_PREFERENCES);
-  return prefs ? { ...DEFAULT_PREFERENCES, ...prefs } : DEFAULT_PREFERENCES;
+  return (prefs && typeof prefs === 'object') ? { ...DEFAULT_PREFERENCES, ...prefs } : DEFAULT_PREFERENCES;
 };
 
 export const setUserPreferences = (preferences: Partial<UserPreferences>): void => {

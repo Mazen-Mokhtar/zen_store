@@ -26,7 +26,6 @@ import { SteamAccountInfoModal } from '@/components/steam/steam-account-info-mod
 import { authService } from '@/lib/auth';
 import { orderApiService } from '@/lib/api';
 import { notificationService } from '@/lib/notifications';
-import { lazyAnalytics } from '@/lib/lazy-analytics';
 import type { SteamGame } from '@/lib/types';
 import { logger } from '@/lib/utils';
 
@@ -47,8 +46,10 @@ export function SteamGameDetailsClient({ game }: SteamGameDetailsClientProps) {
   useEffect(() => {
     setIsAuthenticated(authService.isAuthenticated());
     
-    // Track page view
-    lazyAnalytics.trackPageView(`/steam/${game.slug || game._id}`, game.name);
+    // Track page view - lazy load monitoring only when needed
+    import('@/lib/lazy-unified-monitoring').then(({ lazyUnifiedMonitoring }) => {
+      lazyUnifiedMonitoring.trackPageView(`/steam/${game.slug || game._id}`, game.name);
+    }).catch(err => logger.warn('Failed to load monitoring:', err));
   }, [game]);
 
   const handleBuyNow = useCallback(async () => {
@@ -58,7 +59,9 @@ export function SteamGameDetailsClient({ game }: SteamGameDetailsClientProps) {
     }
 
     // Track buy now click
-    lazyAnalytics.trackInteraction('click', 'steam_buy_now', { gameId: game._id, gameName: game.name });
+    import('@/lib/lazy-unified-monitoring').then(({ lazyUnifiedMonitoring }) => {
+      lazyUnifiedMonitoring.trackInteraction('click', 'steam_buy_now', { gameId: game._id, gameName: game.name });
+    }).catch(err => logger.warn('Failed to load monitoring:', err));
 
     setShowAccountModal(true);
   }, [isAuthenticated, game]);
@@ -80,12 +83,14 @@ export function SteamGameDetailsClient({ game }: SteamGameDetailsClientProps) {
           
           if (checkoutResponse.success && checkoutResponse.data?.url) {
             // Track purchase attempt
-            lazyAnalytics.trackPurchase(
-              game._id, 
-              '', 
-              game.isOffer && game.finalPrice ? game.finalPrice : game.price || 0, 
-              'EGP'
-            );
+            import('@/lib/lazy-unified-monitoring').then(({ lazyUnifiedMonitoring }) => {
+              lazyUnifiedMonitoring.trackPurchase(
+                game._id, 
+                '', 
+                game.isOffer && game.finalPrice ? game.finalPrice : game.price || 0, 
+                'EGP'
+              );
+            }).catch(err => logger.warn('Failed to load monitoring:', err));
             
             window.location.href = checkoutResponse.data.url;
           } else {

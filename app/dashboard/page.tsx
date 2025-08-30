@@ -7,7 +7,7 @@ import { Footer } from '@/components/ui/footer-section';
 import { LoadingSpinner } from '@/components/ui/loading-spinner';
 import { ErrorMessage } from '@/components/ui/error-message';
 import { NotificationToast } from '@/components/ui/notification-toast';
-import { LanguageSelector } from '@/components/ui/language-selector';
+import { CategoryHeader } from '@/components/category-dashboard';
 import Image from 'next/image';
 import { apiService } from '@/lib/api';
 import type { Game } from '@/lib/api';
@@ -114,43 +114,10 @@ export default function EndexHeroPage() {
     return (
       <div className="bg-[#0D0E12] min-h-screen text-white font-sans">
         {/* Header */}
-        <header className="fixed top-0 left-0 right-0 bg-[#1A1B20]/80 backdrop-blur-sm z-50">
-          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-            <div className="flex items-center justify-between h-16">
-              <div className="flex items-center">
-                <div className="flex-shrink-0">
-                  <div className="w-8 h-8 bg-green-500 rounded"></div>
-                </div>
-              </div>
-              <div className="flex items-center gap-4">
-                <LanguageSelector />
-                {isAuth ? (
-                  <div
-                    onClick={() => router.push('/orders')}
-                    role="button"
-                    title="طلباتي"
-                    className="w-8 h-8 rounded-full border border-gray-600 overflow-hidden cursor-pointer transition-shadow hover:ring-2 hover:ring-emerald-400 hover:ring-offset-2 hover:ring-offset-[#1A1B20]"
-                  >
-                    <Image
-                      src="https://res.cloudinary.com/dfvzhl8oa/image/upload/f_auto,q_auto,c_fill,g_face,w_64,h_64,dpr_2/v1754848996/d2090ffb-1769-4853-916c-79c2a4ae2568_gmih9f.jpg"
-                      alt="Avatar"
-                      width={32}
-                      height={32}
-                      sizes="32px"
-                      className="w-full h-full object-cover"
-                      unoptimized
-                      priority
-                    />
-                  </div>
-                ) : (
-                  <button className="text-sm font-semibold hover:text-gray-200" onClick={() => router.push(`/signin?returnUrl=${encodeURIComponent('/dashboard')}`)}>
-                    {t('dashboard.enter')}
-                  </button>
-                )}
-              </div>
-            </div>
-          </div>
-        </header>
+        <CategoryHeader 
+          isAuth={isAuth}
+          onOrdersClick={() => router.push('/orders')}
+        />
 
         {/* Loading Content */}
         <main className="pt-16">
@@ -180,43 +147,10 @@ export default function EndexHeroPage() {
     return (
       <div className="bg-[#0D0E12] min-h-screen text-white font-sans">
         {/* Header */}
-        <header className="fixed top-0 left-0 right-0 bg-[#1A1B20]/80 backdrop-blur-sm z-50">
-          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-            <div className="flex items-center justify-between h-16">
-              <div className="flex items-center">
-                <div className="flex-shrink-0">
-                  <div className="w-8 h-8 bg-green-500 rounded"></div>
-                </div>
-              </div>
-              <div className="flex items-center gap-4">
-                <LanguageSelector />
-                {isAuth ? (
-                  <div
-                    onClick={() => router.push('/orders')}
-                    role="button"
-                    title="طلباتي"
-                    className="w-8 h-8 rounded-full border border-gray-600 overflow-hidden cursor-pointer transition-shadow hover:ring-2 hover:ring-emerald-400 hover:ring-offset-2 hover:ring-offset-[#1A1B20]"
-                  >
-                    <Image
-                      src="https://res.cloudinary.com/dfvzhl8oa/image/upload/f_auto,q_auto,c_fill,g_face,w_64,h_64,dpr_2/v1754848996/d2090ffb-1769-4853-916c-79c2a4ae2568_gmih9f.jpg"
-                      alt="Avatar"
-                      width={32}
-                      height={32}
-                      sizes="32px"
-                      className="w-full h-full object-cover"
-                      unoptimized
-                      priority
-                    />
-                  </div>
-                ) : (
-                  <button className="text-sm font-semibold hover:text-gray-200" onClick={() => router.push(`/signin?returnUrl=${encodeURIComponent('/dashboard')}`)}>
-                    {t('dashboard.enter')}
-                  </button>
-                )}
-              </div>
-            </div>
-          </div>
-        </header>
+        <CategoryHeader 
+          isAuth={isAuth}
+          onOrdersClick={() => router.push('/orders')}
+        />
 
         {/* Error Content */}
         <main className="pt-16">
@@ -236,43 +170,10 @@ export default function EndexHeroPage() {
       {/* Notifications */}
       <NotificationToast />
       {/* Header */}
-      <header className="fixed top-0 left-0 right-0 bg-[#1A1B20]/80 backdrop-blur-sm z-50">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex items-center justify-between h-16">
-            <div className="flex items-center">
-              <div className="flex-shrink-0">
-                <div className="w-8 h-8 bg-green-500 rounded"></div>
-              </div>
-            </div>
-            <div className="flex items-center gap-4">
-              <LanguageSelector />
-              {isAuth ? (
-                <div
-                  onClick={() => router.push('/orders')}
-                  role="button"
-                  title="طلباتي"
-                  className="w-8 h-8 rounded-full border border-gray-600 overflow-hidden cursor-pointer transition-shadow hover:ring-2 hover:ring-emerald-400 hover:ring-offset-2 hover:ring-offset-[#1A1B20]"
-                >
-                  <Image
-                    src="https://res.cloudinary.com/dfvzhl8oa/image/upload/f_auto,q_auto,c_fill,g_face,w_64,h_64,dpr_2/v1754848996/d2090ffb-1769-4853-916c-79c2a4ae2568_gmih9f.jpg"
-                    alt="Avatar"
-                    width={32}
-                    height={32}
-                    sizes="32px"
-                    className="w-full h-full object-cover"
-                    unoptimized
-                    priority
-                  />
-                </div>
-              ) : (
-                <button className="text-sm font-semibold hover:text-gray-200" onClick={() => router.push(`/signin?returnUrl=${encodeURIComponent('/dashboard')}`)}>
-                  {t('dashboard.enter')}
-                </button>
-              )}
-            </div>
-          </div>
-        </div>
-      </header>
+      <CategoryHeader 
+        isAuth={isAuth}
+        onOrdersClick={() => router.push('/orders')}
+      />
 
       {/* Hero Section */}
       <main className="pt-16">

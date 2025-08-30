@@ -1,43 +1,12 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import * as React from 'react';
+import { useState, useEffect } from 'react';
 import { SecurityEventType, LogLevel, ErrorSeverity } from '../../lib/securityLogger';
-
-interface SecurityLog {
-  id: string;
-  level: string;
-  timestamp: string;
-  message: string;
-  userId?: string;
-  sessionId?: string;
-  component?: string;
-  action?: string;
-  duration?: number;
-}
-
-interface SecurityEvent {
-  id: string;
-  type: SecurityEventType;
-  severity: ErrorSeverity;
-  timestamp: string;
-  userId?: string;
-  sessionId?: string;
-  ipAddress?: string;
-  userAgent?: string;
-  url?: string;
-  method?: string;
-  message: string;
-  blocked: boolean;
-  riskScore: number;
-}
-
-interface SecurityStats {
-  totalLogs: number;
-  totalSecurityEvents: number;
-  highRiskEvents: number;
-  criticalErrors: number;
-  recentActivity: number;
-}
+import SecurityStatsOverview, { SecurityStats } from './security/SecurityStats';
+import SecurityEventsTable, { SecurityEvent } from './security/SecurityEventsTable';
+import SecurityLogsTable, { SecurityLog } from './security/SecurityLogsTable';
+import SecurityFiltersPanel, { SecurityFilters } from './security/SecurityFilters';
 
 interface SecurityDashboardProps {
   className?: string;
@@ -56,7 +25,7 @@ const SecurityDashboard: React.FC<SecurityDashboardProps> = ({ className = '' })
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [activeTab, setActiveTab] = useState<'overview' | 'logs' | 'events' | 'export'>('overview');
-  const [filters, setFilters] = useState({
+  const [filters, setFilters] = useState<SecurityFilters>({
     type: 'all',
     severity: '',
     eventType: '',
@@ -312,29 +281,7 @@ const SecurityDashboard: React.FC<SecurityDashboardProps> = ({ className = '' })
       <div className="p-6">
         {activeTab === 'overview' && (
           <div className="space-y-6">
-            {/* Stats Grid */}
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4">
-              <div className="bg-blue-50 p-4 rounded-lg">
-                <div className="text-2xl font-bold text-blue-600">{stats.totalLogs}</div>
-                <div className="text-sm text-blue-800">Total Logs</div>
-              </div>
-              <div className="bg-purple-50 p-4 rounded-lg">
-                <div className="text-2xl font-bold text-purple-600">{stats.totalSecurityEvents}</div>
-                <div className="text-sm text-purple-800">Security Events</div>
-              </div>
-              <div className="bg-red-50 p-4 rounded-lg">
-                <div className="text-2xl font-bold text-red-600">{stats.highRiskEvents}</div>
-                <div className="text-sm text-red-800">High Risk Events</div>
-              </div>
-              <div className="bg-orange-50 p-4 rounded-lg">
-                <div className="text-2xl font-bold text-orange-600">{stats.criticalErrors}</div>
-                <div className="text-sm text-orange-800">Critical Errors</div>
-              </div>
-              <div className="bg-green-50 p-4 rounded-lg">
-                <div className="text-2xl font-bold text-green-600">{stats.recentActivity}</div>
-                <div className="text-sm text-green-800">Recent Activity (24h)</div>
-              </div>
-            </div>
+            <SecurityStatsOverview stats={stats} loading={loading} />
 
             {/* Recent High-Risk Events */}
             <div>
@@ -381,181 +328,35 @@ const SecurityDashboard: React.FC<SecurityDashboardProps> = ({ className = '' })
 
         {activeTab === 'logs' && (
           <div className="space-y-4">
-            {/* Filters */}
-            <div className="grid grid-cols-1 md:grid-cols-4 gap-4 p-4 bg-gray-50 rounded-lg">
-              <select
-                value={filters.severity}
-                onChange={(e: React.ChangeEvent<HTMLSelectElement>) => setFilters(prev => ({ ...prev, severity: e.target.value }))}
-                className="rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
-              >
-                <option value="">All Severities</option>
-                <option value="critical">Critical</option>
-                <option value="error">Error</option>
-                <option value="warn">Warning</option>
-                <option value="info">Info</option>
-                <option value="debug">Debug</option>
-              </select>
-              
-              <input
-                type="text"
-                placeholder="User ID"
-                value={filters.userId}
-                onChange={(e: React.ChangeEvent<HTMLInputElement>) => setFilters(prev => ({ ...prev, userId: e.target.value }))}
-                className="rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
-              />
-              
-              <input
-                type="datetime-local"
-                placeholder="Start Date"
-                value={filters.startDate}
-                onChange={(e: React.ChangeEvent<HTMLInputElement>) => setFilters(prev => ({ ...prev, startDate: e.target.value }))}
-                className="rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
-              />
-              
-              <input
-                type="datetime-local"
-                placeholder="End Date"
-                value={filters.endDate}
-                onChange={(e: React.ChangeEvent<HTMLInputElement>) => setFilters(prev => ({ ...prev, endDate: e.target.value }))}
-                className="rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
-              />
-            </div>
+            <SecurityFiltersPanel 
+              filters={filters} 
+              onFiltersChange={setFilters}
+              onRefresh={fetchSecurityData}
+              onExport={exportData}
+              onClearLogs={clearLogs}
+              loading={loading}
+              autoRefresh={autoRefresh}
+              onAutoRefreshToggle={setAutoRefresh}
+            />
 
-            {/* Logs Table */}
-            <div className="overflow-x-auto">
-              <table className="min-w-full divide-y divide-gray-200">
-                <thead className="bg-gray-50">
-                  <tr>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Level</th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Timestamp</th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Message</th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Component</th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">User</th>
-                  </tr>
-                </thead>
-                <tbody className="bg-white divide-y divide-gray-200">
-                  {logs.map((log) => (
-                    <tr key={log.id} className="hover:bg-gray-50">
-                      <td className="px-6 py-4 whitespace-nowrap">
-                        <span className={`px-2 py-1 rounded-full text-xs font-medium ${getSeverityColor(log.level)}`}>
-                          {log.level.toUpperCase()}
-                        </span>
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                        {formatTimestamp(log.timestamp)}
-                      </td>
-                      <td className="px-6 py-4 text-sm text-gray-900 max-w-md truncate">
-                        {log.message}
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                        {log.component || '-'}
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                        {log.userId || '-'}
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-              {logs.length === 0 && (
-                <div className="text-center py-8 text-gray-500">
-                  No logs found matching the current filters
-                </div>
-              )}
-            </div>
+            <SecurityLogsTable logs={logs} loading={loading} />
           </div>
         )}
 
         {activeTab === 'events' && (
           <div className="space-y-4">
-            {/* Filters */}
-            <div className="grid grid-cols-1 md:grid-cols-4 gap-4 p-4 bg-gray-50 rounded-lg">
-              <select
-                value={filters.eventType}
-                onChange={(e: React.ChangeEvent<HTMLSelectElement>) => setFilters(prev => ({ ...prev, eventType: e.target.value }))}
-                className="rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
-              >
-                <option value="">All Event Types</option>
-                {Object.values(SecurityEventType).map(type => (
-                  <option key={type} value={type}>{type.replace(/_/g, ' ').toUpperCase()}</option>
-                ))}
-              </select>
-              
-              <input
-                type="text"
-                placeholder="IP Address"
-                value={filters.ipAddress}
-                onChange={(e: React.ChangeEvent<HTMLInputElement>) => setFilters(prev => ({ ...prev, ipAddress: e.target.value }))}
-                className="rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
-              />
-              
-              <input
-                type="datetime-local"
-                placeholder="Start Date"
-                value={filters.startDate}
-                onChange={(e: React.ChangeEvent<HTMLInputElement>) => setFilters(prev => ({ ...prev, startDate: e.target.value }))}
-                className="rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
-              />
-              
-              <input
-                type="datetime-local"
-                placeholder="End Date"
-                value={filters.endDate}
-                onChange={(e: React.ChangeEvent<HTMLInputElement>) => setFilters(prev => ({ ...prev, endDate: e.target.value }))}
-                className="rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
-              />
-            </div>
+            <SecurityFiltersPanel 
+              filters={filters} 
+              onFiltersChange={setFilters}
+              onRefresh={fetchSecurityData}
+              onExport={exportData}
+              onClearLogs={clearLogs}
+              loading={loading}
+              autoRefresh={autoRefresh}
+              onAutoRefreshToggle={setAutoRefresh}
+            />
 
-            {/* Events Table */}
-            <div className="overflow-x-auto">
-              <table className="min-w-full divide-y divide-gray-200">
-                <thead className="bg-gray-50">
-                  <tr>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Risk</th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Type</th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Timestamp</th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Message</th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">IP Address</th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
-                  </tr>
-                </thead>
-                <tbody className="bg-white divide-y divide-gray-200">
-                  {securityEvents.map((event) => (
-                    <tr key={event.id} className="hover:bg-gray-50">
-                      <td className="px-6 py-4 whitespace-nowrap">
-                        <span className={`px-2 py-1 rounded-full text-xs font-medium ${getRiskScoreColor(event.riskScore)}`}>
-                          {event.riskScore}
-                        </span>
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
-                        {event.type.replace(/_/g, ' ')}
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                        {formatTimestamp(event.timestamp)}
-                      </td>
-                      <td className="px-6 py-4 text-sm text-gray-900 max-w-md truncate">
-                        {event.message}
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                        {event.ipAddress || '-'}
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap">
-                        <span className={`px-2 py-1 rounded-full text-xs font-medium ${
-                          event.blocked ? 'bg-red-100 text-red-800' : 'bg-yellow-100 text-yellow-800'
-                        }`}>
-                          {event.blocked ? 'Blocked' : 'Allowed'}
-                        </span>
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-              {securityEvents.length === 0 && (
-                <div className="text-center py-8 text-gray-500">
-                  No security events found matching the current filters
-                </div>
-              )}
-            </div>
+            <SecurityEventsTable events={securityEvents} loading={loading} />
           </div>
         )}
 

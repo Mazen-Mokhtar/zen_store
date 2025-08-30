@@ -4,9 +4,9 @@ const nextConfig = {
   httpAgentOptions: {
     keepAlive: false,
   },
-  // Disable React strict mode
-  reactStrictMode: false,
-  // Disable static page generation
+  // Enable React strict mode for better performance
+  reactStrictMode: true,
+  // TypeScript configuration
   typescript: {
     ignoreBuildErrors: true,
   },
@@ -17,6 +17,70 @@ const nextConfig = {
   skipMiddlewareUrlNormalize: true,
   // Skip trailing slash redirect
   skipTrailingSlashRedirect: true,
+  
+  // Bundle optimization
+  experimental: {
+    optimizeCss: true,
+    optimizePackageImports: ['lucide-react', '@radix-ui/react-icons'],
+    turbo: {
+      rules: {
+        '*.svg': {
+          loaders: ['@svgr/webpack'],
+          as: '*.js',
+        },
+      },
+    },
+  },
+  
+  // Webpack optimization
+  webpack: (config, { buildId, dev, isServer, defaultLoaders, webpack }) => {
+    // Bundle analyzer in development
+    if (!dev && !isServer) {
+      config.optimization.splitChunks = {
+        chunks: 'all',
+        cacheGroups: {
+          default: {
+            minChunks: 2,
+            priority: -20,
+            reuseExistingChunk: true,
+          },
+          vendor: {
+            test: /[\\/]node_modules[\\/]/,
+            name: 'vendors',
+            priority: -10,
+            chunks: 'all',
+          },
+          react: {
+            test: /[\\/]node_modules[\\/](react|react-dom)[\\/]/,
+            name: 'react',
+            priority: 10,
+            chunks: 'all',
+          },
+          ui: {
+            test: /[\\/]node_modules[\\/](@radix-ui|lucide-react)[\\/]/,
+            name: 'ui',
+            priority: 5,
+            chunks: 'all',
+          },
+        },
+      };
+    }
+    
+    // Optimize imports
+    config.resolve.alias = {
+      ...config.resolve.alias,
+      '@': require('path').resolve(__dirname),
+    };
+    
+    return config;
+  },
+  
+  // Compiler optimizations
+  compiler: {
+    removeConsole: process.env.NODE_ENV === 'production' ? {
+      exclude: ['error', 'warn'],
+    } : false,
+  },
   images: {
     remotePatterns: [
       {
