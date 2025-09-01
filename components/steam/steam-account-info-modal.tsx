@@ -12,6 +12,30 @@ interface SteamAccountInfoModalProps {
   isLoading: boolean;
 }
 
+// Security utility for sanitizing display text
+const sanitizeDisplayText = (text: string): string => {
+  if (typeof text !== 'string') return '';
+  return text.trim().slice(0, 500); // Limit length and trim whitespace
+};
+
+// Security utility for sanitizing field names
+const sanitizeFieldName = (fieldName: string): string => {
+  if (typeof fieldName !== 'string') return '';
+  // Allow only alphanumeric characters, spaces, and common symbols
+  return fieldName.replace(/[^a-zA-Z0-9\s\u0600-\u06FF@._-]/g, '').slice(0, 100);
+};
+
+// Validation utility for game props
+const validateGameProps = (game: SteamGame): boolean => {
+  return !!(game && game._id && game.name);
+};
+
+// Validation utility for account info fields
+const validateAccountInfoFields = (fields: any[]): boolean => {
+  if (!Array.isArray(fields)) return false;
+  return fields.length <= 20; // Limit number of fields
+};
+
 export function SteamAccountInfoModal({ 
   isOpen, 
   onClose, 
@@ -29,7 +53,8 @@ export function SteamAccountInfoModal({
     return emailRegex.test(email.trim());
   };
 
-  if (!isOpen) return null;
+  // Security: Early return with validation
+  if (!isOpen || !validateGameProps(game)) return null;
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -38,21 +63,22 @@ export function SteamAccountInfoModal({
     const newErrors: Record<string, string> = {};
     const missingFields: string[] = [];
     
-    if (game.accountInfoFields && Array.isArray(game.accountInfoFields)) {
+    if (validateAccountInfoFields(game.accountInfoFields) && Array.isArray(game.accountInfoFields)) {
       game.accountInfoFields.forEach(field => {
-        const fieldValue = accountInfo[field.fieldName];
-        const fieldName = field.fieldName.toLowerCase();
+        const sanitizedFieldName = sanitizeFieldName(field.fieldName);
+        const fieldValue = accountInfo[sanitizedFieldName];
+        const fieldName = sanitizedFieldName.toLowerCase();
         
         // Check if required field is empty
         if (field.isRequired && (!fieldValue || fieldValue.trim() === '')) {
-          newErrors[field.fieldName] = 'This field is required';
-          missingFields.push(field.fieldName);
+          newErrors[sanitizedFieldName] = 'This field is required';
+          missingFields.push(sanitizedFieldName);
         }
         // Check email format validation
         else if (fieldValue && fieldValue.trim() !== '' && 
                 (fieldName.includes('email') || fieldName.includes('gmail') || fieldName.includes('mail'))) {
           if (!isValidEmail(fieldValue)) {
-            newErrors[field.fieldName] = 'Please enter a valid email address';
+            newErrors[sanitizedFieldName] = 'Please enter a valid email address';
           }
         }
       });
@@ -67,35 +93,43 @@ export function SteamAccountInfoModal({
 
     setIsFormValid(true);
 
-    // Convert to API format
+    // Convert to API format with security checks
     const formattedAccountInfo = Object.entries(accountInfo)
-      .filter(([_, value]) => value.trim() !== '')
-      .map(([fieldName, value]) => ({ fieldName, value: value.trim() }));
+      .filter(([fieldName, value]) => fieldName && value && value.trim() !== '') // Filter out empty entries
+      .slice(0, 20) // Limit number of fields
+      .map(([fieldName, value]) => ({ 
+        fieldName: sanitizeFieldName(fieldName), 
+        value: sanitizeDisplayText(value.trim()) 
+      }));
 
     onSubmit(formattedAccountInfo);
   };
 
   const handleInputChange = (fieldName: string, value: string) => {
-    setAccountInfo(prev => ({ ...prev, [fieldName]: value }));
+    // Security: Sanitize input values
+    const sanitizedValue = sanitizeDisplayText(value);
+    const sanitizedFieldName = sanitizeFieldName(fieldName);
     
-    // Real-time email validation
-    const fieldNameLower = fieldName.toLowerCase();
-    if (value.trim() !== '' && (fieldNameLower.includes('email') || fieldNameLower.includes('gmail') || fieldNameLower.includes('mail'))) {
-      if (!isValidEmail(value)) {
-        setErrors(prev => ({ ...prev, [fieldName]: 'Please enter a valid email address' }));
+    setAccountInfo(prev => ({ ...prev, [sanitizedFieldName]: sanitizedValue }));
+    
+    // Real-time email validation using sanitized field name
+    const fieldNameLower = sanitizedFieldName.toLowerCase();
+    if (sanitizedValue.trim() !== '' && (fieldNameLower.includes('email') || fieldNameLower.includes('gmail') || fieldNameLower.includes('mail'))) {
+      if (!isValidEmail(sanitizedValue)) {
+        setErrors(prev => ({ ...prev, [sanitizedFieldName]: 'Please enter a valid email address' }));
         setIsFormValid(false);
       } else {
-        setErrors(prev => ({ ...prev, [fieldName]: '' }));
+        setErrors(prev => ({ ...prev, [sanitizedFieldName]: '' }));
         // Check if all other fields are valid
-        const updatedErrors = { ...errors, [fieldName]: '' };
+        const updatedErrors = { ...errors, [sanitizedFieldName]: '' };
         setIsFormValid(Object.values(updatedErrors).every(error => error === ''));
       }
     } else {
       // Clear error when user starts typing
-      if (errors[fieldName]) {
-        setErrors(prev => ({ ...prev, [fieldName]: '' }));
+      if (errors[sanitizedFieldName]) {
+        setErrors(prev => ({ ...prev, [sanitizedFieldName]: '' }));
         // Check if all other fields are valid
-        const updatedErrors = { ...errors, [fieldName]: '' };
+        const updatedErrors = { ...errors, [sanitizedFieldName]: '' };
         setIsFormValid(Object.values(updatedErrors).every(error => error === ''));
       }
     }
@@ -123,7 +157,7 @@ export function SteamAccountInfoModal({
         <form onSubmit={handleSubmit} className="p-6">
           {/* Game Info */}
           <div className="mb-6 p-4 bg-[#232329] rounded-xl">
-            <h3 className="font-bold text-white mb-2">{game.name}</h3>
+            <h3 className="font-bold text-white mb-2">{sanitizeDisplayText(game.name)}</h3>
             <div className="flex items-center justify-between">
               <span className="text-gray-400">Price:</span>
               <span className="text-green-400 font-bold">
@@ -145,32 +179,37 @@ export function SteamAccountInfoModal({
 
           {/* Account Info Fields */}
           <div className="space-y-4 mb-6">
-            {game.accountInfoFields && Array.isArray(game.accountInfoFields) ? game.accountInfoFields.map((field, index) => (
-              <div key={index} className="space-y-2">
-                <label className="block text-sm font-medium text-gray-300">
-                  {field.fieldName}
-                  {field.isRequired && <span className="text-red-400 ml-1">*</span>}
-                </label>
-                <input
-                  type={field.fieldName.toLowerCase().includes('password') ? 'password' : 'text'}
-                  value={accountInfo[field.fieldName] || ''}
-                  onChange={(e) => handleInputChange(field.fieldName, e.target.value)}
-                  className={`w-full px-4 py-3 bg-[#232329] border rounded-lg text-white placeholder-gray-500 focus:outline-none focus:ring-2 transition-colors ${
-                    errors[field.fieldName] 
-                      ? 'border-red-500 focus:ring-red-500/50' 
-                      : 'border-gray-600 focus:border-green-500 focus:ring-green-500/50'
-                  }`}
-                  placeholder={`Enter your ${field.fieldName.toLowerCase()}`}
-                  required={field.isRequired}
-                />
-                {errors[field.fieldName] && (
-                  <div className="flex items-center gap-2 text-red-400 text-sm">
-                    <AlertCircle size={14} />
-                    {errors[field.fieldName]}
+            {validateAccountInfoFields(game.accountInfoFields) && Array.isArray(game.accountInfoFields) ? game.accountInfoFields
+              .slice(0, 20) // Limit number of fields
+              .map((field, index) => {
+                const sanitizedFieldName = sanitizeFieldName(field.fieldName);
+                return (
+                  <div key={`${sanitizedFieldName}-${index}`} className="space-y-2">
+                    <label className="block text-sm font-medium text-gray-300">
+                      {sanitizeDisplayText(field.fieldName)}
+                      {field.isRequired && <span className="text-red-400 ml-1">*</span>}
+                    </label>
+                    <input
+                      type={sanitizedFieldName.toLowerCase().includes('password') ? 'password' : 'text'}
+                      value={accountInfo[sanitizedFieldName] || ''}
+                      onChange={(e) => handleInputChange(field.fieldName, e.target.value)}
+                      className={`w-full px-4 py-3 bg-[#232329] border rounded-lg text-white placeholder-gray-500 focus:outline-none focus:ring-2 transition-colors ${
+                        errors[sanitizedFieldName] 
+                          ? 'border-red-500 focus:ring-red-500/50' 
+                          : 'border-gray-600 focus:border-green-500 focus:ring-green-500/50'
+                      }`}
+                      placeholder={`Enter your ${sanitizedFieldName.toLowerCase()}`}
+                      required={field.isRequired}
+                    />
+                    {errors[sanitizedFieldName] && (
+                      <div className="flex items-center gap-2 text-red-400 text-sm">
+                        <AlertCircle size={14} />
+                        {errors[sanitizedFieldName]}
+                      </div>
+                    )}
                   </div>
-                )}
-              </div>
-            )) : (
+                );
+              }) : (
               <div className="text-gray-400 text-center py-4">
                 No account information required for this game.
               </div>

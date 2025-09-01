@@ -13,6 +13,10 @@ import type { CategoryDashboardState, SortBy } from './types';
 export const useCategoryData = (categoryId: string | null) => {
   const { t } = useTranslation();
   
+  // Constants for pagination
+  const INITIAL_GAMES_LIMIT = 12;
+  const LOAD_MORE_INCREMENT = 12;
+  
   const [state, setState] = useState<CategoryDashboardState>({
     current: 0,
     popularItems: { games: [], packages: [] },
@@ -26,6 +30,10 @@ export const useCategoryData = (categoryId: string | null) => {
     loadingPackages: false,
     isAuth: false
   });
+  
+  // Pagination state
+  const [displayedGamesCount, setDisplayedGamesCount] = useState(INITIAL_GAMES_LIMIT);
+  const [isLoadingMore, setIsLoadingMore] = useState(false);
 
   // Fetch data function with useCallback to prevent unnecessary re-renders
   const fetchData = useCallback(async (selectedCategory: string | null) => {
@@ -147,6 +155,39 @@ export const useCategoryData = (categoryId: string | null) => {
     setState(prev => ({ ...prev, current }));
   }, []);
 
+  // Handle load more games with security validation
+  const handleLoadMore = useCallback(async () => {
+    if (isLoadingMore) return;
+    
+    try {
+      setIsLoadingMore(true);
+      
+      // Security: Validate current state before proceeding
+      if (displayedGamesCount >= 1000) {
+        logger.warn('Maximum games limit reached for security');
+        return;
+      }
+      
+      // Simulate loading delay for better UX
+      await new Promise(resolve => setTimeout(resolve, 500));
+      
+      setDisplayedGamesCount(prev => {
+        const newCount = prev + LOAD_MORE_INCREMENT;
+        // Security: Cap the maximum number of displayed games
+        return Math.min(newCount, 1000);
+      });
+    } catch (error) {
+      logger.error('Error in handleLoadMore:', error);
+    } finally {
+      setIsLoadingMore(false);
+    }
+  }, [isLoadingMore, LOAD_MORE_INCREMENT, displayedGamesCount]);
+
+  // Reset displayed games count when search term or sort changes
+  useEffect(() => {
+    setDisplayedGamesCount(INITIAL_GAMES_LIMIT);
+  }, [state.searchTerm, state.sortBy, INITIAL_GAMES_LIMIT]);
+
   return {
     ...state,
     filteredAndSortedGames,
@@ -154,6 +195,9 @@ export const useCategoryData = (categoryId: string | null) => {
     updateSearchTerm,
     updateSortBy,
     updateCurrent,
-    setState
+    setState,
+    displayedGamesCount,
+    isLoadingMore,
+    handleLoadMore
   };
 };

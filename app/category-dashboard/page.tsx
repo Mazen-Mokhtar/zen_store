@@ -34,8 +34,8 @@ export default function CategoryDashboardPage() {
   
   // Use custom hooks
   const {
-    categoryGames,
     popularItems,
+    categoryGames,
     loading,
     error,
     searchTerm,
@@ -49,7 +49,10 @@ export default function CategoryDashboardPage() {
     handleWhatsAppPurchase,
     updateSearchTerm,
     updateSortBy,
-    setState
+    setState,
+    displayedGamesCount,
+    isLoadingMore,
+    handleLoadMore
   } = useCategoryData(categoryId);
   
   const {
@@ -198,6 +201,10 @@ export default function CategoryDashboardPage() {
           gamePackages={gamePackages}
           loadingPackages={loadingPackages}
           onWhatsAppPurchase={handleWhatsAppPurchase}
+          displayedGamesCount={displayedGamesCount}
+          onLoadMore={handleLoadMore}
+          showLoadMoreButton={true}
+          isLoadingMore={isLoadingMore}
         />
         
                  {/* No Games Message */}

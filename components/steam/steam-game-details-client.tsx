@@ -23,6 +23,7 @@ import { LoadingSpinner } from '@/components/ui/loading-spinner';
 import { NotificationToast } from '@/components/ui/notification-toast';
 import { LoginRequiredModal } from '@/components/ui/login-required-modal';
 import { SteamAccountInfoModal } from '@/components/steam/steam-account-info-modal';
+import { SteamOrderConfirmationModal } from '@/components/ui/steam-order-confirmation-modal';
 import { authService } from '@/lib/auth';
 import { orderApiService } from '@/lib/api';
 import { notificationService } from '@/lib/notifications';
@@ -38,7 +39,9 @@ export function SteamGameDetailsClient({ game }: SteamGameDetailsClientProps) {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [showLoginModal, setShowLoginModal] = useState(false);
   const [showAccountModal, setShowAccountModal] = useState(false);
+  const [showConfirmationModal, setShowConfirmationModal] = useState(false);
   const [isCreatingOrder, setIsCreatingOrder] = useState(false);
+  const [pendingAccountInfo, setPendingAccountInfo] = useState<{ fieldName: string; value: string }[]>([]);
   const [selectedImageIndex, setSelectedImageIndex] = useState<number | null>(null);
   const [videoPlaying, setVideoPlaying] = useState(false);
   const [videoMuted, setVideoMuted] = useState(true);
@@ -67,15 +70,22 @@ export function SteamGameDetailsClient({ game }: SteamGameDetailsClientProps) {
   }, [isAuthenticated, game]);
 
   const handleCreateOrder = useCallback(async (accountInfo: { fieldName: string; value: string }[]) => {
+    setPendingAccountInfo(accountInfo);
+    setShowAccountModal(false);
+    setShowConfirmationModal(true);
+  }, []);
+
+  const handleConfirmOrder = useCallback(async () => {
     try {
       setIsCreatingOrder(true);
       
       const response = await orderApiService.createSteamOrder(
         game._id,
-        accountInfo
+        pendingAccountInfo
       );
 
       if (response.success) {
+        setShowConfirmationModal(false);
         notificationService.success('تم إنشاء الطلب', 'جاري توجيهك إلى صفحة الدفع...');
         
         try {
@@ -111,9 +121,8 @@ export function SteamGameDetailsClient({ game }: SteamGameDetailsClientProps) {
       );
     } finally {
       setIsCreatingOrder(false);
-      setShowAccountModal(false);
     }
-  }, [game]);
+  }, [game, pendingAccountInfo]);
 
   const currentPrice = game.isOffer && game.finalPrice ? game.finalPrice : game.price || 0;
   const hasDiscount = game.isOffer && game.originalPrice && game.finalPrice && game.originalPrice > game.finalPrice;
@@ -487,6 +496,16 @@ export function SteamGameDetailsClient({ game }: SteamGameDetailsClientProps) {
         onClose={() => setShowAccountModal(false)}
         game={game}
         onSubmit={handleCreateOrder}
+        isLoading={isCreatingOrder}
+      />
+
+      {/* Order Confirmation Modal */}
+      <SteamOrderConfirmationModal
+        isOpen={showConfirmationModal}
+        onClose={() => setShowConfirmationModal(false)}
+        onConfirm={handleConfirmOrder}
+        game={game}
+        accountInfo={pendingAccountInfo}
         isLoading={isCreatingOrder}
       />
     </div>

@@ -16,6 +16,7 @@ import { handleApiError } from '@/lib/api-error';
 import { useTranslation } from '@/lib/i18n';
 import { authService } from '@/lib/auth';
 import { logger } from '@/lib/utils'
+import { sanitizeInput } from '@/lib/security';
 
 // صور خلفية داكنة بسيطة بدون نصوص
 const heroImages = [
@@ -34,11 +35,19 @@ export default function EndexHeroPage() {
   const ALL_GAMES_CATEGORY_ID = process.env.NEXT_PUBLIC_ALL_GAMES_CATEGORY_ID || '68847d21bcb9d10e1b12e76a';
   
   const [current, setCurrent] = useState(0);
-  const [popularItems, setPopularItems] = useState<{ games: Game[]; packages: any[] }>({ games: [], packages: [] });
+  const [popularItems, setPopularItems] = useState<{ games: Game[], packages: any[] }>({ games: [], packages: [] });
   const [mobileGames, setMobileGames] = useState<Game[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [isAuth, setIsAuth] = useState(false);
+  
+  // State for managing displayed games limit
+  const [displayedGamesLimit, setDisplayedGamesLimit] = useState(6);
+  const [showAllGames, setShowAllGames] = useState(false);
+  
+  // Constants for game display limits
+  const INITIAL_GAMES_LIMIT = 6;
+  const SHOW_SEE_ALL_THRESHOLD = 6;
 
   // Hero carousel effect
   useEffect(() => {
@@ -51,6 +60,17 @@ export default function EndexHeroPage() {
   // Check auth state on mount
   useEffect(() => {
     setIsAuth(authService.isAuthenticated());
+  }, []);
+
+  // Handle toggle show all games with security validation
+  const handleToggleShowAllGames = useCallback(() => {
+    try {
+      setShowAllGames(prev => !prev);
+    } catch (error) {
+      console.error('Error toggling show all games:', error);
+      // Fallback to safe state
+      setShowAllGames(false);
+    }
   }, []);
 
   // Fetch data function with useCallback to prevent unnecessary re-renders
@@ -215,7 +235,11 @@ export default function EndexHeroPage() {
         <PopularesSection items={popularItems.games} />
         
         {/* Mobile Games Section */}
-        <MobileGamesSection games={mobileGames} />
+        <MobileGamesSection 
+          games={mobileGames} 
+          showAllGames={showAllGames}
+          onToggleShowAll={handleToggleShowAllGames}
+        />
         
         {/* No Games Message */}
         {(mobileGames?.length || 0) === 0 && !loading && (
@@ -292,7 +316,15 @@ const PopularesSection = memo(function PopularesSection({ items }: { items: Game
 })
 
 // إضافة مكون MobileGamesSection في نفس الملف
-const MobileGamesSection = memo(function MobileGamesSection({ games }: { games: Game[] }) {
+const MobileGamesSection = memo(function MobileGamesSection({ 
+  games, 
+  showAllGames, 
+  onToggleShowAll 
+}: { 
+  games: Game[];
+  showAllGames: boolean;
+  onToggleShowAll: () => void;
+}) {
    const { t } = useTranslation();
    const router = useRouter();
 
@@ -310,17 +342,32 @@ const MobileGamesSection = memo(function MobileGamesSection({ games }: { games: 
      }
    };
 
+   // Determine games to display based on showAllGames state
+   const INITIAL_DISPLAY_LIMIT = 6;
+   const gamesToDisplay = showAllGames ? games : games.slice(0, INITIAL_DISPLAY_LIMIT);
+   const shouldShowSeeAllButton = games.length > INITIAL_DISPLAY_LIMIT;
+
    return (
      <section className="max-w-6xl mx-auto mt-10 rounded-3xl bg-[#232329] shadow-lg px-6 py-6">
-       <h2 className="text-2xl font-bold text-white mb-6">{t('dashboard.mobileGames')}</h2>
+       <h2 className="text-2xl font-bold text-white mb-6 flex items-center justify-between">
+         <span>{t('dashboard.mobileGames')}</span>
+         <span className="text-sm text-gray-400 font-normal">({games.length})</span>
+       </h2>
        <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-5">
-         {games.map((game) => (
+         {gamesToDisplay.map((game) => (
            <div 
              key={game._id} 
              onClick={() => handleGameClick(game)}
              className="w-full h-56 bg-[#18181c] rounded-2xl shadow flex flex-col items-stretch relative overflow-hidden cursor-pointer hover:scale-105 transition-transform"
            >
-             <Image src={game.image.secure_url} alt={game.name} width={200} height={200} className="w-full h-full object-cover rounded-2xl" unoptimized />
+             <Image 
+               src={game.image?.secure_url || '/placeholder-game.svg'} 
+               alt={game.name} 
+               width={200} 
+               height={200} 
+               className="w-full h-full object-cover rounded-2xl" 
+               unoptimized 
+             />
              <div className="absolute bottom-0 left-0 right-0 px-3 py-4 bg-gradient-to-t from-black/80 via-black/40 to-transparent">
                <span className="text-white font-semibold text-sm drop-shadow text-center block">{game.name}</span>
              </div>
@@ -332,13 +379,16 @@ const MobileGamesSection = memo(function MobileGamesSection({ games }: { games: 
            </div>
          ))}
        </div>
-       <div className="flex justify-center mt-8">
-         <button 
-           className="px-8 py-2 rounded-full border border-gray-400 text-white bg-[#232329] hover:bg-[#18181c] transition font-semibold"
-         >
-           {t('dashboard.seeAll')}
-         </button>
-       </div>
+       {shouldShowSeeAllButton && (
+         <div className="flex justify-center mt-8">
+           <button 
+             onClick={onToggleShowAll}
+             className="px-8 py-3 rounded-full border border-gray-400 text-white bg-[#232329] hover:bg-[#18181c] hover:border-green-500 transition-all font-semibold transform hover:scale-105"
+           >
+             {showAllGames ? t('dashboard.showLess') : t('dashboard.seeAll')}
+           </button>
+         </div>
+       )}
      </section>
   );
 })

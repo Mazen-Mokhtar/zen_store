@@ -16,6 +16,7 @@ import { ErrorMessage } from '@/components/ui/error-message';
 import { authService } from '@/lib/auth';
 import { AuthStatus } from '@/components/ui/auth-status';
 import { LoginRequiredModal } from '@/components/ui/login-required-modal';
+import { OrderConfirmationModal } from '@/components/ui/order-confirmation-modal';
 import { NotificationToast } from '@/components/ui/notification-toast';
 import { notificationService } from '@/lib/notifications';
 import { logger } from '@/lib/utils';
@@ -36,6 +37,7 @@ export default function PackagesPage() {
   const [isCreatingOrder, setIsCreatingOrder] = useState(false);
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [showLoginModal, setShowLoginModal] = useState(false);
+  const [showConfirmationModal, setShowConfirmationModal] = useState(false);
 
   useEffect(() => {
     // تأكد من أننا في المتصفح قبل جلب البيانات
@@ -126,6 +128,13 @@ export default function PackagesPage() {
       return;
     }
 
+    // إظهار نافذة التأكيد
+    setShowConfirmationModal(true);
+  };
+
+  const handleConfirmOrder = async () => {
+    if (!selected || !game) return;
+
     try {
       setIsCreatingOrder(true);
       
@@ -152,6 +161,9 @@ export default function PackagesPage() {
       if (response.success) {
         notificationService.showSuccess('تم إنشاء الطلب بنجاح!');
         
+        // إغلاق نافذة التأكيد
+        setShowConfirmationModal(false);
+        
         try {
           logger.log('🔄 Redirecting to checkout...');
           const checkoutResponse = await orderApiService.checkout(response.data._id);
@@ -174,7 +186,7 @@ export default function PackagesPage() {
         notificationService.showError(errorMsg);
       }
     } catch (error) {
-      logger.error('❌ Error in handleCreateOrder:', {
+      logger.error('❌ Error in handleConfirmOrder:', {
         error,
         message: error instanceof Error ? error.message : 'Unknown error',
         stack: error instanceof Error ? error.stack : undefined
@@ -375,6 +387,17 @@ export default function PackagesPage() {
               const returnUrl = encodeURIComponent(current);
               router.push(`/signin?returnUrl=${returnUrl}`);
             }}
+          />
+
+          {/* Order Confirmation Modal */}
+          <OrderConfirmationModal
+            isOpen={showConfirmationModal}
+            onClose={() => setShowConfirmationModal(false)}
+            onConfirm={handleConfirmOrder}
+            game={game}
+            selectedPackage={packages.find(p => p._id === selected) || null}
+            accountInfo={accountInfo}
+            isLoading={isCreatingOrder}
           />
 
         </section>

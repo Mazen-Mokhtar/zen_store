@@ -91,10 +91,10 @@ export class AuthService {
   }
   async googleLogin(idToken: string) {
     try {
-      const client = new OAuth2Client();
+      const client = new OAuth2Client( process.env.GOOGLE_CLIENT_ID);
       const ticket = await client.verifyIdToken({
         idToken,
-        audience: process.env.CLIENT_ID, // تأكد إنها متضبطة في .env
+        audience: process.env.GOOGLE_CLIENT_ID, // تأكد إنها متضبطة في .env
       });
 
       if (!ticket) {
@@ -121,22 +121,22 @@ export class AuthService {
       }
 
       const accessToken: string = this.tokenService.sign({
-        payload: { userId: user._id.toString(), role: user.role },
-        type: ITokenTypes.access,
-        role: user.role,
-        expiresIn: "1d"
-      })
-      const refreshToken: string = this.tokenService.sign({
-        payload: { userId: user._id.toString(), role: user.role },
-        type: ITokenTypes.refresh,
-        role: user.role as RoleTypes,
-        expiresIn: "7d"
-      })
-      const responseData = { 
-        data: {
-          accessToken: accessToken, 
-          refreshToken: refreshToken,
+      payload: { userId: user._id.toString(), role: user.role },
+      type: ITokenTypes.access,
+      role: user.role,
+      expiresIn: "1d"
+    })
+    const refreshToken: string = this.tokenService.sign({
+      payload: { userId: user._id.toString(), role: user.role },
+      type: ITokenTypes.refresh,
+      role: user.role as RoleTypes,
+      expiresIn: "7d"
+    })
+    const responseData = { 
+        data: { 
+          accessToken: `${user.role} ${accessToken}`, 
           expiresAt: new Date(Date.now() + 24 * 60 * 60 * 1000), // 1 day from now
+          refreshToken,
           user: {
             id: user._id,
             email: user.email,
@@ -144,23 +144,10 @@ export class AuthService {
             role: user.role,
             profileImage: user.profileImage?.secure_url
           }
-        }
+        } 
       };
 
-      // Log the data sent from Google OAuth service with delay
-      setTimeout(() => {
-        console.log('=== GOOGLE OAUTH BACKEND DEBUG ===');
-        console.log('Full response data:', JSON.stringify(responseData, null, 2));
-        console.log('User info:', JSON.stringify(user, null, 2));
-        console.log('Generated accessToken length:', accessToken?.length || 0);
-        console.log('Generated refreshToken length:', refreshToken?.length || 0);
-        console.log('Response being sent to frontend:', JSON.stringify({
-          accessToken: accessToken ? `${accessToken.substring(0, 20)}...` : null,
-          refreshToken: refreshToken ? `${refreshToken.substring(0, 20)}...` : null,
-          user: user
-        }, null, 2));
-        console.log('=== END BACKEND DEBUG ===');
-      }, 500);
+
 
       return responseData;
 
@@ -168,8 +155,6 @@ export class AuthService {
       throw new BadRequestException("Failed to verify Google token: " + error.message);
     }
   }
-  
-
   async forgetPassword(body: ForgetPasswordDTO) {
     const user = await this.userRepository.findOne({ email: body.email, isConfirm: true })
     if (!user)
@@ -251,8 +236,6 @@ export class AuthService {
     })
     return { success: true, data: { accessToken } }
   }
-
-  // Session management methods
   async getSession(user: TUser) {
     try {
       // Return current session info
