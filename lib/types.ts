@@ -17,7 +17,7 @@ export interface Order {
   };
   accountInfo: { fieldName: string; value: string }[];
   status: 'pending' | 'paid' | 'delivered' | 'rejected';
-  paymentMethod: 'card' | 'cash';
+  paymentMethod: 'card' | 'cash' | 'wallet-transfer' | 'insta-transfer' | 'fawry-transfer';
   totalAmount: number;
   adminNote?: string;
   createdAt: string;
@@ -30,7 +30,7 @@ export interface CreateOrderData {
   gameId: string;
   packageId?: string;
   accountInfo: { fieldName: string; value: string }[];
-  paymentMethod: 'card' | 'cash';
+  paymentMethod: 'card' | 'cash' | 'wallet-transfer' | 'insta-transfer' | 'fawry-transfer';
   note?: string;
 }
 

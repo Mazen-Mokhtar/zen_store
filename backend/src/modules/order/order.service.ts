@@ -421,36 +421,65 @@ export class OrderService {
         walletTransferData: WalletTransferDTO,
         file: Express.Multer.File
     ) {
+        console.log('🚀 [Backend] بدء معالجة طلب تحويل المحفظة');
+        console.log('👤 [Backend] معرف المستخدم:', user._id);
+        console.log('📋 [Backend] معرف الطلب:', orderId);
+        console.log('💳 [Backend] رقم التحويل:', walletTransferData.walletTransferNumber);
+        console.log('📱 [Backend] اسم إنستا:', walletTransferData.nameOfInsta || 'غير محدد');
+        console.log('🖼️ [Backend] معلومات الملف:', {
+            originalname: file?.originalname,
+            mimetype: file?.mimetype,
+            size: file?.size
+        });
+        
         // Validate order exists and belongs to user
         const order = await this.orderRepository.findOne({
             _id: orderId,
             userId: user._id,
-            paymentMethod: { $in: ['wallet-transfer', 'insta-transfer'] },
+            paymentMethod: { $in: ['wallet-transfer', 'insta-transfer', 'fawry-transfer'] },
             status: OrderStatus.PENDING
+        });
+        
+        console.log('🔍 [Backend] البحث عن الطلب:', {
+            found: !!order,
+            paymentMethod: order?.paymentMethod,
+            status: order?.status
         });
 
         if (!order) {
+            console.log('❌ [Backend] الطلب غير موجود أو غير مؤهل لتحويل المحفظة');
             throw new NotFoundException('Order not found or not eligible for wallet transfer');
         }
 
         // Validate file type and size
         if (!file) {
+            console.log('❌ [Backend] صورة التحويل مطلوبة');
             throw new BadRequestException('Wallet transfer image is required');
         }
 
         try {
+            console.log('📁 [Backend] إنشاء مجلد للرفع');
             // Generate folder ID for organizing uploads
             const folderId = `wallet-transfer-${orderId}`;
+            console.log('📂 [Backend] معرف المجلد:', folderId);
 
+            console.log('☁️ [Backend] بدء رفع الصورة إلى التخزين السحابي');
             // Upload image to cloud storage
             const uploadResult = await this.cloudService.uploadFile(
                 file,
                 { folder: `orders/${folderId}` }
             );
+            console.log('✅ [Backend] تم رفع الصورة بنجاح:', {
+                secure_url: uploadResult.secure_url,
+                public_id: uploadResult.public_id
+            });
 
+            console.log('🔐 [Backend] تشفير رقم التحويل');
             // Encrypt the wallet transfer number
             const encryptedNumber = this.encryptionService.encrypt(walletTransferData.walletTransferNumber);
+            console.log('🔒 [Backend] تم تشفير رقم التحويل بنجاح');
             
+            console.log('📝 [Backend] إعداد بيانات التحديث');
             // Prepare update data
             const updateData: any = {
                 walletTransferImage: {
@@ -463,10 +492,26 @@ export class OrderService {
             
             // If it's insta-transfer, encrypt and save nameOfInsta
             if (order.paymentMethod === 'insta-transfer' && walletTransferData.nameOfInsta) {
+                console.log('📱 [Backend] تشفير اسم إنستا باي');
                 updateData.nameOfInsta = this.encryptionService.encrypt(walletTransferData.nameOfInsta);
                 updateData.instaTransferSubmittedAt = new Date();
+                console.log('✅ [Backend] تم تشفير اسم إنستا باي');
             }
+            
+            // If it's fawry-transfer, add fawry-specific timestamp
+            if (order.paymentMethod === 'fawry-transfer') {
+                console.log('💰 [Backend] إضافة طابع زمني لفوري');
+                updateData.fawryTransferSubmittedAt = new Date();
+            }
+            
+            console.log('💾 [Backend] بيانات التحديث المعدة:', {
+                hasImage: !!updateData.walletTransferImage,
+                hasEncryptedNumber: !!updateData.walletTransferNumber,
+                paymentMethod: order.paymentMethod,
+                hasInstaName: !!updateData.nameOfInsta
+            });
 
+            console.log('🔄 [Backend] تحديث الطلب في قاعدة البيانات');
             // Update order with wallet transfer information
             const updatedOrder = await this.orderRepository.findByIdAndUpdate(
                 orderId,
@@ -475,9 +520,13 @@ export class OrderService {
             );
 
             if (!updatedOrder) {
+                console.log('❌ [Backend] فشل في تحديث الطلب');
                 throw new BadRequestException('Failed to update order with wallet transfer details');
             }
+            
+            console.log('✅ [Backend] تم تحديث الطلب بنجاح');
 
+            console.log('📊 [Backend] إعداد بيانات الاستجابة');
             const responseData: any = {
                 orderId: updatedOrder._id,
                 status: updatedOrder.status,
@@ -490,6 +539,7 @@ export class OrderService {
             
             // Add masked Instagram name if it's insta-transfer
             if (order.paymentMethod === 'insta-transfer' && walletTransferData.nameOfInsta) {
+                console.log('🎭 [Backend] إضافة اسم إنستا مقنع للاستجابة');
                 responseData.maskedInstaName = this.encryptionService.maskData(
                     walletTransferData.nameOfInsta,
                     2
@@ -497,11 +547,21 @@ export class OrderService {
                 responseData.instaTransferSubmittedAt = updatedOrder.instaTransferSubmittedAt;
             }
             
-            return {
+            // Add fawry-specific data if it's fawry-transfer
+            if (order.paymentMethod === 'fawry-transfer') {
+                console.log('💰 [Backend] إضافة بيانات فوري للاستجابة');
+                responseData.fawryTransferSubmittedAt = updatedOrder.fawryTransferSubmittedAt;
+            }
+            
+            const finalResponse = {
                 success: true,
                 message: 'Transfer details submitted successfully. Your order is being reviewed.',
                 data: responseData
             };
+            
+            console.log('🎉 [Backend] الاستجابة النهائية:', JSON.stringify(finalResponse, null, 2));
+            
+            return finalResponse;
         } catch (error) {
             throw new BadRequestException(`Failed to submit wallet transfer: ${error.message}`);
         }
@@ -521,7 +581,7 @@ export class OrderService {
 
         const order = await this.orderRepository.findOne({
             _id: orderId,
-            paymentMethod: { $in: ['wallet-transfer', 'insta-transfer'] },
+            paymentMethod: { $in: ['wallet-transfer', 'insta-transfer', 'fawry-transfer'] },
             walletTransferNumber: { $exists: true }
         });
         console.log(order);
@@ -553,6 +613,11 @@ export class OrderService {
             if (order.paymentMethod === 'insta-transfer' && order.nameOfInsta) {
                 responseData.nameOfInsta = this.encryptionService.decrypt(order.nameOfInsta);
                 responseData.instaTransferSubmittedAt = order.instaTransferSubmittedAt;
+            }
+            
+            // Add fawry-specific data if it's fawry-transfer
+            if (order.paymentMethod === 'fawry-transfer') {
+                responseData.fawryTransferSubmittedAt = order.fawryTransferSubmittedAt;
             }
 
             return {

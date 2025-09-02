@@ -1,9 +1,12 @@
 "use client";
 
-import React from 'react';
-import { X, Package, CreditCard, User, CheckCircle } from 'lucide-react';
+import React, { useState } from 'react';
+import { X, CheckCircle, User, Package, CreditCard, Wallet, Upload, AlertCircle } from 'lucide-react';
 import Image from 'next/image';
 import type { SteamGame } from '@/lib/types';
+import PaymentMethodSelector from '@/components/payment/PaymentMethodSelector';
+import WalletTransferOptions, { WalletTransferType } from '@/components/payment/WalletTransferOptions';
+import WalletTransferForm, { WalletTransferData } from '@/components/payment/WalletTransferForm';
 
 // Security utility for sanitizing display text
 const sanitizeDisplayText = (text: string): string => {
@@ -29,10 +32,14 @@ const validateAccountInfo = (accountInfo: { fieldName: string; value: string }[]
   return accountInfo.length <= 10; // Limit number of fields
 };
 
+type PaymentMethod = 'card' | 'wallet-transfer';
+
 interface SteamOrderConfirmationModalProps {
   isOpen: boolean;
   onClose: () => void;
-  onConfirm: () => void;
+  onConfirm: (paymentMethod?: 'card' | 'wallet-transfer') => void;
+  onWalletTransferSubmit?: (data: WalletTransferData, transferType: WalletTransferType) => Promise<void>;
+  onCreateOrderWithTransfer?: (orderData: any, transferData: WalletTransferData, transferType: WalletTransferType) => Promise<void>;
   game: SteamGame;
   accountInfo: { fieldName: string; value: string }[];
   isLoading?: boolean;
@@ -42,10 +49,18 @@ export function SteamOrderConfirmationModal({
   isOpen,
   onClose,
   onConfirm,
+  onWalletTransferSubmit,
+  onCreateOrderWithTransfer,
   game,
   accountInfo,
   isLoading = false
 }: SteamOrderConfirmationModalProps) {
+  // Payment flow state
+  const [currentStep, setCurrentStep] = useState<'confirmation' | 'payment-method' | 'wallet-options' | 'wallet-form'>('confirmation');
+  const [selectedPaymentMethod, setSelectedPaymentMethod] = useState<PaymentMethod>('card');
+  const [selectedTransferType, setSelectedTransferType] = useState<WalletTransferType>('wallet-transfer');
+  const [isSubmittingTransfer, setIsSubmittingTransfer] = useState(false);
+
   // Security: Early return with validation
   if (!isOpen || !validateSteamGameProps(game)) return null;
 
@@ -53,6 +68,104 @@ export function SteamOrderConfirmationModal({
   const currentPrice = game?.isOffer && game?.finalPrice ? game.finalPrice : game?.price || 0;
   const hasDiscount = game?.isOffer && game?.originalPrice && game?.finalPrice && game.originalPrice > game.finalPrice;
   const gameName = sanitizeDisplayText(game?.name || '');
+
+  // Reset state when modal closes
+  const handleClose = () => {
+    setCurrentStep('confirmation');
+    setSelectedPaymentMethod('card');
+    setSelectedTransferType('wallet-transfer');
+    setIsSubmittingTransfer(false);
+    onClose();
+  };
+
+  // Handle payment method selection
+  const handlePaymentMethodSelect = async (method: PaymentMethod) => {
+    setSelectedPaymentMethod(method);
+    if (method === 'card') {
+      onConfirm('card');
+    } else {
+      // الانتقال مباشرة إلى خيارات التحويل بدون إنشاء الطلب
+      console.log('🚀 [SteamOrderModal] الانتقال إلى خيارات wallet transfer');
+      setCurrentStep('wallet-options');
+    }
+  };
+
+  // Handle wallet transfer type selection
+  const handleTransferTypeSelect = (type: WalletTransferType) => {
+    setSelectedTransferType(type);
+    setCurrentStep('wallet-form');
+  };
+
+  // Handle wallet transfer submission
+  const handleWalletTransferSubmit = async (data: WalletTransferData) => {
+    if (!onWalletTransferSubmit) return;
+    
+    console.log('🚀 [Frontend] بدء إرسال تحويل المحفظة');
+    console.log('📋 [Frontend] بيانات التحويل:', {
+      transferType: selectedTransferType,
+      hasImage: !!data.walletTransferImage,
+      walletTransferNumber: data.walletTransferNumber,
+      nameOfInsta: data.nameOfInsta || 'غير محدد'
+    });
+    
+    setIsSubmittingTransfer(true);
+    try {
+      console.log('📤 [Frontend] إرسال البيانات للخادم...');
+      const response = await onWalletTransferSubmit(data, selectedTransferType);
+      console.log('✅ [Frontend] تم إرسال التحويل بنجاح');
+      console.log('📨 [Frontend] استجابة الخادم:', response);
+      handleClose();
+    } catch (error) {
+      console.error('❌ [Frontend] خطأ في إرسال تحويل المحفظة:', error);
+    } finally {
+      setIsSubmittingTransfer(false);
+    }
+  };
+
+  // Handle confirm button click - go directly to payment method selection
+  const handleConfirmClick = () => {
+    setCurrentStep('payment-method');
+  };
+
+  // Render payment method selector
+  if (currentStep === 'payment-method') {
+    return (
+      <PaymentMethodSelector
+        selectedMethod={selectedPaymentMethod}
+        onMethodChange={handlePaymentMethodSelect}
+        onClose={handleClose}
+      />
+    );
+  }
+
+  // Render wallet transfer options
+  if (currentStep === 'wallet-options') {
+    return (
+      <WalletTransferOptions
+        selectedOption={selectedTransferType}
+        onOptionChange={handleTransferTypeSelect}
+        onBack={() => setCurrentStep('payment-method')}
+        onClose={handleClose}
+      />
+    );
+  }
+
+  // Render wallet transfer form
+  if (currentStep === 'wallet-form') {
+    return (
+      <WalletTransferForm
+        transferType={selectedTransferType}
+        totalAmount={currentPrice}
+        gameId={game?._id}
+        accountInfo={accountInfo.reduce((acc, item) => ({ ...acc, [item.fieldName]: item.value }), {})}
+        onSubmit={handleWalletTransferSubmit}
+        onCreateOrderWithTransfer={onCreateOrderWithTransfer ? (orderData, transferData) => onCreateOrderWithTransfer(orderData, transferData, selectedTransferType) : undefined}
+        onBack={() => setCurrentStep('wallet-options')}
+        onClose={handleClose}
+        isSubmitting={isSubmittingTransfer}
+      />
+    );
+  }
 
   return (
     <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 p-4">
@@ -179,14 +292,14 @@ export function SteamOrderConfirmationModal({
         {/* Actions */}
         <div className="flex gap-3 p-6 border-t border-gray-700">
           <button
-            onClick={onClose}
+            onClick={handleClose}
             className="flex-1 px-4 py-3 bg-gray-700 hover:bg-gray-600 text-white font-medium rounded-lg transition-colors"
             disabled={isLoading}
           >
             إلغاء
           </button>
           <button
-            onClick={onConfirm}
+            onClick={handleConfirmClick}
             className="flex-1 px-4 py-3 bg-[#00e6c0] hover:bg-[#00e6c0]/90 text-[#151e2e] font-bold rounded-lg transition-colors flex items-center justify-center gap-2"
             disabled={isLoading}
           >
@@ -198,7 +311,7 @@ export function SteamOrderConfirmationModal({
             ) : (
               <>
                 <CheckCircle className="w-4 h-4" />
-                تأكيد الطلب
+                المتابعة للدفع
               </>
             )}
           </button>

@@ -1,5 +1,4 @@
 "use client";
-// Add dynamic export to prevent static prerendering
 export const dynamic = "force-dynamic";
 
 import Image from "next/image";
@@ -20,6 +19,8 @@ import { OrderConfirmationModal } from '@/components/ui/order-confirmation-modal
 import { NotificationToast } from '@/components/ui/notification-toast';
 import { notificationService } from '@/lib/notifications';
 import { logger } from '@/lib/utils';
+import { WalletTransferData } from '@/components/payment/WalletTransferForm';
+import { WalletTransferType } from '@/components/payment/WalletTransferOptions';
 
 export default function PackagesPage() {
   const searchParams = useSearchParams();
@@ -38,12 +39,13 @@ export default function PackagesPage() {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [showLoginModal, setShowLoginModal] = useState(false);
   const [showConfirmationModal, setShowConfirmationModal] = useState(false);
+  const [currentOrderId, setCurrentOrderId] = useState<string | null>(null);
+
+
 
   useEffect(() => {
-    // تأكد من أننا في المتصفح قبل جلب البيانات
     if (typeof window === 'undefined') return;
 
-    // التحقق من حالة تسجيل الدخول
     setIsAuthenticated(authService.isAuthenticated());
 
     const fetchData = async () => {
@@ -57,13 +59,11 @@ export default function PackagesPage() {
         setLoading(true);
         setError(null);
 
-        // جلب معلومات اللعبة
         const gameResponse = await apiService.getGameById(gameId);
         if (gameResponse.success && gameResponse.data) {
           setGame(gameResponse.data);
         }
 
-        // جلب الباقات الخاصة باللعبة
         const packagesResponse = await apiService.getPackagesByGameId(gameId);
         if (packagesResponse.success) {
           setPackages(packagesResponse.data);
@@ -82,7 +82,6 @@ export default function PackagesPage() {
   }, [gameId]);
 
   const handleCreateOrder = async () => {
-    // التحقق من تسجيل الدخول أولاً
     if (!isAuthenticated) {
       setShowLoginModal(true);
       return;
@@ -93,7 +92,6 @@ export default function PackagesPage() {
       return;
     }
 
-    // التحقق من الحقول المطلوبة وتنسيق الإيميل
     const missingFields: string[] = [];
     const invalidEmailFields: string[] = [];
     const emailRegex = /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/;
@@ -103,12 +101,10 @@ export default function PackagesPage() {
         const fieldValue = accountInfo[field.fieldName];
         const fieldNameLower = field.fieldName.toLowerCase();
         
-        // التحقق من الحقول المطلوبة
         if (field.isRequired && (!fieldValue || fieldValue.trim() === '')) {
           missingFields.push(field.fieldName);
         }
         
-        // التحقق من تنسيق الإيميل للحقول التي تحتوي على email أو gmail
         if (fieldValue && fieldValue.trim() !== '' && 
             (fieldNameLower.includes('email') || fieldNameLower.includes('gmail'))) {
           if (!emailRegex.test(fieldValue.trim())) {
@@ -128,20 +124,16 @@ export default function PackagesPage() {
       return;
     }
 
-    // إظهار نافذة التأكيد
     setShowConfirmationModal(true);
   };
 
-  const handleConfirmOrder = async () => {
+  const handleConfirmOrder = async (paymentMethod: 'card' | 'wallet-transfer' = 'card') => {
     if (!selected || !game) return;
 
     try {
       setIsCreatingOrder(true);
       
-      // Log the account info for debugging
-      logger.log('🔍 Account info being sent:', accountInfo);
-      
-      // Prepare order data with proper typing
+
       const orderData: CreateOrderData = {
         gameId: gameId as string,
         packageId: selected,
@@ -153,32 +145,31 @@ export default function PackagesPage() {
         note: `طلب ${game.name} - ${packages.find(p => p._id === selected)?.title}`
       };
 
-      logger.log('📤 Sending order data:', orderData);
-      
       const response = await orderApiService.createOrder(orderData);
-      logger.log('📥 Order creation response:', response);
 
       if (response.success) {
         notificationService.showSuccess('تم إنشاء الطلب بنجاح!');
         
-        // إغلاق نافذة التأكيد
-        setShowConfirmationModal(false);
+        setCurrentOrderId(response.data._id);
         
-        try {
-          logger.log('🔄 Redirecting to checkout...');
-          const checkoutResponse = await orderApiService.checkout(response.data._id);
-          logger.log('✅ Checkout response:', checkoutResponse);
+        if (paymentMethod === 'card') {
+          setShowConfirmationModal(false);
           
-          if (checkoutResponse.success && checkoutResponse.data?.url) {
-            window.location.href = checkoutResponse.data.url;
-          } else {
-            const errorMsg = checkoutResponse.error || 'فشل في إنشاء جلسة الدفع';
-            logger.error('❌ Checkout failed:', errorMsg);
-            notificationService.showError(errorMsg);
+          try {
+            const checkoutResponse = await orderApiService.checkout(response.data._id);
+            
+            if (checkoutResponse.success && checkoutResponse.data?.url) {
+              window.location.href = checkoutResponse.data.url;
+            } else {
+              const errorMsg = checkoutResponse.error || 'فشل في إنشاء جلسة الدفع';
+              notificationService.showError(errorMsg);
+            }
+          } catch (checkoutError) {
+            notificationService.showError('حدث خطأ أثناء توجيهك إلى صفحة الدفع');
           }
-        } catch (checkoutError) {
-          logger.error('❌ Error during checkout:', checkoutError);
-          notificationService.showError('حدث خطأ أثناء توجيهك إلى صفحة الدفع');
+        } else {
+          console.log('💳 [Packages] تم إنشاء الطلب لـ wallet transfer، البقاء في الصفحة');
+          // البقاء في الصفحة لإكمال wallet transfer
         }
       } else {
         const errorMsg = response.error || 'فشل في إنشاء الطلب';
@@ -199,6 +190,98 @@ export default function PackagesPage() {
       notificationService.showError(errorMessage);
     } finally {
       setIsCreatingOrder(false);
+    }
+  };
+
+  // Handle creating order with wallet transfer in one step
+  const handleCreateOrderWithTransfer = async (orderData: any, transferData: WalletTransferData, transferType: WalletTransferType): Promise<void> => {
+    if (!selected || !game) {
+      notificationService.error('خطأ', 'يرجى اختيار باقة أولاً');
+      return;
+    }
+
+    const selectedPackage = packages.find(p => p._id === selected);
+    if (!selectedPackage) {
+      notificationService.error('خطأ', 'الباقة المحددة غير موجودة');
+      return;
+    }
+
+    try {
+      console.log('🚀 [Packages] إنشاء طلب مع بيانات التحويل');
+      
+      // Create order data with correct structure
+      const createOrderData: CreateOrderData = {
+        gameId: game._id,
+        packageId: selectedPackage._id,
+        accountInfo: Object.entries(accountInfo).map(([fieldName, value]) => ({
+          fieldName,
+          value: value ? value.toString() : ''
+        })),
+        paymentMethod: transferType,
+        note: ''
+      };
+
+      // Use the new API method to create order with transfer
+      const response = await orderApiService.createOrderWithWalletTransfer(
+        createOrderData,
+        {
+          walletTransferNumber: transferData.walletTransferNumber,
+          ...(transferData.nameOfInsta && { nameOfInsta: transferData.nameOfInsta })
+        },
+        transferData.walletTransferImage
+      );
+      
+      console.log('✅ [Packages] تم إنشاء الطلب مع التحويل بنجاح:', response);
+      notificationService.success('نجح', 'تم إنشاء الطلب وإرسال بيانات التحويل بنجاح');
+      setShowConfirmationModal(false);
+    } catch (error) {
+      console.error('❌ [Packages] خطأ في إنشاء الطلب مع التحويل:', error);
+      logger.error('Error creating order with wallet transfer:', error);
+      notificationService.error('خطأ', 'حدث خطأ أثناء إنشاء الطلب مع بيانات التحويل');
+      throw error;
+    }
+  };
+
+  // Handle wallet transfer submission
+  const handleWalletTransferSubmit = async (data: WalletTransferData, transferType: WalletTransferType): Promise<void> => {
+    console.log('🔍 [Packages] فحص currentOrderId قبل إرسال التحويل:', currentOrderId);
+    if (!selected || !game) {
+      notificationService.error('خطأ', 'يرجى اختيار باقة أولاً');
+      return;
+    }
+
+    const selectedPackage = packages.find(p => p._id === selected);
+    if (!selectedPackage) {
+      notificationService.error('خطأ', 'الباقة المحددة غير موجودة');
+      return;
+    }
+
+    if (!currentOrderId) {
+      console.error('❌ [Packages] currentOrderId فارغ!');
+      notificationService.error('خطأ', 'لم يتم العثور على معرف الطلب');
+      return;
+    }
+
+    try {
+      console.log('🔄 [Frontend] استدعاء API لإرسال تحويل المحفظة');
+      // Submit wallet transfer using the API service
+      const response = await orderApiService.submitWalletTransfer(
+        currentOrderId,
+        {
+          walletTransferNumber: data.walletTransferNumber,
+          ...(data.nameOfInsta && { nameOfInsta: data.nameOfInsta })
+        },
+        data.walletTransferImage
+      );
+      
+      console.log('🎉 [Frontend] استجابة API:', response);
+      notificationService.success('نجح', 'تم إرسال بيانات التحويل بنجاح');
+      setShowConfirmationModal(false);
+    } catch (error) {
+      console.error('❌ [Frontend] خطأ في API:', error);
+      logger.error('Error submitting wallet transfer:', error);
+      notificationService.error('خطأ', 'حدث خطأ أثناء إرسال بيانات التحويل');
+      throw error;
     }
   };
 
@@ -394,6 +477,8 @@ export default function PackagesPage() {
             isOpen={showConfirmationModal}
             onClose={() => setShowConfirmationModal(false)}
             onConfirm={handleConfirmOrder}
+            onWalletTransferSubmit={handleWalletTransferSubmit}
+            onCreateOrderWithTransfer={handleCreateOrderWithTransfer}
             game={game}
             selectedPackage={packages.find(p => p._id === selected) || null}
             accountInfo={accountInfo}

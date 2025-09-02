@@ -141,10 +141,14 @@ class ApiService {
         let url = endpoint.startsWith('http') ? endpoint : (endpoint.startsWith('/api') ? endpoint : `${API_BASE_URL}${endpoint}`);
         
         const headers = new Headers({
-          'Content-Type': 'application/json',
           'X-CSRF-Token': this.getCSRFToken(),
           'X-Requested-With': 'XMLHttpRequest',
         });
+
+        // Only set Content-Type to application/json if we're not sending FormData
+        if (!(fetchOptions.body instanceof FormData)) {
+          headers.set('Content-Type', 'application/json');
+        }
 
       if (fetchOptions.headers) {
         const incoming = new Headers(fetchOptions.headers as HeadersInit);
@@ -210,7 +214,16 @@ class ApiService {
     } catch {
       // If JSON parsing fails, try to get text
       try {
-        errorData = { message: await response.text() };
+        const text = await response.text();
+        
+        // Check if we received a multipart response
+        if (text.includes('------WebK') || text.includes('boundary=')) {
+          errorData = { 
+            message: 'Server returned multipart response instead of JSON. This may indicate a server configuration issue.' 
+          };
+        } else {
+          errorData = { message: text || 'Unknown server error' };
+        }
       } catch {
         errorData = { message: 'Unknown server error' };
       }
@@ -259,11 +272,26 @@ class ApiService {
     const contentType = response.headers.get('content-type');
     
     if (contentType && contentType.includes('application/json')) {
-      return await response.json();
+      try {
+        return await response.json();
+      } catch (error) {
+        // If JSON parsing fails, try to get text and check for multipart boundary issues
+        const text = await response.text();
+        if (text.includes('------WebK') || text.includes('boundary=')) {
+          throw new ApiError(500, 'Server returned malformed multipart response instead of JSON');
+        }
+        throw new ApiError(500, `Invalid JSON response: ${error instanceof Error ? error.message : 'Unknown error'}`);
+      }
     }
     
     // For non-JSON responses, return text as data
     const text = await response.text();
+    
+    // Check if we received a multipart response when we expected something else
+    if (text.includes('------WebK') || text.includes('boundary=')) {
+      throw new ApiError(500, 'Server returned unexpected multipart response');
+    }
+    
     return { data: text } as unknown as T;
   }
 
@@ -718,6 +746,127 @@ class OrderApiService {
       return {
         success: false,
         error: error instanceof Error ? error.message : 'حدث خطأ غير متوقع'
+      };
+    }
+  }
+
+  async createOrderWithWalletTransfer(
+    orderData: CreateOrderData,
+    walletTransferData: {
+      walletTransferNumber: string;
+      nameOfInsta?: string;
+    },
+    walletTransferImage: File
+  ): Promise<{ success: boolean; data?: any; error?: string }> {
+    try {
+      logger.info('🚀 [OrderAPI] Creating order with wallet transfer', {
+        gameId: orderData.gameId,
+        packageId: orderData.packageId,
+        paymentMethod: orderData.paymentMethod,
+        walletTransferNumber: walletTransferData.walletTransferNumber
+      });
+
+      // First create the order
+      const orderResult = await this.createOrder(orderData);
+      if (!orderResult.success || !orderResult.data?._id) {
+        throw new Error(orderResult.error || 'Failed to create order');
+      }
+
+      const orderId = orderResult.data._id;
+      logger.info('✅ [OrderAPI] Order created successfully', { orderId });
+
+      // Then submit wallet transfer
+      const transferResult = await this.submitWalletTransfer(orderId, walletTransferData, walletTransferImage);
+      if (!transferResult.success) {
+        throw new Error(transferResult.error || 'Failed to submit wallet transfer');
+      }
+
+      logger.info('✅ [OrderAPI] Order with wallet transfer created successfully', { orderId });
+      return { success: true, data: { orderId, ...transferResult.data } };
+    } catch (error) {
+      logger.error('❌ [OrderAPI] Error creating order with wallet transfer:', error);
+      return {
+        success: false,
+        error: error instanceof Error ? error.message : 'حدث خطأ أثناء إنشاء الطلب مع بيانات التحويل'
+      };
+    }
+  }
+
+  async submitWalletTransfer(
+    orderId: string, 
+    walletTransferData: {
+      walletTransferNumber: string;
+      nameOfInsta?: string;
+    },
+    walletTransferImage: File
+  ): Promise<{ success: boolean; data?: any; error?: string }> {
+    try {
+      console.log('🚀 [API] بدء إرسال بيانات تحويل المحفظة');
+      console.log('📋 [API] معرف الطلب:', orderId);
+      console.log('💳 [API] رقم التحويل:', walletTransferData.walletTransferNumber);
+      console.log('📱 [API] اسم إنستا:', walletTransferData.nameOfInsta || 'غير محدد');
+      console.log('🖼️ [API] حجم الصورة:', walletTransferImage.size, 'بايت');
+      console.log('📄 [API] نوع الصورة:', walletTransferImage.type);
+      
+      const formData = new FormData();
+      formData.append('walletTransferNumber', walletTransferData.walletTransferNumber);
+      if (walletTransferData.nameOfInsta) {
+        formData.append('nameOfInsta', walletTransferData.nameOfInsta);
+      }
+      formData.append('walletTransferImage', walletTransferImage);
+
+      console.log('🌐 [API] إرسال الطلب إلى:', `/api/order/${orderId}/wallet-transfer`);
+      
+      const response = await this.api.authenticatedRequest<any>(
+        `/api/order/${orderId}/wallet-transfer`,
+        {
+          method: 'POST',
+          body: formData,
+          // Don't set Content-Type header - let browser set it automatically with boundary
+          headers: {}
+        }
+      );
+      
+
+
+      // Invalidate user orders cache after submitting wallet transfer
+      try {
+        const { authService } = await import('./auth');
+        const user = authService.getUser();
+        if (user) {
+          const cacheKey = `user-orders:${user._id}`;
+          invalidateCache(cacheKey);
+        }
+        invalidateCache(`order-details:${orderId}`);
+      } catch (e) {
+        logger.warn('Failed to invalidate caches after submitWalletTransfer:', e);
+      }
+
+      return { success: true, data: response.data || response };
+    } catch (error) {
+      logger.error('Failed to submit wallet transfer:', error);
+      
+      // Handle authentication errors - redirect handled by authenticatedRequest
+      if (error instanceof ApiError && error.status === 401) {
+        // Silent return - redirect already handled
+        return {
+          success: false,
+          error: ''
+        };
+      }
+      
+      // Handle validation errors (400 Bad Request)
+      if (error instanceof ApiError && error.status === 400) {
+        const errorMessage = error.data?.error || error.message;
+        return {
+          success: false,
+          error: errorMessage
+        };
+      }
+      
+      return {
+        success: false,
+        error: error instanceof Error ? error.message : 'فشل في إرسال بيانات التحويل'
       };
     }
   }

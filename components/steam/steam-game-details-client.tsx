@@ -29,6 +29,8 @@ import { orderApiService } from '@/lib/api';
 import { notificationService } from '@/lib/notifications';
 import type { SteamGame } from '@/lib/types';
 import { logger } from '@/lib/utils';
+import { WalletTransferData } from '@/components/payment/WalletTransferForm';
+import { WalletTransferType } from '@/components/payment/WalletTransferOptions';
 
 interface SteamGameDetailsClientProps {
   game: SteamGame;
@@ -45,6 +47,9 @@ export function SteamGameDetailsClient({ game }: SteamGameDetailsClientProps) {
   const [selectedImageIndex, setSelectedImageIndex] = useState<number | null>(null);
   const [videoPlaying, setVideoPlaying] = useState(false);
   const [videoMuted, setVideoMuted] = useState(true);
+  const [currentOrderId, setCurrentOrderId] = useState<string | null>(null);
+
+
 
   useEffect(() => {
     setIsAuthenticated(authService.isAuthenticated());
@@ -73,9 +78,9 @@ export function SteamGameDetailsClient({ game }: SteamGameDetailsClientProps) {
     setPendingAccountInfo(accountInfo);
     setShowAccountModal(false);
     setShowConfirmationModal(true);
-  }, []);
+  }, [currentOrderId]);
 
-  const handleConfirmOrder = useCallback(async () => {
+  const handleConfirmOrder = useCallback(async (paymentMethod: 'card' | 'wallet-transfer' = 'card') => {
     try {
       setIsCreatingOrder(true);
       
@@ -85,30 +90,36 @@ export function SteamGameDetailsClient({ game }: SteamGameDetailsClientProps) {
       );
 
       if (response.success) {
-        setShowConfirmationModal(false);
-        notificationService.success('تم إنشاء الطلب', 'جاري توجيهك إلى صفحة الدفع...');
+        setCurrentOrderId(response.data._id);
         
-        try {
-          const checkoutResponse = await orderApiService.checkout(response.data._id);
+        if (paymentMethod === 'card') {
+          setShowConfirmationModal(false);
+          notificationService.success('تم إنشاء الطلب', 'جاري توجيهك إلى صفحة الدفع...');
           
-          if (checkoutResponse.success && checkoutResponse.data?.url) {
-            // Track purchase attempt
-            import('@/lib/lazy-unified-monitoring').then(({ lazyUnifiedMonitoring }) => {
-              lazyUnifiedMonitoring.trackPurchase(
-                game._id, 
-                '', 
-                game.isOffer && game.finalPrice ? game.finalPrice : game.price || 0, 
-                'EGP'
-              );
-            }).catch(err => logger.warn('Failed to load monitoring:', err));
+          try {
+            const checkoutResponse = await orderApiService.checkout(response.data._id);
             
-            window.location.href = checkoutResponse.data.url;
-          } else {
-            throw new Error(checkoutResponse.error || 'فشل في إنشاء جلسة الدفع');
+            if (checkoutResponse.success && checkoutResponse.data?.url) {
+              // Track purchase attempt
+              import('@/lib/lazy-unified-monitoring').then(({ lazyUnifiedMonitoring }) => {
+                lazyUnifiedMonitoring.trackPurchase(
+                  game._id, 
+                  '', 
+                  game.isOffer && game.finalPrice ? game.finalPrice : game.price || 0, 
+                  'EGP'
+                );
+              }).catch(err => logger.warn('Failed to load monitoring:', err));
+              
+              window.location.href = checkoutResponse.data.url;
+            } else {
+              throw new Error(checkoutResponse.error || 'فشل في إنشاء جلسة الدفع');
+            }
+          } catch (checkoutError) {
+            logger.error('Checkout error:', checkoutError);
+            notificationService.error('خطأ في الدفع', 'حدث خطأ أثناء توجيهك إلى صفحة الدفع');
           }
-        } catch (checkoutError) {
-          logger.error('Checkout error:', checkoutError);
-          notificationService.error('خطأ في الدفع', 'حدث خطأ أثناء توجيهك إلى صفحة الدفع');
+        } else {
+          notificationService.success('نجح', 'تم إنشاء الطلب بنجاح!');
         }
       } else {
         throw new Error(response.error || 'فشل في إنشاء الطلب');
@@ -121,6 +132,67 @@ export function SteamGameDetailsClient({ game }: SteamGameDetailsClientProps) {
       );
     } finally {
       setIsCreatingOrder(false);
+    }
+  }, [game, pendingAccountInfo, currentOrderId]);
+
+  const handleWalletTransferSubmit = useCallback(async (data: WalletTransferData, transferType: WalletTransferType): Promise<void> => {
+    if (!currentOrderId) {
+      notificationService.error('خطأ', 'لم يتم العثور على معرف الطلب');
+      return;
+    }
+
+    try {
+       const response = await orderApiService.submitWalletTransfer(
+         currentOrderId,
+         {
+           walletTransferNumber: data.walletTransferNumber,
+           ...(data.nameOfInsta && { nameOfInsta: data.nameOfInsta })
+         },
+         data.walletTransferImage
+        );
+
+      notificationService.success('نجح', 'تم إرسال بيانات التحويل بنجاح');
+      setShowConfirmationModal(false);
+    } catch (error) {
+      logger.error('Error submitting wallet transfer:', error);
+      notificationService.error('خطأ', 'حدث خطأ أثناء إرسال بيانات التحويل');
+      throw error;
+    }
+  }, [currentOrderId]);
+
+  const handleCreateOrderWithTransfer = useCallback(async (orderData: any, transferData: WalletTransferData, transferType: WalletTransferType): Promise<void> => {
+    if (!pendingAccountInfo) {
+      notificationService.error('خطأ', 'يرجى إدخال بيانات الحساب أولاً');
+      return;
+    }
+
+    try {
+      const createOrderData = {
+        gameId: game._id,
+        accountInfo: Object.entries(pendingAccountInfo).map(([fieldName, value]) => ({
+          fieldName,
+          value: value ? value.toString() : ''
+        })),
+        paymentMethod: transferType,
+        note: ''
+      };
+
+      // Use the new API method to create order with transfer
+      const response = await orderApiService.createOrderWithWalletTransfer(
+        createOrderData,
+        {
+          walletTransferNumber: transferData.walletTransferNumber,
+          ...(transferData.nameOfInsta && { nameOfInsta: transferData.nameOfInsta })
+        },
+        transferData.walletTransferImage
+      );
+      
+      notificationService.success('نجح', 'تم إنشاء الطلب وإرسال بيانات التحويل بنجاح');
+      setShowConfirmationModal(false);
+    } catch (error) {
+      logger.error('Error creating order with wallet transfer:', error);
+      notificationService.error('خطأ', 'حدث خطأ أثناء إنشاء الطلب مع بيانات التحويل');
+      throw error;
     }
   }, [game, pendingAccountInfo]);
 
@@ -504,6 +576,8 @@ export function SteamGameDetailsClient({ game }: SteamGameDetailsClientProps) {
         isOpen={showConfirmationModal}
         onClose={() => setShowConfirmationModal(false)}
         onConfirm={handleConfirmOrder}
+        onWalletTransferSubmit={handleWalletTransferSubmit}
+        onCreateOrderWithTransfer={handleCreateOrderWithTransfer}
         game={game}
         accountInfo={pendingAccountInfo}
         isLoading={isCreatingOrder}

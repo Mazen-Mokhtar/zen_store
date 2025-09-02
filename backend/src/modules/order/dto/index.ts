@@ -5,6 +5,7 @@ import { OrderStatus } from "src/DB/models/Order/order.schema";
 import { IsSteamGameValidation } from "../validators/steam-game.validator";
 import { IsValidAccountInfo } from "../validators/account-info.validator";
 import { IsInstaTransferValidation } from "../validators/insta-transfer.validator";
+import { IsFawryTransferValidation } from "../validators/fawry-transfer.validator";
 import { PaymentMethod } from "../enums/payment-method.enum";
 
 export class AccountInfoDTO {
@@ -88,6 +89,9 @@ export class WalletTransferDTO {
     @Matches(/^[0-9]+$/, {
         message: 'Wallet transfer number must contain only digits'
     })
+    @IsFawryTransferValidation({
+        message: 'Wallet transfer number validation failed for wallet/fawry transfer'
+    })
     walletTransferNumber: string;
 
     @IsInstaTransferValidation({
@@ -99,4 +103,49 @@ export class WalletTransferDTO {
 export class WalletTransferImageDTO {
     @IsMongoId()
     orderId: Types.ObjectId;
+}
+
+export class CreateOrderWithWalletTransferDTO {
+    @IsMongoId()
+    gameId: Types.ObjectId;
+
+    @IsMongoId()
+    @IsOptional()
+    @IsSteamGameValidation({
+        message: 'Steam games should not have packageId, while non-Steam games require packageId'
+    })
+    packageId?: Types.ObjectId;
+
+    @IsArray()
+    @ValidateNested({ each: true })
+    @Type(() => AccountInfoDTO)
+    @IsValidAccountInfo({
+        message: 'Account info validation failed. Please ensure all required fields are provided and email format is correct.'
+    })
+    accountInfo: AccountInfoDTO[];
+
+    @IsString()
+    @MinLength(3, {
+        message: 'Wallet transfer number must be at least 3 digits'
+    })
+    @MaxLength(20, {
+        message: 'Wallet transfer number must not exceed 20 digits'
+    })
+    @Matches(/^[0-9]+$/, {
+        message: 'Wallet transfer number must contain only digits'
+    })
+    @IsFawryTransferValidation({
+        message: 'Wallet transfer number validation failed for wallet/fawry transfer'
+    })
+    walletTransferNumber: string;
+
+    @IsInstaTransferValidation({
+        message: 'Instagram name is required for insta-transfer payment method'
+    })
+    nameOfInsta?: string;
+
+    @IsString()
+    @IsOptional()
+    @MaxLength(1000)
+    note?: string;
 }
