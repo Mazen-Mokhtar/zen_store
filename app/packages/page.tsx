@@ -1,7 +1,6 @@
 "use client";
 export const dynamic = "force-dynamic";
 
-import Image from "next/image";
 import React, { useState, useEffect } from "react";
 import { useSearchParams } from "next/navigation";
 import { useRouter } from "next/navigation";
@@ -21,6 +20,8 @@ import { notificationService } from '@/lib/notifications';
 import { logger } from '@/lib/utils';
 import { WalletTransferData } from '@/components/payment/WalletTransferForm';
 import { WalletTransferType } from '@/components/payment/WalletTransferOptions';
+import { Logo } from '@/components/ui/logo';
+import Image from 'next/image';
 
 export default function PackagesPage() {
   const searchParams = useSearchParams();
@@ -327,9 +328,7 @@ export default function PackagesPage() {
       {/* Header */}
       <header className="flex items-center justify-between px-4 py-3 bg-[#131b28]/80 backdrop-blur border-b border-white/5">
         <div className="flex items-center gap-3 min-w-0">
-          <div className="w-8 h-8 rounded-lg bg-white/10 flex items-center justify-center">
-            <Image src="/next.svg" alt="Logo" width={18} height={18} unoptimized />
-          </div>
+          <Logo size="xl" showText={false} />
           <div className="truncate">
             <div className="text-sm text-gray-300">الباقات</div>
             <div className="text-base md:text-lg font-semibold truncate">

@@ -1,16 +1,17 @@
 export interface Order {
   id: string;
   _id?: string;
-  userId: string | {
+  userId?: {
     _id: string;
     email: string;
-    phone: string;
+    phone?: string;
   };
-  userEmail: string;
-  userName: string;
+  userEmail?: string;
+  userName?: string;
   gameId?: {
     _id: string;
     name: string;
+    type?: string;
   };
   packageId?: {
     _id: string;
@@ -19,9 +20,9 @@ export interface Order {
   accountInfo?: {
     fieldName: string;
     value: string;
-    _id: string;
+    _id?: string;
   }[];
-  items: {
+  items?: {
     id: string;
     name: string;
     price: number;
@@ -29,12 +30,21 @@ export interface Order {
   }[];
   totalAmount: number;
   status: 'pending' | 'paid' | 'delivered' | 'rejected' | 'cancelled' | 'processing';
-  paymentStatus: 'pending' | 'paid' | 'failed' | 'refunded';
-  paymentMethod?: string;
+  paymentStatus?: 'pending' | 'paid' | 'failed' | 'refunded';
+  paymentMethod?: 'card' | 'cash' | 'wallet-transfer' | 'insta-transfer' | 'fawry-transfer';
   adminNote?: string;
   isReviewed?: boolean;
   createdAt: string;
-  updatedAt: string;
+  updatedAt?: string;
+  __v?: number;
+  // Wallet transfer specific fields
+  walletTransferImage?: {
+    secure_url: string;
+    public_id: string;
+    _id?: string;
+  };
+  walletTransferNumber?: string;
+  walletTransferSubmittedAt?: string;
   shippingAddress?: {
     street: string;
     city: string;

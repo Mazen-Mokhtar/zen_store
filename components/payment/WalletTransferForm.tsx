@@ -3,6 +3,7 @@
 import React, { useState, useRef } from 'react';
 import { Upload, X, ArrowRight, AlertCircle, Check } from 'lucide-react';
 import { WalletTransferType } from './WalletTransferOptions';
+import Image from 'next/image';
 
 interface WalletTransferFormProps {
   transferType: WalletTransferType;
@@ -202,10 +203,13 @@ const WalletTransferForm: React.FC<WalletTransferFormProps> = ({
               
               {imagePreview ? (
                 <div className="relative">
-                  <img
+                  <Image
                     src={imagePreview}
                     alt="Transfer preview"
+                    width={400}
+                    height={192}
                     className="w-full h-48 object-cover rounded-lg border border-gray-600"
+                    unoptimized
                   />
                   <button
                     type="button"

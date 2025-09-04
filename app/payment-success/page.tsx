@@ -5,8 +5,8 @@ export const dynamic = "force-dynamic";
 import { useEffect, useState } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { CheckCircle, Package, ArrowRight } from 'lucide-react';
-import Image from 'next/image';
 import { AuthStatus } from '@/components/ui/auth-status';
+import { Logo } from '@/components/ui/logo';
 
 export default function PaymentSuccessPage() {
   const router = useRouter();
@@ -47,10 +47,7 @@ export default function PaymentSuccessPage() {
     <div className="bg-[#0D0E12] min-h-screen text-white">
       {/* Header */}
       <header className="flex items-center justify-between px-4 py-2 bg-[#1b2631]">
-        <div className="flex items-center gap-2">
-          <Image src="/next.svg" alt="Endex Logo" width={48} height={48} unoptimized />
-          <span className="text-2xl font-bold tracking-wide">ENDEX</span>
-        </div>
+        <Logo size="lg" textSize="lg" />
         <AuthStatus />
       </header>
 

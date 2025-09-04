@@ -4,6 +4,7 @@ import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { Home, Search, ArrowLeft, Shield } from 'lucide-react';
 import { Footer } from '@/components/ui/footer-section';
+import { Logo } from '@/components/ui/logo';
 
 const NotFoundPage = () => {
   const router = useRouter();
@@ -76,12 +77,7 @@ const NotFoundPage = () => {
       <header className="bg-black/20 backdrop-blur-sm border-b border-gray-700/50">
         <div className="max-w-6xl mx-auto px-6 py-4">
           <div className="flex items-center justify-between">
-            <div className="flex items-center space-x-4">
-              <div className="w-8 h-8 bg-gradient-to-r from-blue-500 to-purple-600 rounded-lg flex items-center justify-center">
-                <span className="text-white font-bold text-sm">ZS</span>
-              </div>
-              <span className="text-white font-semibold text-lg">Zen Store</span>
-            </div>
+            <Logo size="md" textSize="md" className="space-x-4" />
             <div className="flex items-center space-x-2 text-gray-400">
               <Shield size={16} />
               <span className="text-xs">Secure</span>

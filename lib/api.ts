@@ -823,7 +823,9 @@ class OrderApiService {
           method: 'POST',
           body: formData,
           // Don't set Content-Type header - let browser set it automatically with boundary
-          headers: {}
+          headers: {},
+          // Increase timeout for file upload requests (e.g., wallet transfer image)
+          timeout: 120000 // 120 seconds
         }
       );
       

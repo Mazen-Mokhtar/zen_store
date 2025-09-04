@@ -305,7 +305,7 @@ export class OrderService {
 
         const data = await this.orderRepository.findWithPopulate(
             filter,
-            "",
+            "walletTransferNumber walletTransferImage walletTransferSubmittedAt",
             { sort: query.sort || { createdAt: -1 } },
             query.page,
             [

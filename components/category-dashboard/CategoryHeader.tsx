@@ -1,9 +1,10 @@
 'use client';
 
 import React from 'react';
-import Image from 'next/image';
 import { useRouter } from 'next/navigation';
+import Image from 'next/image';
 import { LanguageSelector } from '@/components/ui/language-selector';
+import { Logo } from '@/components/ui/logo';
 import { useTranslation } from '@/lib/i18n';
 import type { CategoryHeaderProps } from './types';
 
@@ -19,9 +20,7 @@ export const CategoryHeader: React.FC<CategoryHeaderProps> = ({
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex items-center justify-between h-16">
           <div className="flex items-center">
-            <div className="flex-shrink-0">
-              <div className="w-8 h-8 bg-green-500 rounded"></div>
-            </div>
+            <Logo size="xl" showText={false} />
           </div>
           <div className="flex items-center gap-4">
             <LanguageSelector />

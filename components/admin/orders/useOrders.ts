@@ -104,6 +104,9 @@ export const useOrders = () => {
           createdAt: o.createdAt || new Date().toISOString(),
           updatedAt: o.updatedAt || o.createdAt || new Date().toISOString(),
           shippingAddress: o.shippingAddress || undefined,
+          walletTransferNumber: o.walletTransferNumber || undefined,
+          walletTransferImage: o.walletTransferImage || undefined,
+          walletTransferSubmittedAt: o.walletTransferSubmittedAt || undefined,
         })) : [];
         
         setState(prev => ({
@@ -128,8 +131,8 @@ export const useOrders = () => {
     if (state.filters.searchTerm) {
       filtered = filtered.filter(order => 
         order.id.toLowerCase().includes(state.filters.searchTerm.toLowerCase()) ||
-        order.userEmail.toLowerCase().includes(state.filters.searchTerm.toLowerCase()) ||
-        order.userName.toLowerCase().includes(state.filters.searchTerm.toLowerCase())
+        (order.userEmail && order.userEmail.toLowerCase().includes(state.filters.searchTerm.toLowerCase())) ||
+        (order.userName && order.userName.toLowerCase().includes(state.filters.searchTerm.toLowerCase()))
       );
     }
     

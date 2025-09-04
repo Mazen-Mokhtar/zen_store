@@ -2,6 +2,7 @@
 
 import { GlareCard } from "@/components/ui/glare-card";
 import { useRouter } from "next/navigation";
+import Image from "next/image";
 
 
 export type Category = {
@@ -38,10 +39,13 @@ export function GlareCardDemo({ categories = [] }: { categories: Category[] }) {
           className="cursor-pointer transition-transform hover:scale-105"
         >
           <GlareCard className="flex flex-col items-center justify-center relative overflow-hidden">
-            <img
+            <Image
               className="h-full w-full absolute inset-0 object-cover z-0"
               src={cat.logo.secure_url}
               alt={cat.name}
+              fill
+              sizes="(max-width: 768px) 100vw, (max-width: 1200px) 33vw, 25vw"
+              unoptimized
             />
             <div className="relative z-10 bg-black/60 w-full text-center py-2">
               <span className="font-bold text-white text-lg">{cat.name}</span>
@@ -51,4 +55,4 @@ export function GlareCardDemo({ categories = [] }: { categories: Category[] }) {
       ))}
     </div>
   );
-} 
+}

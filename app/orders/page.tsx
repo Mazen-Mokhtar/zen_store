@@ -19,6 +19,7 @@ import { AuthStatus } from '@/components/ui/auth-status';
 import { orderApiService } from '@/lib/api';
 import type { Order } from '@/lib/types';
 import { ORDER_STATUS_CONFIG } from '@/lib/types';
+import { Logo } from '@/components/ui/logo';
 
 const statusConfig = ORDER_STATUS_CONFIG;
 
@@ -53,7 +54,7 @@ const OrderItem = React.memo<{
       <div className="col-span-2 flex items-center gap-3">
         <div className="relative">
           <Image
-            src={order.gameId.image.secure_url}
+            src={order.gameId.image?.secure_url || '/placeholder-game.jpg'}
             alt={order.gameId.name}
             width={50}
             height={50}
@@ -239,7 +240,7 @@ function OrdersPage() {
                 </button>
                 <div className="w-px h-6 bg-gray-600"></div>
                 <div className="flex-shrink-0">
-                  <div className="w-8 h-8 bg-green-500 rounded"></div>
+                  <Logo size="xl" showText={false} />
                 </div>
                 <h1 className="text-xl font-bold">طلباتي</h1>
               </div>
@@ -301,7 +302,7 @@ function OrdersPage() {
                 </button>
                 <div className="w-px h-6 bg-gray-600"></div>
                 <div className="flex-shrink-0">
-                  <div className="w-8 h-8 bg-green-500 rounded"></div>
+                  <Logo size="xl" showText={false} />
                 </div>
                 <h1 className="text-xl font-bold">طلباتي</h1>
               </div>
@@ -367,7 +368,7 @@ function OrdersPage() {
               </button>
               <div className="w-px h-6 bg-gray-600"></div>
               <div className="flex-shrink-0">
-                <div className="w-8 h-8 bg-green-500 rounded"></div>
+                <Logo size="xl" showText={false} />
               </div>
               <h1 className="text-xl font-bold">طلباتي</h1>
             </div>

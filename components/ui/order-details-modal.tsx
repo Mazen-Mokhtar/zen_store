@@ -73,7 +73,7 @@ const OrderDetailsModalComponent: React.FC<OrderDetailsModalProps> = ({
             <h3 className="text-lg font-bold text_WHITE mb-4">معلومات المنتج</h3>
             <div className="flex items-center gap-4">
               <Image
-                src={order.gameId.image.secure_url}
+                src={order.gameId.image?.secure_url || '/placeholder-game.jpg'}
                 alt={order.gameId.name}
                 width={80}
                 height={80}

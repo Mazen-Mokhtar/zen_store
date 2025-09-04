@@ -2,28 +2,45 @@
 
 export interface Order {
   _id: string;
+  userId?: {
+    _id: string;
+    email: string;
+    phone?: string;
+  };
   gameId: {
     _id: string;
     name: string;
-    image: {
+    type?: string;
+    image?: {
       secure_url: string;
     };
   };
   packageId?: {
     _id: string;
     title: string;
-    price: number;
-    currency: string;
+    price?: number;
+    currency?: string;
   };
-  accountInfo: { fieldName: string; value: string }[];
+  accountInfo: { fieldName: string; value: string; _id?: string }[];
   status: 'pending' | 'paid' | 'delivered' | 'rejected';
   paymentMethod: 'card' | 'cash' | 'wallet-transfer' | 'insta-transfer' | 'fawry-transfer';
   totalAmount: number;
   adminNote?: string;
   createdAt: string;
+  updatedAt?: string;
   paidAt?: string;
   refundAmount?: number;
   refundDate?: string;
+  isReviewed?: boolean;
+  __v?: number;
+  // Wallet transfer specific fields
+  walletTransferImage?: {
+    secure_url: string;
+    public_id: string;
+    _id?: string;
+  };
+  walletTransferNumber?: string;
+  walletTransferSubmittedAt?: string;
 }
 
 export interface CreateOrderData {

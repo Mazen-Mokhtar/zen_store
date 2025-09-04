@@ -31,6 +31,7 @@ import type { SteamGame } from '@/lib/types';
 import { logger } from '@/lib/utils';
 import { WalletTransferData } from '@/components/payment/WalletTransferForm';
 import { WalletTransferType } from '@/components/payment/WalletTransferOptions';
+import { Logo } from '@/components/ui/logo';
 
 interface SteamGameDetailsClientProps {
   game: SteamGame;
@@ -169,10 +170,7 @@ export function SteamGameDetailsClient({ game }: SteamGameDetailsClientProps) {
     try {
       const createOrderData = {
         gameId: game._id,
-        accountInfo: Object.entries(pendingAccountInfo).map(([fieldName, value]) => ({
-          fieldName,
-          value: value ? value.toString() : ''
-        })),
+        accountInfo: pendingAccountInfo,
         paymentMethod: transferType,
         note: ''
       };
@@ -216,12 +214,7 @@ export function SteamGameDetailsClient({ game }: SteamGameDetailsClientProps) {
                 Back
               </button>
               <div className="w-px h-6 bg-gray-600"></div>
-              <div className="flex items-center gap-2">
-                <div className="w-8 h-8 bg-gradient-to-r from-blue-500 to-purple-600 rounded-lg flex items-center justify-center">
-                  <span className="text-white font-bold text-sm">S</span>
-                </div>
-                <span className="font-semibold">Steam Store</span>
-              </div>
+              <Logo size="xl" showText={false} />
             </div>
             <div className="flex items-center gap-4">
               <LanguageSelector />
