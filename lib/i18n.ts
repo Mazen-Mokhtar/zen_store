@@ -100,7 +100,7 @@ const translations: Record<string, Translation> = {
       orderCreated: 'Order Created',
       orderPaid: 'Order Paid',
       orderDelivered: 'Order Delivered',
-      orderRejected: 'Order Rejected/Cancelled',
+      orderRejected: 'Order Rejected',
       cardPayment: 'Credit Card',
       cashPayment: 'Cash Payment',
       status: {
@@ -113,7 +113,7 @@ const translations: Record<string, Translation> = {
         pending: 'Your order is under review and will be processed soon',
         paid: 'Payment received and order is being processed',
         delivered: 'Your order has been delivered successfully',
-        rejected: 'Order has been rejected or cancelled'
+        rejected: 'Order has been rejected'
       }
     },
     navigation: {

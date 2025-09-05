@@ -3,7 +3,6 @@ export const statusColors = {
   paid: 'bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-300',
   delivered: 'bg-emerald-100 text-emerald-800 dark:bg-emerald-900 dark:text-emerald-300',
   rejected: 'bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-300',
-  cancelled: 'bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-300',
   processing: 'bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-300'
 };
 
@@ -12,7 +11,6 @@ export const statusLabels = {
   paid: 'مدفوع',
   delivered: 'تم التسليم',
   rejected: 'مرفوض',
-  cancelled: 'ملغي',
   processing: 'قيد المعالجة'
 };
 
@@ -35,6 +33,5 @@ export const ORDER_STATUS_OPTIONS = [
   { value: 'pending', label: 'في الانتظار' },
   { value: 'processing', label: 'قيد المعالجة' },
   { value: 'delivered', label: 'تم التسليم' },
-  { value: 'cancelled', label: 'ملغي' },
   { value: 'rejected', label: 'مرفوض' }
 ];

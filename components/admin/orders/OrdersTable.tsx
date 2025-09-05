@@ -91,7 +91,6 @@ export const OrdersTable: React.FC<OrdersTableProps> = ({
                   <option value="pending">في الانتظار</option>
                   <option value="processing">قيد المعالجة</option>
                   <option value="delivered">تم التسليم</option>
-                  <option value="cancelled">ملغي</option>
                   <option value="rejected">مرفوض</option>
                 </select>
                 <button
@@ -202,11 +201,7 @@ export const OrdersTable: React.FC<OrdersTableProps> = ({
                           <FiRefreshCw className="w-5 h-5 text-blue-600 animate-spin" />
                         </div>
                       )}
-                      {order.status === 'cancelled' && (
-                        <div className="w-10 h-10 bg-red-100 rounded-full flex items-center justify-center">
-                          <FiX className="w-5 h-5 text-red-600" />
-                        </div>
-                      )}
+
                     </div>
                     <div>
                       <select
@@ -217,7 +212,6 @@ export const OrdersTable: React.FC<OrdersTableProps> = ({
                         <option value="pending">في الانتظار</option>
                         <option value="processing">قيد المعالجة</option>
                         <option value="delivered">تم التسليم</option>
-                        <option value="cancelled">ملغي</option>
                         <option value="rejected">مرفوض</option>
                       </select>
                     </div>

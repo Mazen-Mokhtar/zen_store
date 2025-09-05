@@ -330,7 +330,7 @@ export const OrderDetailsModal: React.FC<OrderDetailsModalProps> = ({
                       {order.paymentMethod === 'wallet-transfer' ? 'تحويل محفظة إلكترونية' :
                        order.paymentMethod === 'card' ? 'بطاقة ائتمان' :
                        order.paymentMethod === 'cash' ? 'نقداً' :
-                       order.paymentMethod === 'insta-transfer' ? 'تحويل فوري' :
+                       order.paymentMethod === 'insta-transfer' ? 'تحويل إنستا' :
                        order.paymentMethod === 'fawry-transfer' ? 'تحويل فوري' :
                        order.paymentMethod || 'غير محدد'}
                     </p>
@@ -409,7 +409,7 @@ export const OrderDetailsModal: React.FC<OrderDetailsModalProps> = ({
           )}
 
           {/* Wallet Transfer Information */}
-          {order.paymentMethod === 'wallet-transfer' && (order.walletTransferImage || order.walletTransferNumber || order.walletTransferSubmittedAt) && (
+          {(order.paymentMethod === 'wallet-transfer' || order.paymentMethod === 'insta-transfer' || order.paymentMethod === 'fawry-transfer') && (order.walletTransferImage || order.walletTransferNumber || order.walletTransferSubmittedAt || order.nameOfInsta || order.instaTransferSubmittedAt) && (
             <div className="bg-gradient-to-br from-purple-50 to-violet-100 dark:from-gray-700 dark:to-gray-600 rounded-xl p-6 border border-purple-200 dark:border-gray-600 mt-6">
               <div className="flex items-center gap-3 mb-4">
                 <div className="w-10 h-10 bg-purple-500 rounded-full flex items-center justify-center">
@@ -434,8 +434,23 @@ export const OrderDetailsModal: React.FC<OrderDetailsModalProps> = ({
                   </div>
                 )}
                 
+                {/* Instagram Name for insta-transfer */}
+                {order.paymentMethod === 'insta-transfer' && order.nameOfInsta && (
+                  <div className="bg-white dark:bg-gray-800 rounded-lg p-4 border border-purple-100 dark:border-gray-600 shadow-sm">
+                    <div className="flex items-center gap-3">
+                      <div className="w-8 h-8 bg-purple-100 dark:bg-gray-600 rounded-full flex items-center justify-center">
+                        <User className="w-4 h-4 text-purple-600 dark:text-purple-400" />
+                      </div>
+                      <div className="flex-1">
+                        <p className="text-xs text-gray-500 dark:text-gray-400">اسم إنستا</p>
+                        <p className="font-semibold text-gray-900 dark:text-white">{order.nameOfInsta}</p>
+                      </div>
+                    </div>
+                  </div>
+                )}
+                
                 {/* Transfer Date */}
-                {order.walletTransferSubmittedAt && (
+                {(order.walletTransferSubmittedAt || order.instaTransferSubmittedAt) && (
                   <div className="bg-white dark:bg-gray-800 rounded-lg p-4 border border-purple-100 dark:border-gray-600 shadow-sm">
                     <div className="flex items-center gap-3">
                       <div className="w-8 h-8 bg-purple-100 dark:bg-gray-600 rounded-full flex items-center justify-center">
@@ -444,7 +459,7 @@ export const OrderDetailsModal: React.FC<OrderDetailsModalProps> = ({
                       <div className="flex-1">
                         <p className="text-xs text-gray-500 dark:text-gray-400">تاريخ إرسال التحويل</p>
                         <p className="font-semibold text-gray-900 dark:text-white">
-                          {new Date(order.walletTransferSubmittedAt).toLocaleDateString('ar-SA', {
+                          {new Date(order.walletTransferSubmittedAt || order.instaTransferSubmittedAt).toLocaleDateString('ar-SA', {
                             year: 'numeric',
                             month: 'long',
                             day: 'numeric',
@@ -518,16 +533,7 @@ export const OrderDetailsModal: React.FC<OrderDetailsModalProps> = ({
                 تسليم الطلب
               </button>
             )}
-            {order.status !== 'cancelled' && order.status !== 'delivered' && (
-              <button
-                onClick={() => handleUpdateStatus('cancelled')}
-                className="flex items-center gap-2 px-6 py-3 bg-gradient-to-r from-red-500 to-pink-600 text-white rounded-xl hover:from-red-600 hover:to-pink-700 transition-all duration-200 shadow-lg hover:shadow-xl transform hover:scale-105 font-semibold"
-                disabled={loading}
-              >
-                <XCircle className="w-4 h-4" />
-                إلغاء الطلب
-              </button>
-            )}
+
             {order.paymentStatus === 'pending' && (
               <button
                 onClick={() => handleUpdateStatus(order.status, 'تم تأكيد الدفع')}

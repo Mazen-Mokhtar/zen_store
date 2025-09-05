@@ -254,8 +254,35 @@ const WalletTransferForm: React.FC<WalletTransferFormProps> = ({
             </label>
             <input
               type="text"
+              inputMode="numeric"
+              pattern="[0-9]*"
+              maxLength={20}
               value={formData.walletTransferNumber}
-              onChange={(e) => handleInputChange('walletTransferNumber', e.target.value)}
+              onChange={(e) => {
+                const digitsOnly = e.target.value.replace(/[^0-9]/g, '');
+                handleInputChange('walletTransferNumber', digitsOnly);
+              }}
+              onPaste={(e) => {
+                e.preventDefault();
+                const pastedText = e.clipboardData.getData('text');
+                const digitsOnly = pastedText.replace(/[^0-9]/g, '');
+                handleInputChange('walletTransferNumber', digitsOnly);
+              }}
+              onKeyDown={(e) => {
+                // Allow: backspace, delete, tab, escape, enter, home, end, left, right arrows
+                if ([8, 9, 27, 13, 46, 35, 36, 37, 39].indexOf(e.keyCode) !== -1 ||
+                    // Allow Ctrl+A, Ctrl+C, Ctrl+V, Ctrl+X
+                    (e.keyCode === 65 && e.ctrlKey === true) ||
+                    (e.keyCode === 67 && e.ctrlKey === true) ||
+                    (e.keyCode === 86 && e.ctrlKey === true) ||
+                    (e.keyCode === 88 && e.ctrlKey === true)) {
+                  return;
+                }
+                // Ensure that it is a number and stop the keypress
+                if ((e.shiftKey || (e.keyCode < 48 || e.keyCode > 57)) && (e.keyCode < 96 || e.keyCode > 105)) {
+                  e.preventDefault();
+                }
+              }}
               placeholder="مثال: 123 أو 1234567890"
               className="w-full px-4 py-3 bg-[#232329] border border-gray-600 rounded-lg text-white placeholder-gray-400 focus:border-[#00e6c0] focus:outline-none transition-colors"
               disabled={isSubmitting}

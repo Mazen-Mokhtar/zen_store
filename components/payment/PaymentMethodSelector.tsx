@@ -1,6 +1,6 @@
 'use client';
 
-import React from 'react';
+import React, { useState } from 'react';
 import { CreditCard, Wallet } from 'lucide-react';
 
 export type PaymentMethodType = 'card' | 'wallet-transfer';
@@ -9,15 +9,24 @@ interface PaymentMethodSelectorProps {
   selectedMethod: PaymentMethodType;
   onMethodChange: (method: PaymentMethodType) => void;
   onClose: () => void;
+  isLoading?: boolean;
 }
 
 const PaymentMethodSelector: React.FC<PaymentMethodSelectorProps> = ({
   selectedMethod,
   onMethodChange,
-  onClose
+  onClose,
+  isLoading = false
 }) => {
-  const handleMethodSelect = (method: PaymentMethodType) => {
-    onMethodChange(method);
+  const [processingMethod, setProcessingMethod] = useState<PaymentMethodType | null>(null);
+
+  const handleMethodSelect = async (method: PaymentMethodType) => {
+    setProcessingMethod(method);
+    try {
+      await onMethodChange(method);
+    } finally {
+      setProcessingMethod(null);
+    }
   };
 
   return (
@@ -35,11 +44,12 @@ const PaymentMethodSelector: React.FC<PaymentMethodSelectorProps> = ({
           {/* Card Payment */}
           <button
             onClick={() => handleMethodSelect('card')}
+            disabled={isLoading || processingMethod !== null}
             className={`w-full p-4 rounded-xl border-2 transition-all duration-200 ${
               selectedMethod === 'card'
                 ? 'border-[#00e6c0] bg-[#00e6c0]/10'
                 : 'border-gray-600 bg-[#232329] hover:border-gray-500'
-            }`}
+            } ${isLoading || processingMethod !== null ? 'opacity-50 cursor-not-allowed' : ''}`}
           >
             <div className="flex items-center gap-4">
               <div className={`p-3 rounded-lg ${
@@ -57,17 +67,21 @@ const PaymentMethodSelector: React.FC<PaymentMethodSelectorProps> = ({
                   دفع فوري بالبطاقة الائتمانية
                 </p>
               </div>
+              {processingMethod === 'card' && (
+                <div className="w-5 h-5 border-2 border-[#00e6c0] border-t-transparent rounded-full animate-spin" />
+              )}
             </div>
           </button>
 
           {/* Wallet Transfer */}
           <button
             onClick={() => handleMethodSelect('wallet-transfer')}
+            disabled={isLoading || processingMethod !== null}
             className={`w-full p-4 rounded-xl border-2 transition-all duration-200 ${
               selectedMethod === 'wallet-transfer'
                 ? 'border-[#00e6c0] bg-[#00e6c0]/10'
                 : 'border-gray-600 bg-[#232329] hover:border-gray-500'
-            }`}
+            } ${isLoading || processingMethod !== null ? 'opacity-50 cursor-not-allowed' : ''}`}
           >
             <div className="flex items-center gap-4">
               <div className={`p-3 rounded-lg ${
@@ -85,6 +99,9 @@ const PaymentMethodSelector: React.FC<PaymentMethodSelectorProps> = ({
                   تحويل عبر المحفظة الإلكترونية أو إنستا باي أو فوري
                 </p>
               </div>
+              {processingMethod === 'wallet-transfer' && (
+                <div className="w-5 h-5 border-2 border-[#00e6c0] border-t-transparent rounded-full animate-spin" />
+              )}
             </div>
           </button>
         </div>
@@ -93,18 +110,28 @@ const PaymentMethodSelector: React.FC<PaymentMethodSelectorProps> = ({
         <div className="flex gap-3 p-6 border-t border-gray-700">
           <button
             onClick={onClose}
-            className="flex-1 px-4 py-3 bg-gray-600 hover:bg-gray-500 text-white rounded-xl font-medium transition-colors"
+            disabled={isLoading || processingMethod !== null}
+            className={`flex-1 px-4 py-3 bg-gray-600 hover:bg-gray-500 text-white rounded-xl font-medium transition-colors ${
+              isLoading || processingMethod !== null ? 'opacity-50 cursor-not-allowed' : ''
+            }`}
           >
             إلغاء
           </button>
           <button
-            onClick={() => {
-              // Execute the selected payment method
-              onMethodChange(selectedMethod);
-            }}
-            className="flex-1 px-4 py-3 bg-[#00e6c0] hover:bg-[#00d4aa] text-black rounded-xl font-medium transition-colors"
+            onClick={() => handleMethodSelect(selectedMethod)}
+            disabled={isLoading || processingMethod !== null}
+            className={`flex-1 px-4 py-3 bg-[#00e6c0] hover:bg-[#00d4aa] text-black rounded-xl font-medium transition-colors flex items-center justify-center gap-2 ${
+              isLoading || processingMethod !== null ? 'opacity-50 cursor-not-allowed' : ''
+            }`}
           >
-            متابعة
+            {isLoading || processingMethod !== null ? (
+              <>
+                <div className="w-4 h-4 border-2 border-black border-t-transparent rounded-full animate-spin"></div>
+                جاري المعالجة...
+              </>
+            ) : (
+              'متابعة'
+            )}
           </button>
         </div>
       </div>

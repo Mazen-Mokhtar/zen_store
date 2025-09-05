@@ -8,7 +8,7 @@ interface DashboardStats {
   totalOrders: number;
   pendingOrders: number;
   completedOrders: number;
-  cancelledOrders: number;
+
   totalRevenue: number;
   totalUsers: number;
   recentOrders: {
@@ -24,7 +24,7 @@ const mockStats: DashboardStats = {
   totalOrders: 156,
   pendingOrders: 23,
   completedOrders: 118,
-  cancelledOrders: 15,
+
   totalRevenue: 12450.75,
   totalUsers: 89,
   recentOrders: [
@@ -70,14 +70,14 @@ const statusColors = {
   pending: 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-300',
   processing: 'bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-300',
   completed: 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-300',
-  cancelled: 'bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-300'
+
 };
 
 const statusLabels = {
   pending: 'في الانتظار',
   processing: 'قيد المعالجة',
   completed: 'مكتمل',
-  cancelled: 'ملغي'
+
 };
 
 export default function AdminDashboard() {
@@ -237,13 +237,7 @@ export default function AdminDashboard() {
           color="bg-indigo-500"
         />
         
-        <StatCard
-          title="الطلبات الملغية"
-          value={stats.cancelledOrders}
-          icon={FiX}
-          color="bg-red-500"
-          onClick={() => router.push('/admin/orders?status=cancelled')}
-        />
+
         
         <StatCard
           title="معدل النمو"

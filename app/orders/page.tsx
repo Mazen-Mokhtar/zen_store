@@ -31,6 +31,7 @@ const statusConfig = ORDER_STATUS_CONFIG;
 // consistency here for new statuses.
 const STATUS_ICONS: Record<Order['status'], React.ComponentType<{ className?: string }>> = {
   pending: Clock,
+  processing: Clock,
   paid: CheckCircle,
   delivered: CheckCircle,
   rejected: XCircle,

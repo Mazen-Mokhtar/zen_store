@@ -4,6 +4,7 @@ import { GameDocument } from "../Game/game.schema";
 import { PaymentMethod } from "src/modules/order/enums/payment-method.enum";
 export enum OrderStatus {
   PENDING = 'pending',
+  PROCESSING = 'processing',
   PAID = 'paid',
   DELIVERED = 'delivered',
   REJECTED = 'rejected',

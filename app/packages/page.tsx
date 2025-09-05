@@ -41,11 +41,15 @@ export default function PackagesPage() {
   const [showLoginModal, setShowLoginModal] = useState(false);
   const [showConfirmationModal, setShowConfirmationModal] = useState(false);
   const [currentOrderId, setCurrentOrderId] = useState<string | null>(null);
+  const [isClient, setIsClient] = useState(false);
 
-
+  // Set isClient to true when component mounts on client
+  useEffect(() => {
+    setIsClient(true);
+  }, []);
 
   useEffect(() => {
-    if (typeof window === 'undefined') return;
+    if (!isClient) return;
 
     setIsAuthenticated(authService.isAuthenticated());
 
@@ -80,7 +84,7 @@ export default function PackagesPage() {
     };
 
     fetchData();
-  }, [gameId]);
+  }, [gameId, isClient]);
 
   const handleCreateOrder = async () => {
     if (!isAuthenticated) {
@@ -208,6 +212,7 @@ export default function PackagesPage() {
     }
 
     try {
+      setIsCreatingOrder(true);
       console.log('🚀 [Packages] إنشاء طلب مع بيانات التحويل');
       
       // Create order data with correct structure
@@ -240,6 +245,8 @@ export default function PackagesPage() {
       logger.error('Error creating order with wallet transfer:', error);
       notificationService.error('خطأ', 'حدث خطأ أثناء إنشاء الطلب مع بيانات التحويل');
       throw error;
+    } finally {
+      setIsCreatingOrder(false);
     }
   };
 
@@ -264,6 +271,7 @@ export default function PackagesPage() {
     }
 
     try {
+      setIsCreatingOrder(true);
       console.log('🔄 [Frontend] استدعاء API لإرسال تحويل المحفظة');
       // Submit wallet transfer using the API service
       const response = await orderApiService.submitWalletTransfer(
@@ -283,25 +291,38 @@ export default function PackagesPage() {
       logger.error('Error submitting wallet transfer:', error);
       notificationService.error('خطأ', 'حدث خطأ أثناء إرسال بيانات التحويل');
       throw error;
+    } finally {
+      setIsCreatingOrder(false);
     }
   };
 
-  // إذا لم يكن هناك gameId، اعرض رسالة خطأ
-  if (!gameId) {
-    return (
-      <div className={styles.customPackagesBg + " min-h-screen text-white flex items-center justify-center"}>
-        <div className="text-center">
-          <h1 className="text-2xl font-bold mb-4">خطأ</h1>
-          <p className="mb-4">لم يتم تحديد اللعبة</p>
-          <button 
-            onClick={() => router.push('/dashboard')}
-            className="bg-[#00e6c0] text-[#151e2e] px-6 py-2 rounded hover:bg-[#00e6c0]/80 transition"
-          >
-            العودة للرئيسية
-          </button>
+  // Show loading until client has mounted and gameId is checked
+  if (!isClient || (!gameId && isClient)) {
+    if (!isClient) {
+      return (
+        <div className={styles.customPackagesBg + " min-h-screen text-white flex items-center justify-center"}>
+          <LoadingSpinner size="lg" text="جاري التحميل..." />
         </div>
-      </div>
-    );
+      );
+    }
+    
+    // Client has mounted but no gameId
+    if (!gameId) {
+      return (
+        <div className={styles.customPackagesBg + " min-h-screen text-white flex items-center justify-center"}>
+          <div className="text-center">
+            <h1 className="text-2xl font-bold mb-4">خطأ</h1>
+            <p className="mb-4">لم يتم تحديد اللعبة</p>
+            <button 
+              onClick={() => router.push('/dashboard')}
+              className="bg-[#00e6c0] text-[#151e2e] px-6 py-2 rounded hover:bg-[#00e6c0]/80 transition"
+            >
+              العودة للرئيسية
+            </button>
+          </div>
+        </div>
+      );
+    }
   }
 
   if (loading) {

@@ -1,6 +1,6 @@
 'use client';
 
-import React from 'react';
+import React, { useState } from 'react';
 import { Wallet, Instagram, CreditCard, ArrowRight } from 'lucide-react';
 
 export type WalletTransferType = 'wallet-transfer' | 'insta-transfer' | 'fawry-transfer';
@@ -10,16 +10,25 @@ interface WalletTransferOptionsProps {
   onOptionChange: (option: WalletTransferType) => void;
   onBack: () => void;
   onClose: () => void;
+  isLoading?: boolean;
 }
 
 const WalletTransferOptions: React.FC<WalletTransferOptionsProps> = ({
   selectedOption,
   onOptionChange,
   onBack,
-  onClose
+  onClose,
+  isLoading = false
 }) => {
-  const handleOptionSelect = (option: WalletTransferType) => {
-    onOptionChange(option);
+  const [processingOption, setProcessingOption] = useState<WalletTransferType | null>(null);
+
+  const handleOptionSelect = async (option: WalletTransferType) => {
+    setProcessingOption(option);
+    try {
+      await onOptionChange(option);
+    } finally {
+      setProcessingOption(null);
+    }
   };
 
   const transferOptions = [
@@ -80,11 +89,12 @@ const WalletTransferOptions: React.FC<WalletTransferOptionsProps> = ({
               <button
                 key={option.id}
                 onClick={() => handleOptionSelect(option.id)}
+                disabled={isLoading || processingOption !== null}
                 className={`w-full p-4 rounded-xl border-2 transition-all duration-200 text-right ${
                   isSelected
                     ? 'border-[#00e6c0] bg-[#00e6c0]/10'
                     : 'border-gray-600 bg-[#232329] hover:border-gray-500'
-                }`}
+                } ${isLoading || processingOption !== null ? 'opacity-50 cursor-not-allowed' : ''}`}
               >
                 <div className="flex items-start gap-4">
                   <div className={`p-3 rounded-lg ${
@@ -115,6 +125,9 @@ const WalletTransferOptions: React.FC<WalletTransferOptionsProps> = ({
                       ))}
                     </div>
                   </div>
+                  {processingOption === option.id && (
+                    <div className="w-5 h-5 border-2 border-[#00e6c0] border-t-transparent rounded-full animate-spin" />
+                  )}
                 </div>
               </button>
             );
@@ -140,25 +153,34 @@ const WalletTransferOptions: React.FC<WalletTransferOptionsProps> = ({
         <div className="flex gap-3 p-6 border-t border-gray-700">
           <button
             onClick={onClose}
-            className="flex-1 px-4 py-3 bg-gray-600 hover:bg-gray-500 text-white rounded-xl font-medium transition-colors"
+            disabled={isLoading || processingOption !== null}
+            className={`flex-1 px-4 py-3 bg-gray-600 hover:bg-gray-500 text-white rounded-xl font-medium transition-colors ${
+              isLoading || processingOption !== null ? 'opacity-50 cursor-not-allowed' : ''
+            }`}
           >
             إلغاء
           </button>
           <button
             onClick={() => {
               if (selectedOption) {
-                // Continue to form
-                onClose();
+                handleOptionSelect(selectedOption);
               }
             }}
-            disabled={!selectedOption}
-            className={`flex-1 px-4 py-3 rounded-xl font-medium transition-colors ${
-              selectedOption
+            disabled={!selectedOption || isLoading || processingOption !== null}
+            className={`flex-1 px-4 py-3 rounded-xl font-medium transition-colors flex items-center justify-center gap-2 ${
+              selectedOption && !isLoading && processingOption === null
                 ? 'bg-[#00e6c0] hover:bg-[#00d4aa] text-black'
                 : 'bg-gray-700 text-gray-400 cursor-not-allowed'
             }`}
           >
-            متابعة
+            {isLoading || processingOption !== null ? (
+              <>
+                <div className="w-4 h-4 border-2 border-gray-400 border-t-transparent rounded-full animate-spin"></div>
+                جاري المعالجة...
+              </>
+            ) : (
+              'متابعة'
+            )}
           </button>
         </div>
       </div>

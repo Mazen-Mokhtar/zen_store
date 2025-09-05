@@ -101,10 +101,11 @@ export function OrderConfirmationModal({
     
     setIsSubmittingTransfer(true);
     try {
-      const response = await onWalletTransferSubmit(data, selectedTransferType);
+      await onWalletTransferSubmit(data, selectedTransferType);
       handleClose();
     } catch (error) {
       console.error('Error submitting wallet transfer:', error);
+      // Keep the modal open on error so user can retry
     } finally {
       setIsSubmittingTransfer(false);
     }
@@ -122,6 +123,7 @@ export function OrderConfirmationModal({
         selectedMethod={selectedPaymentMethod}
         onMethodChange={handlePaymentMethodSelect}
         onClose={handleClose}
+        isLoading={isLoading || isSubmittingTransfer}
       />
     );
   }
@@ -134,6 +136,7 @@ export function OrderConfirmationModal({
         onOptionChange={handleTransferTypeSelect}
         onBack={() => setCurrentStep('payment-method')}
         onClose={handleClose}
+        isLoading={isLoading || isSubmittingTransfer}
       />
     );
   }
@@ -151,7 +154,7 @@ export function OrderConfirmationModal({
         onCreateOrderWithTransfer={onCreateOrderWithTransfer ? (orderData, transferData) => onCreateOrderWithTransfer(orderData, transferData, selectedTransferType) : undefined}
         onBack={() => setCurrentStep('wallet-options')}
         onClose={handleClose}
-        isSubmitting={isSubmittingTransfer}
+        isSubmitting={isSubmittingTransfer || isLoading}
       />
     );
   }

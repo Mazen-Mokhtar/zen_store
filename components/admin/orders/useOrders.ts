@@ -107,6 +107,8 @@ export const useOrders = () => {
           walletTransferNumber: o.walletTransferNumber || undefined,
           walletTransferImage: o.walletTransferImage || undefined,
           walletTransferSubmittedAt: o.walletTransferSubmittedAt || undefined,
+          nameOfInsta: o.nameOfInsta || undefined,
+          instaTransferSubmittedAt: o.instaTransferSubmittedAt || undefined,
         })) : [];
         
         setState(prev => ({

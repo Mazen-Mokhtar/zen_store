@@ -22,7 +22,7 @@ export interface Order {
     currency?: string;
   };
   accountInfo: { fieldName: string; value: string; _id?: string }[];
-  status: 'pending' | 'paid' | 'delivered' | 'rejected';
+  status: 'pending' | 'processing' | 'paid' | 'delivered' | 'rejected';
   paymentMethod: 'card' | 'cash' | 'wallet-transfer' | 'insta-transfer' | 'fawry-transfer';
   totalAmount: number;
   adminNote?: string;
@@ -59,6 +59,13 @@ export const ORDER_STATUS_CONFIG = {
     borderColor: 'border-yellow-400/20',
     label: 'قيد الانتظار',
     description: 'طلبك قيد المراجعة وسيتم معالجته قريباً'
+  },
+  processing: {
+    color: 'text-orange-400',
+    bgColor: 'bg-orange-400/10',
+    borderColor: 'border-orange-400/20',
+    label: 'قيد المعالجة',
+    description: 'جاري معالجة طلبك وتجهيزه للتسليم'
   },
   paid: {
     color: 'text-blue-400',

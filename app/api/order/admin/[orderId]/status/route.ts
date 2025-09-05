@@ -46,7 +46,7 @@ export async function PATCH(
     }
 
     // Valid order statuses based on backend OrderStatus enum
-    const validStatuses = ['pending', 'paid', 'delivered', 'rejected'];
+    const validStatuses = ['pending', 'processing', 'paid', 'delivered', 'rejected'];
     if (!validStatuses.includes(status)) {
       return NextResponse.json(
         { error: 'حالة الطلب غير صالحة' },

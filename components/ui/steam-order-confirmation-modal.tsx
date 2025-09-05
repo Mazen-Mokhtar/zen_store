@@ -134,6 +134,7 @@ export function SteamOrderConfirmationModal({
         selectedMethod={selectedPaymentMethod}
         onMethodChange={handlePaymentMethodSelect}
         onClose={handleClose}
+        isLoading={isLoading || isSubmittingTransfer}
       />
     );
   }
@@ -146,6 +147,7 @@ export function SteamOrderConfirmationModal({
         onOptionChange={handleTransferTypeSelect}
         onBack={() => setCurrentStep('payment-method')}
         onClose={handleClose}
+        isLoading={isLoading || isSubmittingTransfer}
       />
     );
   }
@@ -281,11 +283,14 @@ export function SteamOrderConfirmationModal({
             </div>
           </div>
 
-          {/* Warning */}
-          <div className="bg-yellow-500/10 border border-yellow-500/20 rounded-xl p-4">
-            <p className="text-yellow-400 text-sm text-center">
-              يرجى التأكد من صحة البيانات المدخلة قبل المتابعة. لن يمكن تعديلها بعد تأكيد الطلب.
-            </p>
+          {/* Information */}
+          <div className="bg-blue-500/10 border border-blue-500/20 rounded-xl p-4">
+            <div className="flex items-center gap-3">
+              <AlertCircle className="w-5 h-5 text-blue-400 flex-shrink-0" />
+              <p className="text-blue-400 text-sm">
+                بعد الضغط على "المتابعة للدفع" ستظهر لك خيارات الدفع المتاحة لإتمام عملية الشراء.
+              </p>
+            </div>
           </div>
         </div>
 

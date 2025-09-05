@@ -29,7 +29,7 @@ export interface Order {
     quantity: number;
   }[];
   totalAmount: number;
-  status: 'pending' | 'paid' | 'delivered' | 'rejected' | 'cancelled' | 'processing';
+  status: 'pending' | 'paid' | 'delivered' | 'rejected' | 'processing';
   paymentStatus?: 'pending' | 'paid' | 'failed' | 'refunded';
   paymentMethod?: 'card' | 'cash' | 'wallet-transfer' | 'insta-transfer' | 'fawry-transfer';
   adminNote?: string;
@@ -45,6 +45,8 @@ export interface Order {
   };
   walletTransferNumber?: string;
   walletTransferSubmittedAt?: string;
+  nameOfInsta?: string;
+  instaTransferSubmittedAt?: string;
   shippingAddress?: {
     street: string;
     city: string;
