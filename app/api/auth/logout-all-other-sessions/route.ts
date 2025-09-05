@@ -47,14 +47,14 @@ export async function POST(request: NextRequest) {
         await sessionManager.destroySession(session.sessionId);
         loggedOutCount++;
       } catch (error) {
-        console.error(`Failed to destroy session ${session.sessionId}:`, error);
+        // Failed to destroy session
       }
     });
 
     await Promise.allSettled(destroyPromises);
 
     // Log security event
-    console.log(`User ${currentSession.userId} logged out from ${loggedOutCount} other sessions`);
+    // User logged out from other sessions
 
     return NextResponse.json({
       success: true,

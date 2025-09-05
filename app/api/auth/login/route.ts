@@ -28,11 +28,8 @@ export async function POST(request: NextRequest) {
     });
 
     const data = await response.json();
-    console.log('🔍 Backend response status:', response.status);
-    console.log('🔍 Backend response data:', JSON.stringify(data, null, 2));
 
     if (!response.ok) {
-      console.log('❌ Backend login failed:', data.message);
       return NextResponse.json(
         { success: false, message: data.message || 'Login failed' },
         { status: response.status }
@@ -42,8 +39,6 @@ export async function POST(request: NextRequest) {
     // Extract token and user from backend response
     const accessToken = data.data?.accessToken;
     let user = data.data?.user;
-    console.log('🔍 Extracted accessToken:', accessToken ? 'exists' : 'missing');
-    console.log('🔍 Extracted user from response:', user ? JSON.stringify(user, null, 2) : 'missing');
 
     if (!accessToken) {
       return NextResponse.json(
@@ -55,7 +50,6 @@ export async function POST(request: NextRequest) {
     // If user data is not in response, extract it from JWT token
     if (!user && accessToken) {
       const jwtPayload = decodeJWT(accessToken);
-      console.log('🔍 JWT payload:', jwtPayload);
       
       if (jwtPayload) {
         user = {
@@ -65,7 +59,6 @@ export async function POST(request: NextRequest) {
           name: jwtPayload.name || 'Unknown User',
           role: jwtPayload.role || 'user'
         };
-        console.log('🔧 Created user from JWT:', JSON.stringify(user, null, 2));
       }
     }
 
@@ -77,7 +70,6 @@ export async function POST(request: NextRequest) {
     }
 
     // No need for local session management - backend handles everything
-    console.log('✅ Login successful, backend manages session via JWT');
 
     // Set auth_token from backend
     const cookieStore = await cookies();
@@ -88,7 +80,6 @@ export async function POST(request: NextRequest) {
       maxAge: 24 * 60 * 60, // 24 hours
       path: '/',
     });
-    console.log('🍪 Auth token cookie set from backend');
 
     // Return success response with user data (not token)
     return NextResponse.json({

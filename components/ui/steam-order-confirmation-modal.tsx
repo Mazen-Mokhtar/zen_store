@@ -85,7 +85,6 @@ export function SteamOrderConfirmationModal({
       onConfirm('card');
     } else {
       // الانتقال مباشرة إلى خيارات التحويل بدون إنشاء الطلب
-      console.log('🚀 [SteamOrderModal] الانتقال إلى خيارات wallet transfer');
       setCurrentStep('wallet-options');
     }
   };
@@ -100,20 +99,9 @@ export function SteamOrderConfirmationModal({
   const handleWalletTransferSubmit = async (data: WalletTransferData) => {
     if (!onWalletTransferSubmit) return;
     
-    console.log('🚀 [Frontend] بدء إرسال تحويل المحفظة');
-    console.log('📋 [Frontend] بيانات التحويل:', {
-      transferType: selectedTransferType,
-      hasImage: !!data.walletTransferImage,
-      walletTransferNumber: data.walletTransferNumber,
-      nameOfInsta: data.nameOfInsta || 'غير محدد'
-    });
-    
     setIsSubmittingTransfer(true);
     try {
-      console.log('📤 [Frontend] إرسال البيانات للخادم...');
       const response = await onWalletTransferSubmit(data, selectedTransferType);
-      console.log('✅ [Frontend] تم إرسال التحويل بنجاح');
-      console.log('📨 [Frontend] استجابة الخادم:', response);
       handleClose();
     } catch (error) {
       console.error('❌ [Frontend] خطأ في إرسال تحويل المحفظة:', error);

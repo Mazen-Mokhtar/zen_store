@@ -14,6 +14,7 @@ interface OrderDetailsModalProps {
 // Icon mapping for order status
 const statusIconMap = {
   pending: Clock,
+  processing: AlertTriangle,
   paid: CheckCircle,
   delivered: CheckCircle,
   rejected: XCircle

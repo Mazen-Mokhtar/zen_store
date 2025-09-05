@@ -126,7 +126,6 @@ export class ErrorBoundary extends Component<Props, State> {
   private reportError = () => {
     if (this.state.error && this.state.errorId) {
       // In a real app, this would send the error report to your backend
-      console.log('Error reported:', this.state.errorId);
       alert('Error report sent. Thank you!');
     }
   };

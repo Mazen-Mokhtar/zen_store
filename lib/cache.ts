@@ -307,9 +307,8 @@ export const warmCache = async () => {
     ];
     
     // This would be implemented based on your API structure
-    console.log('Cache warming initiated for keys:', criticalKeys);
   } catch (error) {
-    console.error('Cache warming failed:', error);
+    // Cache warming failed silently
   }
 };
 

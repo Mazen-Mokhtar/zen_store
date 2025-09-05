@@ -8,11 +8,7 @@ export async function GET(request: NextRequest) {
     const cookieStore = await cookies();
     const authToken = cookieStore.get('auth_token')?.value;
     
-    console.log('🔍 Session API: Checking auth token');
-    console.log('Auth token:', authToken ? 'exists' : 'missing');
-    
     if (!authToken) {
-      console.log('❌ No auth token found');
       return NextResponse.json(
         { error: 'No active session' },
         { status: 401 }
@@ -31,7 +27,6 @@ export async function GET(request: NextRequest) {
       });
 
       if (!response.ok) {
-        console.log('❌ Backend session validation failed:', response.status);
         return NextResponse.json(
           { error: 'Invalid session' },
           { status: 401 }
@@ -39,11 +34,10 @@ export async function GET(request: NextRequest) {
       }
 
       const sessionData = await response.json();
-      console.log('✅ Session validated by backend');
 
       return NextResponse.json(sessionData);
     } catch (backendError) {
-      console.error('❌ Backend session API error:', backendError);
+      logger.error('Backend session API error:', backendError);
       return NextResponse.json(
         { error: 'Session validation failed' },
         { status: 500 }

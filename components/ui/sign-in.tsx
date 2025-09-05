@@ -88,12 +88,12 @@ export const SignInPage: React.FC<SignInPageProps> = ({
             <h1 className="animate-element animate-delay-100 text-4xl md:text-5xl font-semibold leading-tight">{title}</h1>
             <p className="animate-element animate-delay-200 text-muted-foreground">{description}</p>
 
-            <CSRFProtection onTokenGenerated={(token) => console.log('CSRF token generated:', token)}>
+            <CSRFProtection onTokenGenerated={(token) => {}}>
               <form className="space-y-5" onSubmit={onSignIn}>
               <div className="animate-element animate-delay-300">
                 <label className="text-sm font-medium text-muted-foreground">Email Address</label>
                 <GlassInputWrapper>
-                  <InputSanitizer context="html" onSanitized={(orig, clean) => console.log('Email sanitized:', { orig, clean })}>
+                  <InputSanitizer context="html" onSanitized={(orig, clean) => {}}>
                     <input name="email" type="email" placeholder="Enter your email address" className="w-full bg-transparent text-sm p-4 rounded-2xl focus:outline-none" value={formData.email} onChange={(e) => setFormData(prev => ({ ...prev, email: e.target.value }))} />
                   </InputSanitizer>
                 </GlassInputWrapper>

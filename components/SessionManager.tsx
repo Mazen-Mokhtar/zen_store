@@ -43,7 +43,6 @@ export default function SessionManager({ children }: SessionManagerProps) {
   }, []);
 
   const handleSessionExpired = () => {
-    console.log('🚨 Session expired, redirecting to login');
     toast.error('جلستك انتهت، يرجى تسجيل الدخول مرة أخرى');
     
     // Clear any local auth state

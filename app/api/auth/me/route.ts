@@ -10,10 +10,6 @@ export async function GET(request: NextRequest) {
     const sessionToken = cookieStore.get('session')?.value;
     const authToken = cookieStore.get('auth_token')?.value;
 
-    console.log('🔍 /api/auth/me: Checking cookies');
-    console.log('Session token:', sessionToken ? 'exists' : 'missing');
-    console.log('Auth token:', authToken ? 'exists' : 'missing');
-
     // If we have a session token, validate it first
     if (sessionToken) {
       // Import session manager to validate session
@@ -22,7 +18,6 @@ export async function GET(request: NextRequest) {
       try {
         const sessionData = await sessionManager.validateSession(sessionToken);
         if (sessionData) {
-          console.log('✅ Valid session found');
           return NextResponse.json({
             success: true,
             user: {
@@ -34,7 +29,7 @@ export async function GET(request: NextRequest) {
           });
         }
       } catch (sessionError) {
-        console.log('❌ Session validation failed:', sessionError);
+        // Session validation failed
       }
     }
 

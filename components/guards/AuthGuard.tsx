@@ -177,7 +177,7 @@ export default function AuthGuard({
               }
             }
           } catch (extendError) {
-            console.log('Session extension failed:', extendError);
+            // Session extension failed
           }
           
           // Fallback to token validation

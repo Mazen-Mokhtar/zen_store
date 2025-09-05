@@ -459,13 +459,17 @@ export const OrderDetailsModal: React.FC<OrderDetailsModalProps> = ({
                       <div className="flex-1">
                         <p className="text-xs text-gray-500 dark:text-gray-400">تاريخ إرسال التحويل</p>
                         <p className="font-semibold text-gray-900 dark:text-white">
-                          {new Date(order.walletTransferSubmittedAt || order.instaTransferSubmittedAt).toLocaleDateString('ar-SA', {
-                            year: 'numeric',
-                            month: 'long',
-                            day: 'numeric',
-                            hour: '2-digit',
-                            minute: '2-digit'
-                          })}
+                          {(() => {
+                            const transferDate = order.walletTransferSubmittedAt || order.instaTransferSubmittedAt;
+                            return transferDate ? 
+                              new Date(transferDate).toLocaleDateString('ar-SA', {
+                                year: 'numeric',
+                                month: 'long',
+                                day: 'numeric',
+                                hour: '2-digit',
+                                minute: '2-digit'
+                              }) : 'غير محدد';
+                          })()} 
                         </p>
                       </div>
                     </div>

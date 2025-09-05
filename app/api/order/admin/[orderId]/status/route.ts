@@ -5,12 +5,15 @@ const BACKEND_URL = process.env.BACKEND_URL || 'http://localhost:3000';
 
 export async function PATCH(
   request: NextRequest,
-  { params }: { params: { orderId: string } }
+  { params }: { params: Promise<{ orderId: string }> }
 ) {
   try {
     // Get token from cookies
     const cookieStore = await cookies();
     const rawToken = cookieStore.get('auth_token')?.value;
+    
+    // Await params
+    const { orderId } = await params;
     
     if (!rawToken) {
       return NextResponse.json(
@@ -35,7 +38,6 @@ export async function PATCH(
       );
     }
 
-    const { orderId } = params;
     const { status, adminNote } = await request.json();
 
     if (!status) {

@@ -64,12 +64,6 @@ export async function POST(
     
     backendFormData.append('walletTransferImage', walletTransferImage);
 
-    console.log('🌐 [API Route] إرسال الطلب إلى الباك إند:', `${BACKEND_URL}/order/${orderId}/wallet-transfer`);
-    console.log('📋 [API Route] معرف الطلب:', orderId);
-    console.log('💳 [API Route] رقم التحويل:', walletTransferNumber);
-    console.log('📱 [API Route] اسم إنستا:', nameOfInsta || 'غير محدد');
-    console.log('🖼️ [API Route] حجم الصورة:', walletTransferImage.size, 'بايت');
-
     // Make request to backend API
     const backendResponse = await fetch(`${BACKEND_URL}/order/${orderId}/wallet-transfer`, {
       method: 'POST',
@@ -81,7 +75,7 @@ export async function POST(
 
     if (!backendResponse.ok) {
       const errorText = await backendResponse.text();
-      console.error('❌ [API Route] خطأ من الباك إند:', {
+      logger.error('Backend error:', {
         status: backendResponse.status,
         error: errorText
       });
@@ -118,7 +112,6 @@ export async function POST(
     }
 
     const result = await backendResponse.json();
-    console.log('✅ [API Route] تم استلام الرد من الباك إند:', result);
     
     return NextResponse.json(result, {
       status: 200,
@@ -129,7 +122,6 @@ export async function POST(
     });
 
   } catch (error) {
-    console.error('❌ [API Route] خطأ في معالجة طلب تحويل المحفظة:', error);
     logger.error('Error in wallet transfer API route:', error);
     return NextResponse.json(
       { error: 'خطأ في الخادم الداخلي' },

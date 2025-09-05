@@ -209,7 +209,7 @@ function FormLayout01() {
         <p className="mt-1 text-sm text-muted-foreground dark:text-muted-foreground">
           Take a few moments to register for your company&apos;s workspace
         </p>
-        <CSRFProtection onTokenGenerated={(token) => console.log('CSRF token generated:', token)}>
+        <CSRFProtection onTokenGenerated={(token) => {}}>
           <form onSubmit={handleSubmit} className="mt-8">
           <div className="grid grid-cols-1 gap-y-6">
             <div>

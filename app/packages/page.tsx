@@ -173,7 +173,6 @@ export default function PackagesPage() {
             notificationService.showError('حدث خطأ أثناء توجيهك إلى صفحة الدفع');
           }
         } else {
-          console.log('💳 [Packages] تم إنشاء الطلب لـ wallet transfer، البقاء في الصفحة');
           // البقاء في الصفحة لإكمال wallet transfer
         }
       } else {
@@ -213,7 +212,7 @@ export default function PackagesPage() {
 
     try {
       setIsCreatingOrder(true);
-      console.log('🚀 [Packages] إنشاء طلب مع بيانات التحويل');
+
       
       // Create order data with correct structure
       const createOrderData: CreateOrderData = {
@@ -237,7 +236,7 @@ export default function PackagesPage() {
         transferData.walletTransferImage
       );
       
-      console.log('✅ [Packages] تم إنشاء الطلب مع التحويل بنجاح:', response);
+
       notificationService.success('نجح', 'تم إنشاء الطلب وإرسال بيانات التحويل بنجاح');
       setShowConfirmationModal(false);
     } catch (error) {
@@ -252,7 +251,7 @@ export default function PackagesPage() {
 
   // Handle wallet transfer submission
   const handleWalletTransferSubmit = async (data: WalletTransferData, transferType: WalletTransferType): Promise<void> => {
-    console.log('🔍 [Packages] فحص currentOrderId قبل إرسال التحويل:', currentOrderId);
+
     if (!selected || !game) {
       notificationService.error('خطأ', 'يرجى اختيار باقة أولاً');
       return;
@@ -265,14 +264,14 @@ export default function PackagesPage() {
     }
 
     if (!currentOrderId) {
-      console.error('❌ [Packages] currentOrderId فارغ!');
+
       notificationService.error('خطأ', 'لم يتم العثور على معرف الطلب');
       return;
     }
 
     try {
       setIsCreatingOrder(true);
-      console.log('🔄 [Frontend] استدعاء API لإرسال تحويل المحفظة');
+
       // Submit wallet transfer using the API service
       const response = await orderApiService.submitWalletTransfer(
         currentOrderId,
@@ -283,11 +282,11 @@ export default function PackagesPage() {
         data.walletTransferImage
       );
       
-      console.log('🎉 [Frontend] استجابة API:', response);
+
       notificationService.success('نجح', 'تم إرسال بيانات التحويل بنجاح');
       setShowConfirmationModal(false);
     } catch (error) {
-      console.error('❌ [Frontend] خطأ في API:', error);
+
       logger.error('Error submitting wallet transfer:', error);
       notificationService.error('خطأ', 'حدث خطأ أثناء إرسال بيانات التحويل');
       throw error;
