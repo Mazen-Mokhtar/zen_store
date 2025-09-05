@@ -1,8 +1,8 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
-  // Disable HTTP Agent to prevent proxy issues
+  // HTTP Agent configuration for better connectivity
   httpAgentOptions: {
-    keepAlive: false,
+    keepAlive: true,
   },
   // Enable React strict mode for better performance
   reactStrictMode: true,

@@ -1,42 +1,61 @@
-import dynamic from "next/dynamic";
-import type { Category } from "@/components/ui/glare-card-demo";
+'use client'
+import dynamic from 'next/dynamic'
+import { Category, CategoryResponse } from '@/types/category'
 import { logger } from '@/lib/utils'
+import { useEffect, useState } from 'react'
 
-// Dynamic import of the client component to improve code-splitting
-const GlareCardDemo = dynamic(
-  () => import("@/components/ui/glare-card-demo").then((mod) => mod.GlareCardDemo),
-  {
-    loading: () => (
-      <div className="text-center text-white">
-        <p className="text-lg mb-4">Loading categories...</p>
-      </div>
-    ),
-  }
-);
+const GlareCardDemo = dynamic(() => import('@/components/ui/glare-card-demo').then(mod => ({ default: mod.GlareCardDemo })), {
+  loading: () => <div className="animate-pulse bg-gray-200 h-64 rounded-lg"></div>,
+  ssr: false
+})
 
-async function getCategories() {
-  try {
-    // تحديد عنوان API بشكل ديناميكي بناءً على البيئة الحالية
-    const apiUrl = `${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3000'}/category/AllCategory`;
-    
-    const res = await fetch(apiUrl, { 
-      cache: "no-store",
-      credentials: 'same-origin'
-    });
-    if (!res.ok) {
-      logger.warn("Failed to fetch categories, server might be down")
-      return []; // Return empty array instead of throwing error
+// مكون صفحة الفئات
+export default function CategoryPage() {
+  const [categories, setCategories] = useState<Category[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    async function fetchCategories() {
+      try {
+        // تحديد عنوان API بشكل ديناميكي بناءً على البيئة الحالية
+        const apiUrl = `${process.env.NEXT_PUBLIC_API_URL || 'https://wivz-zen-ehtkn.ondigitalocean.app'}/category/AllCategory`;
+        
+        const res = await fetch(apiUrl, { 
+          cache: "no-store",
+          headers: {
+            'Content-Type': 'application/json',
+          }
+        });
+        if (!res.ok) {
+          logger.warn("Failed to fetch categories, server might be down")
+          setCategories([]); // Return empty array instead of throwing error
+          return;
+        }
+        const data: CategoryResponse = await res.json();
+        if (data.success && data.data) {
+          setCategories(data.data.slice(0, 3)); // Only first 3 categories
+        } else {
+          logger.warn("API response indicates failure:", data.message);
+          setCategories([]);
+        }
+      } catch (error) {
+        logger.warn("Error fetching categories:", error)
+        setCategories([]); // Return empty array on any error
+      } finally {
+        setLoading(false);
+      }
     }
-    const data = await res.json();
-    return data.data.slice(0, 3) as Category[]; // Only first 3 categories
-  } catch (error) {
-    logger.warn("Error fetching categories:", error)
-    return []; // Return empty array on any error
-  }
-}
 
-export default async function CategoryPage() {
-  const categories = await getCategories();
+    fetchCategories();
+  }, []);
+
+  if (loading) {
+    return (
+      <main className="min-h-screen relative overflow-hidden bg-black">
+        <div className="animate-pulse bg-gray-800 h-64 rounded-lg m-8"></div>
+      </main>
+    );
+  }
   
   return (
     <main className="flex min-h-screen flex-col items-center justify-center p-8 relative overflow-hidden">
