@@ -55,7 +55,7 @@ export async function generateMetadata({ params }: SteamGamePageProps): Promise<
       description: game.description,
       images: [
         {
-          url: game.backgroundImage?.secure_url || game.image.secure_url,
+          url: game.backgroundImage?.secure_url || game.image?.secure_url || '/images/placeholder-game.jpg',
           width: 1200,
           height: 630,
           alt: game.name,
@@ -67,7 +67,7 @@ export async function generateMetadata({ params }: SteamGamePageProps): Promise<
       card: 'summary_large_image',
       title: game.name,
       description: game.description,
-      images: [game.backgroundImage?.secure_url || game.image.secure_url],
+      images: [game.backgroundImage?.secure_url || game.image?.secure_url || '/images/placeholder-game.jpg'],
     },
   };
 }

@@ -1,13 +1,33 @@
 'use client';
 
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useMemo } from 'react';
 import { useRouter } from 'next/navigation';
 import { Order, OrderFilters, OrdersState } from './types';
 import { notificationService } from '@/lib/notifications';
+import { sanitizeInput } from '@/lib/security';
+import { 
+  validateOrderStatus, 
+  validateSearchQuery, 
+  validateAdminNote,
+  validateRateLimit,
+  orderValidation 
+} from '@/lib/validation';
 
 const initialFilters: OrderFilters = {
   searchTerm: '',
-  statusFilter: 'all'
+  statusFilter: 'all',
+  paymentStatus: 'all',
+  sortBy: 'createdAt',
+  sortOrder: 'desc'
+};
+
+const initialPagination = {
+  page: 1,
+  limit: 20,
+  total: 0,
+  totalPages: 0,
+  hasNextPage: false,
+  hasPrevPage: false
 };
 
 const initialState: OrdersState = {
@@ -16,7 +36,10 @@ const initialState: OrdersState = {
   loading: false,
   selectedOrder: null,
   showOrderModal: false,
-  filters: initialFilters
+  filters: initialFilters,
+  pagination: initialPagination,
+  lastFetch: null,
+  serverSidePagination: true
 };
 
 export const useOrders = () => {
@@ -58,14 +81,52 @@ export const useOrders = () => {
     verifyAccess();
   }, [router]);
 
-  // Fetch orders
-  const fetchOrders = useCallback(async () => {
+  // Fetch orders with server-side pagination
+  const fetchOrders = useCallback(async (customFilters?: Partial<OrderFilters>, customPagination?: Partial<typeof initialPagination>) => {
     if (!accessChecked) return;
     
     setState(prev => ({ ...prev, loading: true }));
     
     try {
-      const res = await fetch('/api/order/admin/all', { credentials: 'include' });
+      // Build query parameters
+      const filters = { ...state.filters, ...customFilters };
+      const pagination = { ...state.pagination, ...customPagination };
+      
+      const queryParams = new URLSearchParams();
+      
+      // Add pagination params
+      queryParams.append('page', pagination.page.toString());
+      queryParams.append('limit', pagination.limit.toString());
+      
+      // Add filter params
+      if (filters.statusFilter && filters.statusFilter !== 'all') {
+        queryParams.append('status', filters.statusFilter);
+      }
+      if (filters.paymentStatus && filters.paymentStatus !== 'all') {
+        queryParams.append('paymentStatus', filters.paymentStatus);
+      }
+      if (filters.searchTerm) {
+        queryParams.append('search', filters.searchTerm);
+      }
+      if (filters.dateFrom) {
+        queryParams.append('startDate', filters.dateFrom);
+      }
+      if (filters.dateTo) {
+        queryParams.append('endDate', filters.dateTo);
+      }
+      if (filters.sortBy) {
+        queryParams.append('sortBy', filters.sortBy);
+      }
+      if (filters.sortOrder) {
+        queryParams.append('sortOrder', filters.sortOrder);
+      }
+      
+      const res = await fetch(`/api/order/admin/all?${queryParams.toString()}`, { 
+        credentials: 'include',
+        headers: {
+          'Cache-Control': 'no-cache'
+        }
+      });
       const text = await res.text();
       
       if (!res.ok) {
@@ -111,11 +172,24 @@ export const useOrders = () => {
           instaTransferSubmittedAt: o.instaTransferSubmittedAt || undefined,
         })) : [];
         
+        // Update pagination info from server response
+        const paginationInfo = {
+          page: data.pagination?.currentPage || pagination.page,
+          limit: customPagination?.limit || data.pagination?.itemsPerPage || pagination.limit,
+          total: data.pagination?.totalItems || 0,
+          totalPages: data.pagination?.totalPages || 0,
+          hasNextPage: data.pagination?.hasNextPage || false,
+          hasPrevPage: data.pagination?.hasPrevPage || false
+        };
+        
         setState(prev => ({
           ...prev,
           orders: mapped,
           filteredOrders: mapped,
-          loading: false
+          loading: false,
+          pagination: paginationInfo,
+          filters: filters,
+          lastFetch: Date.now()
         }));
       } catch {
         setState(prev => ({ ...prev, loading: false }));
@@ -124,55 +198,79 @@ export const useOrders = () => {
       notificationService.error('خطأ', 'حدث خطأ أثناء جلب الطلبات');
       setState(prev => ({ ...prev, loading: false }));
     }
-  }, [accessChecked, router]);
+  }, [accessChecked, router, state.filters, state.pagination]);
 
-  // Filter orders
-  const filterOrders = useCallback(() => {
-    let filtered = state.orders;
-    
-    if (state.filters.searchTerm) {
-      filtered = filtered.filter(order => 
-        order.id.toLowerCase().includes(state.filters.searchTerm.toLowerCase()) ||
-        (order.userEmail && order.userEmail.toLowerCase().includes(state.filters.searchTerm.toLowerCase())) ||
-        (order.userName && order.userName.toLowerCase().includes(state.filters.searchTerm.toLowerCase()))
-      );
-    }
-    
-    if (state.filters.statusFilter !== 'all') {
-      filtered = filtered.filter(order => order.status === state.filters.statusFilter);
-    }
-    
-    setState(prev => ({ ...prev, filteredOrders: filtered }));
-  }, [state.orders, state.filters]);
+  // Remove client-side filtering since we're using server-side pagination
+  // filteredOrders will be the same as orders from server response
 
-  // Update order status
+  // Enhanced update order status with validation
   const updateOrderStatus = useCallback(async (orderId: string, newStatus: Order['status'], adminNote?: string) => {
+    // Rate limiting check
+    if (!validateRateLimit(`update_order_${orderId}`, 10, 60000)) {
+      notificationService.error('تحديث متكرر', 'يرجى الانتظار قبل المحاولة مرة أخرى');
+      return;
+    }
+
+    // Validate inputs
+    const sanitizedOrderId = sanitizeInput(orderId);
+    if (!sanitizedOrderId) {
+      notificationService.error('خطأ في البيانات', 'معرف الطلب غير صحيح');
+      return;
+    }
+
+    const statusValidation = validateOrderStatus(newStatus);
+    if (!statusValidation.isValid) {
+      notificationService.error('خطأ في البيانات', statusValidation.errors.join(', '));
+      return;
+    }
+
+    let sanitizedAdminNote: string | undefined;
+    if (adminNote) {
+      const noteValidation = validateAdminNote(adminNote);
+      if (!noteValidation.isValid) {
+        notificationService.error('خطأ في البيانات', noteValidation.errors.join(', '));
+        return;
+      }
+      sanitizedAdminNote = noteValidation.sanitizedValue;
+    }
+
     setState(prev => ({ ...prev, loading: true }));
     
     try {
-      const payload: { status: string; adminNote?: string } = { status: newStatus };
-      if (adminNote) {
-        payload.adminNote = adminNote;
+      const payload: { status: string; adminNote?: string } = { 
+        status: statusValidation.sanitizedValue 
+      };
+      if (sanitizedAdminNote) {
+        payload.adminNote = sanitizedAdminNote;
       }
       
-      const response = await fetch(`/api/order/admin/${orderId}/status`, {
+      const response = await fetch(`/api/order/admin/${encodeURIComponent(sanitizedOrderId)}/status`, {
         method: 'PATCH',
         headers: {
           'Content-Type': 'application/json',
+          'X-Requested-With': 'XMLHttpRequest',
         },
         credentials: 'include',
         body: JSON.stringify(payload)
       });
       
       if (!response.ok) {
-        throw new Error('فشل في تحديث حالة الطلب');
+        const errorText = await response.text();
+        throw new Error(errorText || 'فشل في تحديث حالة الطلب');
       }
+      
+      const result = await response.json();
       
       setState(prev => ({
         ...prev,
         orders: prev.orders.map(order => 
-          order.id === orderId 
-            ? { ...order, status: newStatus, updatedAt: new Date().toISOString() }
+          order.id === sanitizedOrderId 
+            ? { 
+                ...order, 
+                status: statusValidation.sanitizedValue, 
+                adminNote: sanitizedAdminNote,
+                updatedAt: new Date().toISOString() 
+              }
             : order
         ),
         loading: false
@@ -180,26 +278,51 @@ export const useOrders = () => {
       
       notificationService.success('نجح التحديث', 'تم تحديث حالة الطلب بنجاح');
     } catch (error) {
-      notificationService.error('خطأ في التحديث', 'حدث خطأ في تحديث حالة الطلب');
+      console.error('Error updating order status:', error);
+      const errorMessage = error instanceof Error ? error.message : 'حدث خطأ في تحديث حالة الطلب';
+      notificationService.error('خطأ في التحديث', errorMessage);
       setState(prev => ({ ...prev, loading: false }));
     }
   }, []);
 
-  // Export orders
+  // Enhanced export orders with validation and security
   const exportOrders = useCallback(() => {
-    const csvContent = "data:text/csv;charset=utf-8," + 
-      "Order ID,User,Email,Total,Status,Date\n" +
-      state.filteredOrders.map(order => 
-        `${order.id},${order.userName},${order.userEmail},${order.totalAmount},${order.status},${new Date(order.createdAt).toLocaleDateString('ar-EG')}`
-      ).join("\n");
-    
-    const encodedUri = encodeURI(csvContent);
-    const link = document.createElement("a");
-    link.setAttribute("href", encodedUri);
-    link.setAttribute("download", "orders.csv");
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
+    // Rate limiting for export
+    if (!validateRateLimit('export_orders', 5, 300000)) { // 5 exports per 5 minutes
+      notificationService.error('تصدير متكرر', 'يرجى الانتظار قبل تصدير البيانات مرة أخرى');
+      return;
+    }
+
+    try {
+      const headers = ['رقم الطلب', 'اسم العميل', 'البريد الإلكتروني', 'المجموع', 'الحالة', 'التاريخ'];
+      const csvContent = "data:text/csv;charset=utf-8,\uFEFF" + 
+        headers.join(',') + "\n" +
+        state.filteredOrders.map(order => {
+          const sanitizedData = [
+            sanitizeInput(order.id || ''),
+            sanitizeInput(order.userName || ''),
+            sanitizeInput(order.userEmail || ''),
+            order.totalAmount || 0,
+            sanitizeInput(order.status || ''),
+            new Date(order.createdAt).toLocaleDateString('ar-SA')
+          ];
+          return sanitizedData.map(field => `"${String(field).replace(/"/g, '""')}"`).join(',');
+        }).join("\n");
+      
+      const encodedUri = encodeURI(csvContent);
+      const link = document.createElement("a");
+      link.setAttribute("href", encodedUri);
+      link.setAttribute("download", `orders_${new Date().toISOString().split('T')[0]}.csv`);
+      link.style.display = 'none';
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      
+      notificationService.success('تم التصدير', 'تم تصدير البيانات بنجاح');
+    } catch (error) {
+      console.error('Error exporting orders:', error);
+      notificationService.error('خطأ في التصدير', 'حدث خطأ أثناء تصدير البيانات');
+    }
   }, [state.filteredOrders]);
 
   // View order details
@@ -220,24 +343,97 @@ export const useOrders = () => {
     }));
   }, []);
 
-  // Update filters
-  const updateFilters = useCallback((filters: OrderFilters) => {
-    setState(prev => ({ ...prev, filters }));
-  }, []);
+  // Enhanced update filters with validation and server-side fetch
+  const updateFilters = useCallback(async (filters: OrderFilters) => {
+    const sanitizedFilters: OrderFilters = {
+      searchTerm: '',
+      statusFilter: 'all',
+      paymentStatus: 'all',
+      sortBy: 'createdAt',
+      sortOrder: 'desc'
+    };
 
-  // Refresh orders
-  const refreshOrders = useCallback(() => {
-    window.location.reload();
-  }, []);
+    // Validate and sanitize search term
+    if (filters.searchTerm) {
+      const searchValidation = validateSearchQuery(filters.searchTerm);
+      if (searchValidation.isValid) {
+        sanitizedFilters.searchTerm = searchValidation.sanitizedValue || '';
+      }
+    }
+
+    // Validate status filter
+    if (filters.statusFilter && filters.statusFilter !== 'all') {
+      const statusValidation = validateOrderStatus(filters.statusFilter);
+      if (statusValidation.isValid) {
+        sanitizedFilters.statusFilter = statusValidation.sanitizedValue;
+      } else {
+        sanitizedFilters.statusFilter = 'all';
+      }
+    } else {
+      sanitizedFilters.statusFilter = 'all';
+    }
+
+    // Validate payment status
+    if (filters.paymentStatus && filters.paymentStatus !== 'all') {
+      sanitizedFilters.paymentStatus = filters.paymentStatus;
+    }
+
+    // Validate sort options
+    if (filters.sortBy) {
+      sanitizedFilters.sortBy = filters.sortBy;
+    }
+    if (filters.sortOrder) {
+      sanitizedFilters.sortOrder = filters.sortOrder;
+    }
+
+    // Copy other filters
+    if (filters.dateFrom) sanitizedFilters.dateFrom = filters.dateFrom;
+    if (filters.dateTo) sanitizedFilters.dateTo = filters.dateTo;
+    if (filters.paymentMethod) sanitizedFilters.paymentMethod = filters.paymentMethod;
+    if (filters.minAmount) sanitizedFilters.minAmount = filters.minAmount;
+    if (filters.maxAmount) sanitizedFilters.maxAmount = filters.maxAmount;
+
+    // Reset to first page when filters change
+    await fetchOrders(sanitizedFilters, { page: 1 });
+  }, [fetchOrders]);
+
+  // Update pagination
+  const updatePagination = useCallback(async (page: number, limit?: number) => {
+    const newPagination = { page };
+    if (limit) {
+      newPagination.limit = limit;
+    }
+    await fetchOrders(undefined, newPagination);
+  }, [fetchOrders]);
+
+  // Update sort
+  const updateSort = useCallback(async (sortBy: string, sortOrder: 'asc' | 'desc' = 'desc') => {
+    await fetchOrders({ sortBy, sortOrder } as any);
+  }, [fetchOrders]);
+
+  // Enhanced refresh orders
+  const refreshOrders = useCallback(async () => {
+    // Rate limiting for refresh
+    if (!validateRateLimit('refresh_orders', 10, 60000)) {
+      notificationService.error('تحديث متكرر', 'يرجى الانتظار قبل تحديث البيانات مرة أخرى');
+      return;
+    }
+
+    try {
+      await fetchOrders();
+      notificationService.success('تم التحديث', 'تم تحديث البيانات بنجاح');
+    } catch (error) {
+      console.error('Error refreshing orders:', error);
+      notificationService.error('خطأ في التحديث', 'حدث خطأ أثناء تحديث البيانات');
+    }
+  }, [fetchOrders]);
 
   // Effects
   useEffect(() => {
-    fetchOrders();
-  }, [fetchOrders]);
-
-  useEffect(() => {
-    filterOrders();
-  }, [filterOrders]);
+    if (accessChecked) {
+      fetchOrders();
+    }
+  }, [accessChecked]);
 
   return {
     ...state,
@@ -247,6 +443,8 @@ export const useOrders = () => {
     closeOrderModal,
     exportOrders,
     updateFilters,
+    updatePagination,
+    updateSort,
     refreshOrders,
     fetchOrders
   };

@@ -48,6 +48,9 @@ coverage/
 *.lcov
 
 # nyc test coverage
+
+# Backend
+backend/
 .nyc_output
 
 # Dependency directories
@@ -119,6 +122,7 @@ backend/node_modules/
 backend/.env
 backend/logs/
 backend/coverage/
+backend/
 
 # Security - Sensitive files
 cookies.txt

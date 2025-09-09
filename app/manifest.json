@@ -1,0 +1,69 @@
+{
+  "name": "Zen Store - Ultimate Gaming Destination",
+  "short_name": "Zen Store",
+  "description": "Your ultimate gaming destination with secure payments and instant delivery",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#0D0E12",
+  "theme_color": "#00e6c0",
+  "orientation": "portrait-primary",
+  "categories": ["games", "entertainment", "shopping"],
+  "lang": "en",
+  "dir": "ltr",
+  "icons": [
+    {
+      "src": "/icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "/icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
+    }
+  ],
+  "screenshots": [
+    {
+      "src": "/screenshot-mobile.png",
+      "sizes": "390x844",
+      "type": "image/png",
+      "form_factor": "narrow"
+    },
+    {
+      "src": "/screenshot-desktop.png",
+      "sizes": "1920x1080",
+      "type": "image/png",
+      "form_factor": "wide"
+    }
+  ],
+  "shortcuts": [
+    {
+      "name": "Browse Games",
+      "short_name": "Games",
+      "description": "Browse available games and packages",
+      "url": "/dashboard",
+      "icons": [
+        {
+          "src": "/icon-96.png",
+          "sizes": "96x96"
+        }
+      ]
+    },
+    {
+      "name": "My Orders",
+      "short_name": "Orders",
+      "description": "View and track your orders",
+      "url": "/orders",
+      "icons": [
+        {
+          "src": "/icon-96.png",
+          "sizes": "96x96"
+        }
+      ]
+    }
+  ],
+  "related_applications": [],
+  "prefer_related_applications": false
+}

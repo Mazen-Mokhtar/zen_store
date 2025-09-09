@@ -198,26 +198,29 @@ export function SteamGameDetailsClient({ game }: SteamGameDetailsClientProps) {
   const hasDiscount = game.isOffer && game.originalPrice && game.finalPrice && game.originalPrice > game.finalPrice;
 
   return (
-    <div className="min-h-screen bg-[#0D0E12] text-white">
+    <div className="min-h-screen bg-[#0D0E12] text-white" data-steam-page>
       <NotificationToast />
       
       {/* Header */}
       <header className="fixed top-0 left-0 right-0 bg-[#0D0E12]/80 backdrop-blur-md z-40 border-b border-gray-800">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex items-center justify-between h-16">
-            <div className="flex items-center gap-4">
+            <div className="flex items-center gap-2 md:gap-4 min-w-0 flex-1">
               <button
                 onClick={() => router.back()}
-                className="flex items-center gap-2 text-sm text-gray-400 hover:text-white transition-colors"
+                className="flex items-center gap-2 text-sm text-gray-400 hover:text-white transition-colors focus:outline-none focus:ring-2 focus:ring-green-500 rounded"
+                aria-label="Go back to previous page"
               >
                 <ArrowLeft size={16} />
-                Back
+                <span className="hidden sm:inline">Back</span>
               </button>
               <div className="w-px h-6 bg-gray-600"></div>
               <Logo size="xl" showText={false} />
             </div>
-            <div className="flex items-center gap-4">
-              <LanguageSelector />
+            <div className="flex items-center gap-2 md:gap-4 flex-shrink-0">
+              <div className="hidden md:block">
+                <LanguageSelector />
+              </div>
               <AuthStatus
                 variant="compact"
                 avatarUrl="https://res.cloudinary.com/dfvzhl8oa/image/upload/v1754848996/d2090ffb-1769-4853-916c-79c2a4ae2568_gmih9f.jpg"
@@ -231,7 +234,7 @@ export function SteamGameDetailsClient({ game }: SteamGameDetailsClientProps) {
       <section className="relative h-screen overflow-hidden">
         <div className="absolute inset-0">
           <Image
-            src={game.backgroundImage?.secure_url || game.image.secure_url}
+            src={game.backgroundImage?.secure_url || game.image?.secure_url || '/images/placeholder-game.jpg'}
             alt={game.name}
             fill
             className="object-cover"
@@ -260,32 +263,33 @@ export function SteamGameDetailsClient({ game }: SteamGameDetailsClientProps) {
               )}
               
               {/* Game Title */}
-              <h1 className="text-4xl md:text-6xl font-bold mb-4 leading-tight">
+              <h1 className="text-2xl sm:text-4xl md:text-6xl font-bold mb-4 leading-tight">
                 {game.name}
               </h1>
               
               {/* Price Section */}
-              <div className="flex items-center gap-4 mb-6">
+              <div className="flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-4 mb-6">
                 {hasDiscount && (
-                  <div className="bg-green-600 text-white px-3 py-1 rounded-lg text-sm font-bold">
+                  <div className="bg-green-600 text-white px-3 py-1 rounded-lg text-sm font-bold w-fit">
                     -{Math.round(game.discountPercentage || 0)}%
                   </div>
                 )}
-                <div className="flex items-center gap-3">
+                <div className="flex items-center gap-2 sm:gap-3">
                   {hasDiscount && (
-                    <span className="text-gray-400 line-through text-lg">
+                    <span className="text-gray-400 line-through text-sm sm:text-lg">
                       {game.originalPrice} EGP
                     </span>
                   )}
-                  <span className="text-3xl font-bold text-green-400">
+                  <span className="text-xl sm:text-3xl font-bold text-green-400">
                     {currentPrice} EGP
                   </span>
                 </div>
               </div>
               
               {/* Description Preview */}
-              <p className="text-lg text-gray-300 mb-8 leading-relaxed">
-                {game.description.slice(0, 200)}...
+              <p className="text-sm sm:text-lg text-gray-300 mb-6 sm:mb-8 leading-relaxed">
+                <span className="sm:hidden">{game.description.slice(0, 150)}...</span>
+                <span className="hidden sm:inline">{game.description.slice(0, 200)}...</span>
               </p>
               
               {/* Desktop Buy Button */}
@@ -317,9 +321,9 @@ export function SteamGameDetailsClient({ game }: SteamGameDetailsClientProps) {
       <div className="relative z-10 bg-[#0D0E12]">
         {/* Trailer Section */}
         {game.video && (
-          <section className="py-16">
+          <section className="py-8 sm:py-16">
             <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
-              <h2 className="text-3xl font-bold mb-8 text-center">Game Trailer</h2>
+              <h2 className="text-xl sm:text-3xl font-bold mb-4 sm:mb-8 text-center">Game Trailer</h2>
               <div className="relative aspect-video rounded-2xl overflow-hidden bg-gray-900">
                 <video
                   className="w-full h-full object-cover"
@@ -365,10 +369,10 @@ export function SteamGameDetailsClient({ game }: SteamGameDetailsClientProps) {
 
         {/* Image Gallery */}
         {game.images && game.images.length > 0 && (
-          <section className="py-16">
+          <section className="py-8 sm:py-16">
             <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
-              <h2 className="text-3xl font-bold mb-8 text-center">Screenshots</h2>
-              <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
+              <h2 className="text-xl sm:text-3xl font-bold mb-4 sm:mb-8 text-center">Screenshots</h2>
+              <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-2 sm:gap-4">
                 {game.images.map((image, index) => (
                   <div
                     key={index}
@@ -391,20 +395,20 @@ export function SteamGameDetailsClient({ game }: SteamGameDetailsClientProps) {
         )}
 
         {/* Description Section */}
-        <section className="py-16">
+        <section className="py-8 sm:py-16">
           <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
-            <h2 className="text-3xl font-bold mb-8">About This Game</h2>
+            <h2 className="text-xl sm:text-3xl font-bold mb-4 sm:mb-8">About This Game</h2>
             <div className="prose prose-invert max-w-none">
-              <p className="text-lg text-gray-300 leading-relaxed whitespace-pre-line">
+              <p className="text-sm sm:text-lg text-gray-300 leading-relaxed whitespace-pre-line">
                 {game.description}
               </p>
             </div>
             
             {/* Game Info */}
-            <div className="mt-12 grid grid-cols-1 md:grid-cols-2 gap-8">
-              <div className="bg-[#1A1B20] rounded-xl p-6">
-                <h3 className="text-xl font-bold mb-4 flex items-center gap-2">
-                  <Calendar size={20} />
+            <div className="mt-6 sm:mt-12 grid grid-cols-1 md:grid-cols-2 gap-4 sm:gap-8">
+              <div className="bg-[#1A1B20] rounded-xl p-4 sm:p-6">
+                <h3 className="text-lg sm:text-xl font-bold mb-3 sm:mb-4 flex items-center gap-2">
+                  <Calendar size={18} className="sm:w-5 sm:h-5" />
                   Game Information
                 </h3>
                 <div className="space-y-3">
@@ -432,9 +436,9 @@ export function SteamGameDetailsClient({ game }: SteamGameDetailsClientProps) {
               </div>
               
               {/* Required Account Info */}
-              <div className="bg-[#1A1B20] rounded-xl p-6">
-                <h3 className="text-xl font-bold mb-4 flex items-center gap-2">
-                  <Tag size={20} />
+              <div className="bg-[#1A1B20] rounded-xl p-4 sm:p-6">
+                <h3 className="text-lg sm:text-xl font-bold mb-3 sm:mb-4 flex items-center gap-2">
+                  <Tag size={18} className="sm:w-5 sm:h-5" />
                   Required Information
                 </h3>
                 <div className="space-y-2">

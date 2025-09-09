@@ -17,7 +17,7 @@ export const DEFAULT_SETTINGS: AppSettings = {
   notifications: true,
   analytics: true,
   autoRefresh: true,
-  cacheEnabled: true,
+  cacheEnabled: process.env.NODE_ENV !== 'development',
   animations: true,
 };
 

@@ -194,24 +194,27 @@ class EnhancedCache {
 }
 
 // Create enhanced cache instances for different use cases
+// Disable caching in development mode
+const isDevelopment = process.env.NODE_ENV === 'development';
+
 export const cache = new EnhancedCache({
-  maxSize: 1000,
-  defaultTTL: 5 * 60 * 1000,
-  cleanupInterval: 60 * 1000,
+  maxSize: isDevelopment ? 0 : 1000,
+  defaultTTL: isDevelopment ? 0 : 5 * 60 * 1000,
+  cleanupInterval: isDevelopment ? 0 : 60 * 1000,
   enableCompression: false
 });
 
 export const apiCache = new EnhancedCache({
-  maxSize: 500,
-  defaultTTL: 10 * 60 * 1000,
-  cleanupInterval: 2 * 60 * 1000,
-  enableCompression: true
+  maxSize: isDevelopment ? 0 : 500,
+  defaultTTL: isDevelopment ? 0 : 10 * 60 * 1000,
+  cleanupInterval: isDevelopment ? 0 : 2 * 60 * 1000,
+  enableCompression: !isDevelopment
 });
 
 export const imageCache = new EnhancedCache({
-  maxSize: 200,
-  defaultTTL: 30 * 60 * 1000,
-  cleanupInterval: 5 * 60 * 1000,
+  maxSize: isDevelopment ? 50 : 200,
+  defaultTTL: isDevelopment ? 30 * 1000 : 30 * 60 * 1000,
+  cleanupInterval: isDevelopment ? 30 * 1000 : 5 * 60 * 1000,
   enableCompression: false
 });
 

@@ -13,9 +13,11 @@ import type { CategoryDashboardState, SortBy } from './types';
 export const useCategoryData = (categoryId: string | null) => {
   const { t } = useTranslation();
   
-  // Constants for pagination
-  const INITIAL_GAMES_LIMIT = 12;
-  const LOAD_MORE_INCREMENT = 12;
+  // Constants for the new scenario
+  const INITIAL_GAMES_DISPLAY = 6;  // Show 6 games initially
+  const LOAD_MORE_INCREMENT = 6;    // Add 6 more games on Load More (total 12)
+  const PAGINATION_THRESHOLD = 12;  // Start pagination after 12 games
+  const GAMES_PER_PAGE = 12;        // Games per page in pagination mode
   
   const [state, setState] = useState<CategoryDashboardState>({
     current: 0,
@@ -31,12 +33,18 @@ export const useCategoryData = (categoryId: string | null) => {
     isAuth: false
   });
   
-  // Pagination state
-  const [displayedGamesCount, setDisplayedGamesCount] = useState(INITIAL_GAMES_LIMIT);
+  // Pagination state for new scenario
+  const [displayedGamesCount, setDisplayedGamesCount] = useState(INITIAL_GAMES_DISPLAY);
+  const [gamesPerPage] = useState(GAMES_PER_PAGE);
   const [isLoadingMore, setIsLoadingMore] = useState(false);
+  const [hasUsedLoadMore, setHasUsedLoadMore] = useState(false); // Track if Load More was used
+  const [isPaginationMode, setIsPaginationMode] = useState(false); // Track pagination mode
+
+  // State for total games count from server
+  const [totalGamesCount, setTotalGamesCount] = useState(0);
 
   // Fetch data function with useCallback to prevent unnecessary re-renders
-  const fetchData = useCallback(async (selectedCategory: string | null) => {
+  const fetchData = useCallback(async (selectedCategory: string | null, page: number = 1, limit: number = 12) => {
     if (!selectedCategory) {
       setState(prev => ({
         ...prev,
@@ -61,8 +69,14 @@ export const useCategoryData = (categoryId: string | null) => {
       
       logger.debug('🚀 fetchData called with category:', selectedCategory);
       
-      const gamesData = await apiService.getPaidGamesByCategory(selectedCategory);
-      const popularGames = gamesData.data.filter(game => game.isPopular);
+      const gamesData = await apiService.getGamesByCategory(selectedCategory, page, limit);
+      
+      // Remove duplicate games based on _id
+      const uniqueGames = gamesData.data.filter((game, index, self) => 
+        index === self.findIndex(g => g._id === game._id)
+      );
+      
+      const popularGames = uniqueGames.filter(game => game.isPopular);
       
       logger.debug('📊 Setting popularItems:', { 
         popularGames: popularGames?.length || 0,
@@ -75,19 +89,23 @@ export const useCategoryData = (categoryId: string | null) => {
           games: popularGames || [],
           packages: []
         },
-        categoryGames: gamesData.data || [],
+        categoryGames: uniqueGames || [],
         loading: false
       }));
 
+      // Update total games count from API response
+      if (gamesData.pagination && gamesData.pagination.total) {
+        setTotalGamesCount(gamesData.pagination.total);
+      }
+
       if (!gamesData.success) {
-        logger.warn('⚠️ API returned success: false');
         setState(prev => ({
           ...prev,
           error: t('errors.dataLoadFailed')
         }));
-      } else if (gamesData.data.length === 0) {
-        logger.warn('⚠️ No games found in category:', selectedCategory);
       }
+
+      return gamesData.pagination;
 
     } catch (err) {
       logger.error('Error fetching data:', err);
@@ -97,7 +115,7 @@ export const useCategoryData = (categoryId: string | null) => {
         loading: false
       }));
     }
-  }, [t]);
+  }, [t, gamesPerPage]);
 
   // Main data fetching effect
   useEffect(() => {
@@ -155,38 +173,68 @@ export const useCategoryData = (categoryId: string | null) => {
     setState(prev => ({ ...prev, current }));
   }, []);
 
-  // Handle load more games with security validation
+  // Handle load more functionality for new scenario
   const handleLoadMore = useCallback(async () => {
-    if (isLoadingMore) return;
+    logger.debug('🔄 handleLoadMore called with state:', {
+      isLoadingMore,
+      categoryId,
+      hasUsedLoadMore,
+      displayedGamesCount,
+      totalGames: state.categoryGames.length,
+      INITIAL_GAMES_DISPLAY,
+      LOAD_MORE_INCREMENT,
+      PAGINATION_THRESHOLD
+    });
+
+    if (isLoadingMore || !categoryId) {
+      logger.warn('⚠️ handleLoadMore blocked:', {
+        isLoadingMore,
+        categoryId: !!categoryId
+      });
+      return;
+    }
     
     try {
       setIsLoadingMore(true);
       
-      // Security: Validate current state before proceeding
-      if (displayedGamesCount >= 1000) {
-        logger.warn('Maximum games limit reached for security');
-        return;
+      // In the new scenario, Load More only adds 6 games (from 6 to 12)
+      if (displayedGamesCount === INITIAL_GAMES_DISPLAY && state.categoryGames.length > INITIAL_GAMES_DISPLAY && !hasUsedLoadMore) {
+        const newCount = Math.min(INITIAL_GAMES_DISPLAY + LOAD_MORE_INCREMENT, state.categoryGames.length);
+        
+        // Update all states synchronously to avoid race conditions
+        setDisplayedGamesCount(newCount);
+        setHasUsedLoadMore(true);
+        
+        // Enable pagination mode synchronously if there are enough games
+        if (state.categoryGames.length >= PAGINATION_THRESHOLD) {
+          setIsPaginationMode(true);
+        }
       }
-      
-      // Simulate loading delay for better UX
-      await new Promise(resolve => setTimeout(resolve, 500));
-      
-      setDisplayedGamesCount(prev => {
-        const newCount = prev + LOAD_MORE_INCREMENT;
-        // Security: Cap the maximum number of displayed games
-        return Math.min(newCount, 1000);
-      });
     } catch (error) {
-      logger.error('Error in handleLoadMore:', error);
+      logger.error('❌ Error in handleLoadMore:', error);
     } finally {
       setIsLoadingMore(false);
     }
-  }, [isLoadingMore, LOAD_MORE_INCREMENT, displayedGamesCount]);
+  }, [isLoadingMore, displayedGamesCount, categoryId, hasUsedLoadMore, INITIAL_GAMES_DISPLAY, LOAD_MORE_INCREMENT, PAGINATION_THRESHOLD, state.categoryGames.length]);
+
+
+
+  // Reset pagination function
+  const resetPagination = useCallback(() => {
+    setDisplayedGamesCount(INITIAL_GAMES_DISPLAY);
+    setHasUsedLoadMore(false);
+    setIsPaginationMode(false);
+  }, [INITIAL_GAMES_DISPLAY]);
 
   // Reset displayed games count when search term or sort changes
   useEffect(() => {
-    setDisplayedGamesCount(INITIAL_GAMES_LIMIT);
-  }, [state.searchTerm, state.sortBy, INITIAL_GAMES_LIMIT]);
+    resetPagination();
+  }, [state.searchTerm, state.sortBy, resetPagination]);
+
+  // Reset pagination when category changes
+  useEffect(() => {
+    resetPagination();
+  }, [categoryId, resetPagination]);
 
   return {
     ...state,
@@ -198,6 +246,14 @@ export const useCategoryData = (categoryId: string | null) => {
     setState,
     displayedGamesCount,
     isLoadingMore,
-    handleLoadMore
+    handleLoadMore,
+    gamesPerPage,
+    totalGamesCount,
+    hasUsedLoadMore,
+    isPaginationMode,
+    resetPagination,
+    INITIAL_GAMES_DISPLAY,
+    LOAD_MORE_INCREMENT,
+    PAGINATION_THRESHOLD
   };
 };

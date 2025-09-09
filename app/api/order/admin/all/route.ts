@@ -103,6 +103,10 @@ export async function GET(request: Request) {
     }
 
     const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3000';
+    
+    // Extract query parameters from the request URL
+    const url = new URL(request.url);
+    const queryString = url.search; // This includes the '?' if there are parameters
 
     // Try with verified role first, then fallback roles
     const roles: Array<'admin' | 'superAdmin'> = accessCheck.role === 'superAdmin' 
@@ -112,7 +116,7 @@ export async function GET(request: Request) {
     let lastStatus = 500;
 
     for (const role of roles) {
-      const res = await fetch(`${API_BASE_URL}/order/admin/all`, {
+      const res = await fetch(`${API_BASE_URL}/order/admin/all${queryString}`, {
         method: 'GET',
         headers: await buildHeadersWithRole(role),
         // @ts-ignore

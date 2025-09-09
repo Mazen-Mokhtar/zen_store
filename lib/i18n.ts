@@ -77,6 +77,14 @@ const translations: Record<string, Translation> = {
       loading: 'Loading...',
       noPackagesAvailable: 'No packages available',
     },
+    pagination: {
+      firstPage: 'First page',
+      lastPage: 'Last page',
+      nextPage: 'Next page',
+      previousPage: 'Previous page',
+      goToPage: 'Go to page',
+      pageInfo: 'Page {{current}} of {{total}}',
+    },
     orders: {
       title: 'My Orders',
       myOrders: 'My Orders',
@@ -215,6 +223,14 @@ const translations: Record<string, Translation> = {
       securePurchase: 'شراء آمن',
       completePurchase: 'إتمام الشراء',
       accountInformation: 'معلومات الحساب',
+    },
+    pagination: {
+      firstPage: 'الصفحة الأولى',
+      lastPage: 'الصفحة الأخيرة',
+      nextPage: 'الصفحة التالية',
+      previousPage: 'الصفحة السابقة',
+      goToPage: 'الذهاب للصفحة',
+      pageInfo: 'الصفحة {{current}} من {{total}}',
     },
     orders: {
       title: 'طلباتي',

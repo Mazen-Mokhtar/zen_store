@@ -6,6 +6,7 @@ import { Sidebar, Menu, MenuItem, SubMenu } from 'react-pro-sidebar';
 import { FiHome, FiShoppingCart, FiUsers, FiSettings, FiLogOut } from 'react-icons/fi';
 import { useAuth } from '@/lib/auth';
 import { LoadingSpinner } from '@/components/ui/loading-spinner';
+import { Logo } from '@/components/ui/logo';
 
 interface AdminLayoutProps {
   children: React.ReactNode;
@@ -47,10 +48,13 @@ export default function AdminLayout({ children }: AdminLayoutProps) {
           backgroundColor="#1f2937"
           className="h-full"
         >
-          <div className="p-4 border-b border-gray-700">
-            <h2 className={`text-white font-bold ${collapsed ? 'text-sm' : 'text-xl'}`}>
-              {collapsed ? 'ZS' : 'Zen Store Admin'}
-            </h2>
+          <div className="p-4 border-b border-gray-700 flex items-center justify-center">
+            <Logo 
+              size={collapsed ? "sm" : "lg"} 
+              showText={false} 
+              className="text-white"
+              clickable={false}
+            />
           </div>
           
           <Menu

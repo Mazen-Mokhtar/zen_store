@@ -1,7 +1,7 @@
 // Components
 export { CategoryHeader } from './CategoryHeader';
 export { CategoryHero } from './CategoryHero';
-export { SearchFilters } from './SearchFilters';
+export { default as SearchFilters } from './SearchFilters';
 export { PopularSection } from './PopularSection';
 export { CategoryGamesSection } from './CategoryGamesSection';
 

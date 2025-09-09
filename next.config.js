@@ -18,11 +18,23 @@ const nextConfig = {
   // Skip trailing slash redirect
   skipTrailingSlashRedirect: true,
   
+  // Disable caching during development
+  ...(process.env.NODE_ENV === 'development' && {
+    onDemandEntries: {
+      maxInactiveAge: 25 * 1000,
+      pagesBufferLength: 2,
+    },
+    generateEtags: false,
+  }),
+  
   // Bundle optimization
   experimental: {
     optimizeCss: true,
     optimizePackageImports: ['lucide-react', '@radix-ui/react-icons'],
   },
+  
+  // Server external packages
+  serverExternalPackages: ['sharp'],
   
   turbopack: {
     rules: {
@@ -39,6 +51,10 @@ const nextConfig = {
     if (!dev && !isServer) {
       config.optimization.splitChunks = {
         chunks: 'all',
+        maxInitialRequests: 25,
+        maxAsyncRequests: 20,
+        maxInitialRequests: 25,
+        maxAsyncRequests: 20,
         cacheGroups: {
           default: {
             minChunks: 2,
@@ -63,6 +79,20 @@ const nextConfig = {
             priority: 5,
             chunks: 'all',
           },
+          // Separate chunk for large libraries
+          framerMotion: {
+            test: /[\\/]node_modules[\\/]framer-motion[\\/]/,
+            name: 'framer-motion',
+            priority: 8,
+            chunks: 'all',
+          },
+          // Separate chunk for large libraries
+          framerMotion: {
+            test: /[\\/]node_modules[\\/]framer-motion[\\/]/,
+            name: 'framer-motion',
+            priority: 8,
+            chunks: 'all',
+          },
         },
       };
     }
@@ -73,6 +103,18 @@ const nextConfig = {
       '@': require('path').resolve(__dirname),
     };
     
+    // Add performance optimizations
+    if (!dev) {
+      config.optimization.usedExports = true;
+      config.optimization.sideEffects = false;
+    }
+    
+    // Add performance optimizations
+    if (!dev) {
+      config.optimization.usedExports = true;
+      config.optimization.sideEffects = false;
+    }
+    
     return config;
   },
   
@@ -81,8 +123,18 @@ const nextConfig = {
     removeConsole: process.env.NODE_ENV === 'production' ? {
       exclude: ['error', 'warn'],
     } : false,
+    // Enable SWC minification
+    styledComponents: true,
+    // Enable SWC minification
+    styledComponents: true,
   },
+  
+  // Image optimization
   images: {
+    formats: ['image/webp', 'image/avif'],
+    deviceSizes: [640, 750, 828, 1080, 1200, 1920, 2048, 3840],
+    imageSizes: [16, 32, 48, 64, 96, 128, 256, 384],
+    minimumCacheTTL: process.env.NODE_ENV === 'development' ? 1 : 60,
     remotePatterns: [
       {
         protocol: 'https',
@@ -92,8 +144,12 @@ const nextConfig = {
         protocol: 'https',
         hostname: 'fra.cloud.appwrite.io',
       },
+      {
+        protocol: 'https',
+        hostname: 'images.unsplash.com',
+      },
     ],
-    unoptimized: true,
+    unoptimized: false,
   },
 
   // Environment variables that should be available on the client side
@@ -101,6 +157,11 @@ const nextConfig = {
     NEXT_PUBLIC_API_URL: process.env.NEXT_PUBLIC_API_URL,
     NEXT_PUBLIC_WHATSAPP_NUMBER: process.env.NEXT_PUBLIC_WHATSAPP_NUMBER,
   },
+  
+  // Performance optimizations
+  poweredByHeader: false,
+  compress: true,
+  
   // Enhanced security headers configuration
   async headers() {
     return [
@@ -112,9 +173,9 @@ const nextConfig = {
             key: 'Content-Security-Policy',
             value: [
               "default-src 'self'",
-              "script-src 'self' 'unsafe-inline' 'unsafe-eval' https://vercel.live https://www.googletagmanager.com https://www.google-analytics.com",
+              "script-src 'self' 'unsafe-inline' 'unsafe-eval' https://vercel.live https://www.googletagmanager.com https://www.google-analytics.com https://va.vercel-scripts.com",
               "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com",
-              "img-src 'self' data: blob: https://res.cloudinary.com https://vercel.live https://images.unsplash.com https://www.google-analytics.com https://fra.cloud.appwrite.io",
+              "img-src 'self' data: blob: https://res.cloudinary.com https://vercel.live https://images.unsplash.com https://www.google-analytics.com https://fra.cloud.appwrite.io https://images.pexels.com",
               "media-src 'self' https://videos.pexels.com https://res.cloudinary.com",
               "font-src 'self' https://fonts.gstatic.com https://fonts.googleapis.com",
               "connect-src 'self' https://api.github.com https://vercel.live https://www.google-analytics.com ws://localhost:* wss://localhost:* " + (process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3000'),
@@ -198,20 +259,24 @@ const nextConfig = {
             key: 'X-Permitted-Cross-Domain-Policies',
             value: 'none'
           },
-          // Cache-Control for security-sensitive pages
+          // Cache-Control for static assets
           {
             key: 'Cache-Control',
-            value: 'no-store, no-cache, must-revalidate, proxy-revalidate'
+            value: 'public, max-age=31536000, immutable'
           },
-          // Pragma for legacy cache control
+        ]
+      },
+      // Specific headers for static assets
+      {
+        source: '/_next/static/(.*)',
+        headers: [
           {
-            key: 'Pragma',
-            value: 'no-cache'
+            key: 'Cache-Control',
+            value: 'public, max-age=31536000, immutable'
           },
-          // Expires for cache expiration
           {
-            key: 'Expires',
-            value: '0'
+            key: 'X-Content-Type-Options',
+            value: 'nosniff'
           }
         ]
       },

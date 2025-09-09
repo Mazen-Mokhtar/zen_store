@@ -468,33 +468,47 @@ class ApiService {
     }
   }
 
-  async getPaidGamesByCategory(categoryId: string): Promise<{ success: boolean; data: Game[] }> {
+  async getPaidGamesByCategory(categoryId: string, page?: number, limit?: number): Promise<{ success: boolean; data: Game[]; pagination?: any }> {
     try {
-      const cacheKey = `paid-games:${categoryId}`;
-      const cached = getCachedData<{ success: boolean; data: Game[] }>(cacheKey);
+      const queryParams = new URLSearchParams();
+      if (page) queryParams.append('page', page.toString());
+      if (limit) queryParams.append('limit', limit.toString());
+      
+      const queryString = queryParams.toString();
+      const endpoint = `/game/category/${categoryId}/paid${queryString ? `?${queryString}` : ''}`;
+      
+      const cacheKey = `paid-games:${categoryId}:${page || 1}:${limit || 12}`;
+      const cached = getCachedData<{ success: boolean; data: Game[]; pagination?: any }>(cacheKey);
       if (cached) return cached;
 
-      const response = await this.getPublic<{ success: boolean; data: Game[] }>(`/game/category/${categoryId}/paid`);
+      const response = await this.getPublic<{ success: boolean; data: Game[]; pagination?: any }>(endpoint);
       setCachedData(cacheKey, response, CACHE_TTL.MEDIUM);
       return response;
     } catch (error) {
       logger.error('Failed to get paid games by category:', error);
-      return { success: false, data: [] };
+      return { success: false, data: [], pagination: null };
     }
   }
 
-  async getGamesByCategory(categoryId: string): Promise<{ success: boolean; data: Game[] }> {
+  async getGamesByCategory(categoryId: string, page?: number, limit?: number): Promise<{ success: boolean; data: Game[]; pagination?: any }> {
     try {
-      const cacheKey = `games-by-category:${categoryId}`;
-      const cached = getCachedData<{ success: boolean; data: Game[] }>(cacheKey);
+      const queryParams = new URLSearchParams();
+      if (page) queryParams.append('page', page.toString());
+      if (limit) queryParams.append('limit', limit.toString());
+      
+      const queryString = queryParams.toString();
+      const endpoint = `/game/category/${categoryId}${queryString ? `?${queryString}` : ''}`;
+      
+      const cacheKey = `games-by-category:${categoryId}:${page || 1}:${limit || 12}`;
+      const cached = getCachedData<{ success: boolean; data: Game[]; pagination?: any }>(cacheKey);
       if (cached) return cached;
 
-      const response = await this.getPublic<{ success: boolean; data: Game[] }>(`/game/category/${categoryId}`);
+      const response = await this.getPublic<{ success: boolean; data: Game[]; pagination?: any }>(endpoint);
       setCachedData(cacheKey, response, CACHE_TTL.MEDIUM);
       return response;
     } catch (error) {
       logger.error('Failed to get games by category:', error);
-      return { success: false, data: [] };
+      return { success: false, data: [], pagination: null };
     }
   }
 

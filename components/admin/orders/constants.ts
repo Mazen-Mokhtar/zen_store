@@ -35,3 +35,22 @@ export const ORDER_STATUS_OPTIONS = [
   { value: 'delivered', label: 'تم التسليم' },
   { value: 'rejected', label: 'مرفوض' }
 ];
+
+export const PAYMENT_STATUS_OPTIONS = [
+  { value: '', label: 'جميع حالات الدفع' },
+  { value: 'pending', label: 'معلق' },
+  { value: 'paid', label: 'مدفوع' },
+  { value: 'failed', label: 'فشل' },
+  { value: 'refunded', label: 'مسترد' }
+];
+
+export const SORT_OPTIONS = [
+  { value: 'createdAt-desc', label: 'الأحدث أولاً' },
+  { value: 'createdAt-asc', label: 'الأقدم أولاً' },
+  { value: 'totalAmount-desc', label: 'المبلغ (الأعلى أولاً)' },
+  { value: 'totalAmount-asc', label: 'المبلغ (الأقل أولاً)' },
+  { value: 'status-asc', label: 'الحالة (أ-ي)' },
+  { value: 'status-desc', label: 'الحالة (ي-أ)' }
+];
+
+export const ORDER_STATUS_LABELS = statusLabels;
