@@ -2,7 +2,7 @@
 
 import { useState } from 'react';
 import { X, User, Lock, AlertCircle } from 'lucide-react';
-import type { SteamGame } from '@/lib/types';
+import type { SteamGame, AppliedCoupon } from '@/lib/types';
 
 interface SteamAccountInfoModalProps {
   isOpen: boolean;
@@ -10,6 +10,7 @@ interface SteamAccountInfoModalProps {
   game: SteamGame;
   onSubmit: (accountInfo: { fieldName: string; value: string }[]) => void;
   isLoading: boolean;
+  appliedCoupon?: AppliedCoupon | null;
 }
 
 // Security utility for sanitizing display text
@@ -41,7 +42,8 @@ export function SteamAccountInfoModal({
   onClose, 
   game, 
   onSubmit, 
-  isLoading 
+  isLoading,
+  appliedCoupon 
 }: SteamAccountInfoModalProps) {
   const [accountInfo, setAccountInfo] = useState<Record<string, string>>({});
   const [errors, setErrors] = useState<Record<string, string>>({});
@@ -158,11 +160,29 @@ export function SteamAccountInfoModal({
           {/* Game Info */}
           <div className="mb-6 p-4 bg-[#232329] rounded-xl">
             <h3 className="font-bold text-white mb-2">{sanitizeDisplayText(game.name)}</h3>
-            <div className="flex items-center justify-between">
-              <span className="text-gray-400">Price:</span>
-              <span className="text-green-400 font-bold">
-                {game.isOffer && game.finalPrice ? game.finalPrice : game.price || 0} EGP
-              </span>
+            <div className="space-y-2">
+              <div className="flex items-center justify-between">
+                <span className="text-gray-400">Original Price:</span>
+                <span className="text-white">
+                  {game.isOffer && game.finalPrice ? game.finalPrice : game.price || 0} EGP
+                </span>
+              </div>
+              {appliedCoupon && (
+                <div className="flex items-center justify-between">
+                  <span className="text-gray-400">Coupon Discount:</span>
+                  <span className="text-green-400">-{appliedCoupon.discountAmount} EGP</span>
+                </div>
+              )}
+              <hr className="border-gray-600" />
+              <div className="flex items-center justify-between">
+                <span className="text-gray-400 font-bold">Final Price:</span>
+                <span className="text-green-400 font-bold text-lg">
+                  {appliedCoupon 
+                    ? (game.isOffer && game.finalPrice ? game.finalPrice : game.price || 0) - appliedCoupon.discountAmount
+                    : (game.isOffer && game.finalPrice ? game.finalPrice : game.price || 0)
+                  } EGP
+                </span>
+              </div>
             </div>
           </div>
 

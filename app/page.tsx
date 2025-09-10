@@ -6,9 +6,9 @@ export default function Home() {
     <main className="relative">
       <ThemeToggle />
       <HeroGeometric 
-        badge="مرحباً بك في المشروع"
-        title1="ارتقِ بتجربتك"
-        title2="الرقمية معنا"
+        badge="Wivz"
+        title1="من هنا تبدأ متعتك"
+        title2="أمان مضمون… سرعة جنون… شحن واشتراكات موجود"
       />
     </main>
   );

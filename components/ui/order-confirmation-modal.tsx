@@ -4,6 +4,7 @@ import React, { useState } from 'react';
 import { X, CheckCircle, User, Package, CreditCard, Wallet, Upload, AlertCircle } from 'lucide-react';
 import Image from 'next/image';
 import type { Package as PackageType, Game } from '@/lib/api';
+import type { AppliedCoupon } from '@/lib/types';
 import PaymentMethodSelector from '@/components/payment/PaymentMethodSelector';
 import WalletTransferOptions, { WalletTransferType } from '@/components/payment/WalletTransferOptions';
 import WalletTransferForm, { WalletTransferData } from '@/components/payment/WalletTransferForm';
@@ -44,6 +45,7 @@ interface OrderConfirmationModalProps {
   selectedPackage: PackageType | null;
   accountInfo: Record<string, string>;
   isLoading?: boolean;
+  appliedCoupon?: AppliedCoupon | null;
 }
 
 export function OrderConfirmationModal({
@@ -55,7 +57,8 @@ export function OrderConfirmationModal({
   game,
   selectedPackage,
   accountInfo,
-  isLoading = false
+  isLoading = false,
+  appliedCoupon = null
 }: OrderConfirmationModalProps) {
   // Payment flow state
   const [currentStep, setCurrentStep] = useState<'confirmation' | 'payment-method' | 'wallet-options' | 'wallet-form'>('confirmation');
@@ -67,7 +70,9 @@ export function OrderConfirmationModal({
   if (!isOpen || !validateProps(game, selectedPackage)) return null;
 
   // Security: Safe property access with fallbacks
-  const totalAmount = selectedPackage?.finalPrice || selectedPackage?.price || 0;
+  const originalAmount = selectedPackage?.finalPrice || selectedPackage?.price || 0;
+  const discountAmount = appliedCoupon?.discountAmount || 0;
+  const totalAmount = originalAmount - discountAmount;
   const currency = sanitizeDisplayText(selectedPackage?.currency || 'EGP');
   const gameName = sanitizeDisplayText(game?.name || '');
   const packageName = sanitizeDisplayText(selectedPackage?.title || '');
@@ -102,7 +107,7 @@ export function OrderConfirmationModal({
     setIsSubmittingTransfer(true);
     try {
       await onWalletTransferSubmit(data, selectedTransferType);
-      handleClose();
+      // Don't close modal here - let the parent handle redirect
     } catch (error) {
       console.error('Error submitting wallet transfer:', error);
       // Keep the modal open on error so user can retry
@@ -203,19 +208,72 @@ export function OrderConfirmationModal({
                 <p className="text-gray-400 mb-2">
                   {packageName}
                 </p>
-                <div className="flex items-center gap-2">
-                  <span className="text-2xl font-bold text-[#00e6c0]">
-                    {totalAmount.toLocaleString()} {currency}
-                  </span>
-                  {selectedPackage?.originalPrice && selectedPackage.originalPrice > totalAmount && (
-                    <span className="text-sm text-gray-500 line-through">
-                      {selectedPackage.originalPrice.toLocaleString()} {currency}
+                <div className="space-y-2">
+                  <div className="flex items-center gap-2">
+                    <span className="text-lg text-gray-400">السعر الأصلي:</span>
+                    <span className="text-lg font-bold text-white">
+                      {originalAmount.toLocaleString()} {currency}
                     </span>
+                  </div>
+                  {appliedCoupon && (
+                    <div className="flex items-center gap-2">
+                      <span className="text-lg text-gray-400">الخصم:</span>
+                      <span className="text-lg font-bold text-red-400">
+                        -{discountAmount.toLocaleString()} {currency}
+                      </span>
+                    </div>
                   )}
+                  <div className="flex items-center gap-2 pt-2 border-t border-gray-600">
+                    <span className="text-lg text-gray-400">المجموع:</span>
+                    <span className="text-2xl font-bold text-[#00e6c0]">
+                      {totalAmount.toLocaleString()} {currency}
+                    </span>
+                  </div>
                 </div>
               </div>
             </div>
           </div>
+
+          {/* Coupon Information */}
+          {appliedCoupon && (
+            <div className="bg-[#232329] rounded-xl p-4">
+              <h3 className="text-lg font-bold text-white mb-4 flex items-center gap-2">
+                <Package className="w-5 h-5 text-[#00e6c0]" />
+                تفاصيل الكوبون
+              </h3>
+              <div className="space-y-3">
+                <div className="p-3 bg-[#18181c] rounded-lg">
+                  <div className="flex justify-between items-center mb-2">
+                    <span className="text-gray-400 text-sm">كود الكوبون</span>
+                    <span className="text-[#00e6c0] font-bold text-lg">
+                      {appliedCoupon.code}
+                    </span>
+                  </div>
+                  <div className="flex justify-between items-center mb-2">
+                    <span className="text-gray-400 text-sm">نوع الخصم</span>
+                    <span className="text-white font-medium">
+                      {appliedCoupon.type === 'percentage' ? 'نسبة مئوية' : 'مبلغ ثابت'}
+                    </span>
+                  </div>
+                  <div className="flex justify-between items-center mb-2">
+                    <span className="text-gray-400 text-sm">قيمة الخصم</span>
+                    <span className="text-green-400 font-bold">
+                      {appliedCoupon.type === 'percentage' 
+                        ? `${appliedCoupon.value}%` 
+                        : `${appliedCoupon.value} ${currency}`
+                      }
+                    </span>
+                  </div>
+                  <div className="flex justify-between items-center">
+                    <span className="text-gray-400 text-sm">مبلغ الخصم المطبق</span>
+                    <span className="text-red-400 font-bold">
+                      -{appliedCoupon.discountAmount.toLocaleString()} {currency}
+                    </span>
+                  </div>
+                </div>
+              </div>
+            </div>
+          )}
 
           {/* Account Information */}
           {validateAccountInfo(accountInfo) && Object.keys(accountInfo).length > 0 && (

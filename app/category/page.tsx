@@ -59,14 +59,21 @@ export default function CategoryPage() {
   
   return (
     <main className="flex min-h-screen flex-col items-center justify-center p-8 relative overflow-hidden">
-      {/* Background Video */}
+      {/* Background Video - Hidden on small screens */}
       <video
-        className="absolute inset-0 w-full h-full object-cover z-0"
+        className="absolute inset-0 w-full h-full object-cover z-0 hidden sm:block"
         src="https://videos.pexels.com/video-files/8128311/8128311-uhd_2560_1440_25fps.mp4"
         autoPlay
         loop
         muted
         playsInline
+      />
+      {/* Background Image for small screens */}
+      <div 
+        className="absolute inset-0 w-full h-full bg-cover bg-center bg-no-repeat z-0 sm:hidden"
+        style={{
+          backgroundImage: 'url(/images/sm-sc.png)'
+        }}
       />
       {/* Overlay for readability */}
       <div className="absolute inset-0 bg-black/60 z-10" />

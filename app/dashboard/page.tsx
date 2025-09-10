@@ -89,6 +89,17 @@ function DashboardContent() {
   const [displayedGamesLimit, setDisplayedGamesLimit] = useState(6);
   const [showAllGames, setShowAllGames] = useState(false);
   
+  // Function to scroll to popular games section
+  const scrollToGames = useCallback(() => {
+    const popularSection = document.querySelector('[aria-labelledby="popular-games-heading"]');
+    if (popularSection) {
+      popularSection.scrollIntoView({ 
+        behavior: 'smooth', 
+        block: 'start' 
+      });
+    }
+  }, []);
+  
   const INITIAL_GAMES_LIMIT = 6;
   const SHOW_SEE_ALL_THRESHOLD = 6;
 
@@ -278,8 +289,9 @@ function DashboardContent() {
                 </div>
                 <h3 className="text-3xl sm:text-4xl md:text-5xl lg:text-6xl font-extrabold mb-4 md:mb-6">{t('dashboard.bloodStrike')}</h3>
                 <button 
+                  onClick={scrollToGames}
                   className="border border-white/50 rounded-full px-6 md:px-8 py-2 md:py-3 text-sm font-semibold hover:bg-white/10 transition-colors focus:outline-none focus:ring-2 focus:ring-white/50"
-                  aria-label="Buy now"
+                  aria-label="Scroll to games section"
                 >
                   {t('dashboard.buyNow')}
                 </button>

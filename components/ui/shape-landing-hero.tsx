@@ -160,7 +160,7 @@ function HeroGeometric({
                         animate="visible"
                         transition={{ delay: 0.7 }}
                     >
-                        <h1 className="text-4xl sm:text-6xl md:text-8xl font-bold mb-6 md:mb-8 tracking-tight">
+                        <h1 className="text-4xl sm:text-6xl md:text-6xl lg:text-7xl xl:text-6xl font-bold mb-6 md:mb-8 tracking-tight">
                             <span className="bg-clip-text text-transparent bg-gradient-to-b from-white to-white/80">
                                 {title1}
                             </span>
@@ -197,6 +197,11 @@ function HeroGeometric({
                         <Link href="/signin">
                             <HoverButton className="text-white font-medium text-lg">
                                 تسجيل الدخول
+                            </HoverButton>
+                        </Link>
+                        <Link href="/category">
+                            <HoverButton className="text-white font-medium text-lg bg-gradient-to-r from-indigo-500/20 to-rose-500/20 border border-white/10">
+                                الفئات
                             </HoverButton>
                         </Link>
                     </motion.div>

@@ -119,10 +119,12 @@ const WalletTransferForm: React.FC<WalletTransferFormProps> = ({
     return Object.keys(newErrors).length === 0;
   };
 
+  const [isSubmittingForm, setIsSubmittingForm] = useState(false);
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
-    if (!validateForm() || !selectedImage) {
+    if (!validateForm() || !selectedImage || isSubmittingForm) {
       return;
     }
 
@@ -132,6 +134,7 @@ const WalletTransferForm: React.FC<WalletTransferFormProps> = ({
       ...(transferType === 'insta-transfer' && { nameOfInsta: formData.nameOfInsta })
     };
 
+    setIsSubmittingForm(true);
     try {
       if (!orderId && onCreateOrderWithTransfer && gameId && accountInfo) {
         const orderData = {
@@ -147,6 +150,9 @@ const WalletTransferForm: React.FC<WalletTransferFormProps> = ({
       }
     } catch (error) {
       console.error('Error submitting transfer:', error);
+      // Keep form open on error so user can retry
+    } finally {
+      setIsSubmittingForm(false);
     }
   };
 
@@ -159,7 +165,7 @@ const WalletTransferForm: React.FC<WalletTransferFormProps> = ({
             <button
               onClick={onBack}
               className="p-2 hover:bg-gray-700 rounded-lg transition-colors"
-              disabled={isSubmitting}
+              disabled={isSubmitting || isSubmittingForm}
             >
               <ArrowRight className="w-5 h-5 text-gray-400" />
             </button>
@@ -198,7 +204,7 @@ const WalletTransferForm: React.FC<WalletTransferFormProps> = ({
                 accept="image/*"
                 onChange={handleImageSelect}
                 className="hidden"
-                disabled={isSubmitting}
+                disabled={isSubmitting || isSubmittingForm}
               />
               
               {imagePreview ? (
@@ -221,7 +227,7 @@ const WalletTransferForm: React.FC<WalletTransferFormProps> = ({
                       }
                     }}
                     className="absolute top-2 right-2 p-1 bg-red-500 hover:bg-red-600 rounded-full transition-colors"
-                    disabled={isSubmitting}
+                    disabled={isSubmitting || isSubmittingForm}
                   >
                     <X className="w-4 h-4 text-white" />
                   </button>
@@ -231,7 +237,7 @@ const WalletTransferForm: React.FC<WalletTransferFormProps> = ({
                   type="button"
                   onClick={() => fileInputRef.current?.click()}
                   className="w-full h-32 border-2 border-dashed border-gray-600 rounded-lg flex flex-col items-center justify-center gap-2 hover:border-gray-500 transition-colors"
-                  disabled={isSubmitting}
+                  disabled={isSubmitting || isSubmittingForm}
                 >
                   <Upload className="w-8 h-8 text-gray-400" />
                   <span className="text-sm text-gray-400">اضغط لاختيار صورة التحويل</span>
@@ -285,7 +291,7 @@ const WalletTransferForm: React.FC<WalletTransferFormProps> = ({
               }}
               placeholder="مثال: 123 أو 1234567890"
               className="w-full px-4 py-3 bg-[#232329] border border-gray-600 rounded-lg text-white placeholder-gray-400 focus:border-[#00e6c0] focus:outline-none transition-colors"
-              disabled={isSubmitting}
+              disabled={isSubmitting || isSubmittingForm}
             />
             {errors.walletTransferNumber && (
               <div className="flex items-center gap-2 text-red-400 text-sm">
@@ -306,8 +312,8 @@ const WalletTransferForm: React.FC<WalletTransferFormProps> = ({
                 value={formData.nameOfInsta}
                 onChange={(e) => handleInputChange('nameOfInsta', e.target.value)}
                 placeholder="اسم المستخدم في إنستا باي"
-                className="w-full px-4 py-3 bg-[#232329] border border-gray-600 rounded-lg text-white placeholder-gray-400 focus:border-[#00e6c0] focus:outline-none transition-colors"
-                disabled={isSubmitting}
+                className="w-full px-4 py-3 bg-[#232329] border border-gray-600 rounded-lg text-white placeholder-gray-400 focus:border-[#00e6c0] focus:outline-none transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                disabled={isSubmitting || isSubmittingForm}
               />
               {errors.nameOfInsta && (
                 <div className="flex items-center gap-2 text-red-400 text-sm">
@@ -340,20 +346,20 @@ const WalletTransferForm: React.FC<WalletTransferFormProps> = ({
             type="button"
             onClick={onClose}
             className="flex-1 px-4 py-3 bg-gray-600 hover:bg-gray-500 text-white rounded-xl font-medium transition-colors"
-            disabled={isSubmitting}
+            disabled={isSubmitting || isSubmittingForm}
           >
             إلغاء
           </button>
           <button
             onClick={handleSubmit}
-            disabled={isSubmitting || !selectedImage || !formData.walletTransferNumber}
+            disabled={isSubmitting || isSubmittingForm || !selectedImage || !formData.walletTransferNumber}
             className={`flex-1 px-4 py-3 rounded-xl font-medium transition-colors flex items-center justify-center gap-2 ${
-              isSubmitting || !selectedImage || !formData.walletTransferNumber
+              isSubmitting || isSubmittingForm || !selectedImage || !formData.walletTransferNumber
                 ? 'bg-gray-700 text-gray-400 cursor-not-allowed'
                 : 'bg-[#00e6c0] hover:bg-[#00d4aa] text-black'
             }`}
           >
-            {isSubmitting ? (
+            {(isSubmitting || isSubmittingForm) ? (
               <>
                 <div className="w-4 h-4 border-2 border-gray-400 border-t-transparent rounded-full animate-spin" />
                 جاري الإرسال...

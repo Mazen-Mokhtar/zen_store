@@ -25,6 +25,14 @@ export interface Order {
   status: 'pending' | 'processing' | 'paid' | 'delivered' | 'rejected';
   paymentMethod: 'card' | 'cash' | 'wallet-transfer' | 'insta-transfer' | 'fawry-transfer';
   totalAmount: number;
+  originalAmount?: number;
+  discountAmount?: number;
+  couponCode?: string;
+  couponDiscount?: {
+    type: 'percentage' | 'fixed';
+    value: number;
+    appliedAmount: number;
+  };
   adminNote?: string;
   createdAt: string;
   updatedAt?: string;
@@ -49,6 +57,7 @@ export interface CreateOrderData {
   accountInfo: { fieldName: string; value: string }[];
   paymentMethod: 'card' | 'cash' | 'wallet-transfer' | 'insta-transfer' | 'fawry-transfer';
   note?: string;
+  couponCode?: string;
 }
 
 // Order status configuration with visual styling and labels
@@ -128,9 +137,50 @@ export interface SteamGame {
   tags?: string[];
 }
 
-export interface SteamGamePrice {
+export type SteamGamePrice = {
   amount: number;
   currency: string;
   discount?: number;
   originalAmount?: number;
+}
+
+// Coupon Types
+export interface Coupon {
+  _id: string;
+  code: string;
+  type: 'percentage' | 'fixed';
+  value: number;
+  minOrderAmount?: number;
+  maxDiscountAmount?: number;
+  usageLimit?: number;
+  usedCount: number;
+  isActive: boolean;
+  validFrom: string;
+  validUntil: string;
+  applicableGames?: string[];
+  applicableCategories?: string[];
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface CouponValidationRequest {
+  code: string;
+  orderAmount: number;
+}
+
+export interface CouponValidationResponse {
+  isValid: boolean;
+  coupon?: Coupon;
+  discountAmount?: number;
+  finalAmount?: number;
+  error?: string;
+}
+
+export interface AppliedCoupon {
+  code: string;
+  type: 'percentage' | 'fixed';
+  value: number;
+  discountAmount: number;
+  originalAmount: number;
+  finalAmount: number;
 }

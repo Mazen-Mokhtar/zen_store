@@ -32,6 +32,8 @@ import { logger } from '@/lib/utils';
 import { WalletTransferData } from '@/components/payment/WalletTransferForm';
 import { WalletTransferType } from '@/components/payment/WalletTransferOptions';
 import { Logo } from '@/components/ui/logo';
+import { CouponInput } from '@/components/ui/coupon-input';
+import type { AppliedCoupon } from '@/lib/types';
 
 interface SteamGameDetailsClientProps {
   game: SteamGame;
@@ -49,6 +51,7 @@ export function SteamGameDetailsClient({ game }: SteamGameDetailsClientProps) {
   const [videoPlaying, setVideoPlaying] = useState(false);
   const [videoMuted, setVideoMuted] = useState(true);
   const [currentOrderId, setCurrentOrderId] = useState<string | null>(null);
+  const [appliedCoupon, setAppliedCoupon] = useState<AppliedCoupon | null>(null);
 
 
 
@@ -85,9 +88,12 @@ export function SteamGameDetailsClient({ game }: SteamGameDetailsClientProps) {
     try {
       setIsCreatingOrder(true);
       
+      console.log('Creating order with coupon:', appliedCoupon);
+      
       const response = await orderApiService.createSteamOrder(
         game._id,
-        pendingAccountInfo
+        pendingAccountInfo,
+        appliedCoupon?.code
       );
 
       if (response.success) {
@@ -154,12 +160,18 @@ export function SteamGameDetailsClient({ game }: SteamGameDetailsClientProps) {
 
       notificationService.success('نجح', 'تم إرسال بيانات التحويل بنجاح');
       setShowConfirmationModal(false);
+      
+      // Redirect to success page
+      router.push(`/payment-success?orderId=${currentOrderId}`);
     } catch (error) {
       logger.error('Error submitting wallet transfer:', error);
       notificationService.error('خطأ', 'حدث خطأ أثناء إرسال بيانات التحويل');
+      
+      // Redirect to cancel page with error reason
+      router.push(`/payment-cancel?orderId=${currentOrderId}&reason=transfer_failed`);
       throw error;
     }
-  }, [currentOrderId]);
+  }, [currentOrderId, router]);
 
   const handleCreateOrderWithTransfer = useCallback(async (orderData: any, transferData: WalletTransferData, transferType: WalletTransferType): Promise<void> => {
     if (!pendingAccountInfo) {
@@ -187,14 +199,24 @@ export function SteamGameDetailsClient({ game }: SteamGameDetailsClientProps) {
       
       notificationService.success('نجح', 'تم إنشاء الطلب وإرسال بيانات التحويل بنجاح');
       setShowConfirmationModal(false);
+      
+      // Redirect to success page with the new order ID
+      const orderId = response?.data?.orderId || response?.orderId;
+      router.push(`/payment-success?orderId=${orderId}`);
     } catch (error) {
       logger.error('Error creating order with wallet transfer:', error);
       notificationService.error('خطأ', 'حدث خطأ أثناء إنشاء الطلب مع بيانات التحويل');
+      
+      // Redirect to cancel page with error reason
+      router.push(`/payment-cancel?reason=order_creation_failed`);
       throw error;
     }
-  }, [game, pendingAccountInfo]);
+  }, [game, pendingAccountInfo, router]);
 
-  const currentPrice = game.isOffer && game.finalPrice ? game.finalPrice : game.price || 0;
+  const originalPrice = game.isOffer && game.finalPrice ? game.finalPrice : game.price || 0;
+  const currentPrice = appliedCoupon 
+    ? originalPrice - appliedCoupon.discountAmount
+    : originalPrice;
   const hasDiscount = game.isOffer && game.originalPrice && game.finalPrice && game.originalPrice > game.finalPrice;
 
   return (
@@ -291,6 +313,15 @@ export function SteamGameDetailsClient({ game }: SteamGameDetailsClientProps) {
                 <span className="sm:hidden">{game.description.slice(0, 150)}...</span>
                 <span className="hidden sm:inline">{game.description.slice(0, 200)}...</span>
               </p>
+              
+              {/* Coupon Input */}
+              <div className="mb-6">
+                <CouponInput
+                  orderAmount={originalPrice}
+                  onCouponApplied={setAppliedCoupon}
+                  onCouponRemoved={() => setAppliedCoupon(null)}
+                />
+              </div>
               
               {/* Desktop Buy Button */}
               <div className="hidden md:block">
@@ -566,6 +597,7 @@ export function SteamGameDetailsClient({ game }: SteamGameDetailsClientProps) {
         game={game}
         onSubmit={handleCreateOrder}
         isLoading={isCreatingOrder}
+        appliedCoupon={appliedCoupon}
       />
 
       {/* Order Confirmation Modal */}
@@ -578,6 +610,7 @@ export function SteamGameDetailsClient({ game }: SteamGameDetailsClientProps) {
         game={game}
         accountInfo={pendingAccountInfo}
         isLoading={isCreatingOrder}
+        appliedCoupon={appliedCoupon}
       />
     </div>
   );

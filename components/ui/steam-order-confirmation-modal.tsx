@@ -3,7 +3,7 @@
 import React, { useState } from 'react';
 import { X, CheckCircle, User, Package, CreditCard, Wallet, Upload, AlertCircle } from 'lucide-react';
 import Image from 'next/image';
-import type { SteamGame } from '@/lib/types';
+import type { SteamGame, AppliedCoupon } from '@/lib/types';
 import PaymentMethodSelector from '@/components/payment/PaymentMethodSelector';
 import WalletTransferOptions, { WalletTransferType } from '@/components/payment/WalletTransferOptions';
 import WalletTransferForm, { WalletTransferData } from '@/components/payment/WalletTransferForm';
@@ -43,6 +43,7 @@ interface SteamOrderConfirmationModalProps {
   game: SteamGame;
   accountInfo: { fieldName: string; value: string }[];
   isLoading?: boolean;
+  appliedCoupon?: AppliedCoupon | null;
 }
 
 export function SteamOrderConfirmationModal({
@@ -53,7 +54,8 @@ export function SteamOrderConfirmationModal({
   onCreateOrderWithTransfer,
   game,
   accountInfo,
-  isLoading = false
+  isLoading = false,
+  appliedCoupon
 }: SteamOrderConfirmationModalProps) {
   // Payment flow state
   const [currentStep, setCurrentStep] = useState<'confirmation' | 'payment-method' | 'wallet-options' | 'wallet-form'>('confirmation');
@@ -65,7 +67,8 @@ export function SteamOrderConfirmationModal({
   if (!isOpen || !validateSteamGameProps(game)) return null;
 
   // Security: Safe property access with fallbacks
-  const currentPrice = game?.isOffer && game?.finalPrice ? game.finalPrice : game?.price || 0;
+  const originalPrice = game?.isOffer && game?.finalPrice ? game.finalPrice : game?.price || 0;
+  const currentPrice = appliedCoupon ? originalPrice - appliedCoupon.discountAmount : originalPrice;
   const hasDiscount = game?.isOffer && game?.originalPrice && game?.finalPrice && game.originalPrice > game.finalPrice;
   const gameName = sanitizeDisplayText(game?.name || '');
 
@@ -102,7 +105,7 @@ export function SteamOrderConfirmationModal({
     setIsSubmittingTransfer(true);
     try {
       const response = await onWalletTransferSubmit(data, selectedTransferType);
-      handleClose();
+      // Don't close modal here - let the parent handle redirect
     } catch (error) {
       console.error('❌ [Frontend] خطأ في إرسال تحويل المحفظة:', error);
     } finally {
@@ -261,13 +264,54 @@ export function SteamOrderConfirmationModal({
             </div>
           </div>
 
-          {/* Total */}
-          <div className="bg-gradient-to-r from-[#00e6c0]/10 to-[#00e6c0]/5 rounded-xl p-4 border border-[#00e6c0]/20">
-            <div className="flex items-center justify-between">
-              <span className="text-lg font-bold text-white">المجموع الكلي</span>
-              <span className="text-2xl font-bold text-[#00e6c0]">
-                {currentPrice.toLocaleString()} EGP
-              </span>
+          {/* Coupon Information */}
+          {appliedCoupon && (
+            <div className="bg-green-500/10 border border-green-500/20 rounded-xl p-4">
+              <h3 className="text-lg font-bold text-white mb-3 flex items-center gap-2">
+                <Package className="w-5 h-5 text-green-400" />
+                كوبون الخصم
+              </h3>
+              <div className="space-y-2">
+                <div className="flex items-center justify-between">
+                  <span className="text-gray-300">كود الكوبون:</span>
+                  <span className="text-green-400 font-bold">{appliedCoupon.code}</span>
+                </div>
+                <div className="flex items-center justify-between">
+                  <span className="text-gray-300">نوع الخصم:</span>
+                  <span className="text-white">
+                    {appliedCoupon.discountType === 'percentage' 
+                      ? `${appliedCoupon.discountValue}%` 
+                      : `${appliedCoupon.discountValue} EGP`}
+                  </span>
+                </div>
+                <div className="flex items-center justify-between">
+                  <span className="text-gray-300">قيمة الخصم:</span>
+                  <span className="text-green-400 font-bold">-{appliedCoupon.discountAmount.toLocaleString()} EGP</span>
+                </div>
+              </div>
+            </div>
+          )}
+
+          {/* Price Breakdown */}
+          <div className="bg-[#232329] rounded-xl p-4">
+            <div className="space-y-3">
+              <div className="flex items-center justify-between">
+                <span className="text-gray-300">السعر الأصلي:</span>
+                <span className="text-white font-medium">{originalPrice.toLocaleString()} EGP</span>
+              </div>
+              {appliedCoupon && (
+                <div className="flex items-center justify-between">
+                  <span className="text-gray-300">خصم الكوبون:</span>
+                  <span className="text-green-400 font-medium">-{appliedCoupon.discountAmount.toLocaleString()} EGP</span>
+                </div>
+              )}
+              <hr className="border-gray-600" />
+              <div className="flex items-center justify-between">
+                <span className="text-lg font-bold text-white">المجموع الكلي:</span>
+                <span className="text-2xl font-bold text-[#00e6c0]">
+                  {currentPrice.toLocaleString()} EGP
+                </span>
+              </div>
             </div>
           </div>
 

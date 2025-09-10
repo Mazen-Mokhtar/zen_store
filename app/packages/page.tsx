@@ -23,16 +23,20 @@ import { WalletTransferData } from '@/components/payment/WalletTransferForm';
 import { WalletTransferType } from '@/components/payment/WalletTransferOptions';
 import { Logo } from '@/components/ui/logo';
 import Image from 'next/image';
+import { CouponInput } from '@/components/ui/coupon-input';
+import { PackagesCouponInput } from '@/components/ui/packages-coupon-input';
+import type { AppliedCoupon } from '@/lib/types';
 
 // Regular import to avoid prerendering issues
 import OrderConfirmationModal from '@/components/ui/order-confirmation-modal';
 
 const PackageCard = React.memo<{
-  pkg: Package;
+  pkg: Package & { couponDiscountedPrice?: number; couponDiscountAmount?: number };
   isSelected: boolean;
   onSelect: () => void;
-}>(({ pkg, isSelected, onSelect }) => (
-  <div
+}>(({ pkg, isSelected, onSelect }) => {
+  return (
+    <div
     onClick={onSelect}
     className={`square-card bg-yellow-box cursor-pointer relative transition-all duration-300 ${
       isSelected ? "selected-card" : ""
@@ -67,8 +71,15 @@ const PackageCard = React.memo<{
       </p>
     )}
     <div className="card-price">
-      {(pkg.finalPrice || pkg.price).toLocaleString()} {pkg.currency || 'EGP'}
+      {pkg.couponDiscountedPrice !== undefined 
+        ? pkg.couponDiscountedPrice.toLocaleString() 
+        : (pkg.finalPrice || pkg.price).toLocaleString()} {pkg.currency || 'EGP'}
     </div>
+    {pkg.couponDiscountAmount && pkg.couponDiscountAmount > 0 && (
+      <div className="card-oldprice">
+        {(pkg.finalPrice || pkg.price).toLocaleString()} {pkg.currency || 'EGP'}
+      </div>
+    )}
     {pkg.originalPrice && pkg.originalPrice > (pkg.finalPrice || pkg.price) && (
       <div className="card-oldprice">
         {pkg.originalPrice.toLocaleString()} {pkg.currency || 'EGP'}
@@ -82,8 +93,9 @@ const PackageCard = React.memo<{
     {isSelected && (
       <span className="absolute top-3 right-3 bg-[#00e6c0] text-[#151e2e] text-xs px-2 py-1 rounded-full font-bold z-20">✓</span>
     )}
-  </div>
-));
+    </div>
+  );
+});
 
 PackageCard.displayName = 'PackageCard';
 
@@ -134,6 +146,9 @@ function PackagesPageContent() {
   const [isCreatingOrder, setIsCreatingOrder] = useState(false);
   const [showAllPackages, setShowAllPackages] = useState(false);
   const [isMobile, setIsMobile] = useState(false);
+  const [appliedCoupon, setAppliedCoupon] = useState<AppliedCoupon | null>(null);
+  const [couponDetails, setCouponDetails] = useState<any>(null);
+  const [packagesWithCoupon, setPackagesWithCoupon] = useState<Package[]>([]);
 
   useEffect(() => {
     const checkMobile = () => {
@@ -143,8 +158,120 @@ function PackagesPageContent() {
     window.addEventListener('resize', checkMobile);
     return () => window.removeEventListener('resize', checkMobile);
   }, []);
+
+  // تحديث packagesWithCoupon عند تغيير packages
+  useEffect(() => {
+    if (couponDetails && couponDetails.status?.isValid) {
+      const updatedPackages = packages.map(pkg => {
+        const originalPrice = pkg.finalPrice || pkg.price;
+        const discountedPrice = calculateDiscountedPrice(originalPrice, couponDetails);
+        
+        return {
+          ...pkg,
+          couponDiscountedPrice: discountedPrice,
+          couponDiscountAmount: originalPrice - discountedPrice
+        };
+      });
+      setPackagesWithCoupon(updatedPackages);
+    } else {
+      setPackagesWithCoupon(packages);
+    }
+  }, [packages, couponDetails]);
+
+  // تحديث appliedCoupon عند تغيير الباقة المحددة أو الكوبون
+  useEffect(() => {
+    if (selected && couponDetails && couponDetails.status?.isValid) {
+      const selectedPackage = packages.find(pkg => pkg._id === selected);
+      if (selectedPackage) {
+        const originalPrice = selectedPackage.finalPrice || selectedPackage.price;
+        const discountedPrice = calculateDiscountedPrice(originalPrice, couponDetails);
+        const discountAmount = originalPrice - discountedPrice;
+        
+        const appliedCouponData: AppliedCoupon = {
+          code: couponDetails.code,
+          type: couponDetails.type,
+          value: couponDetails.value,
+          discountAmount: discountAmount,
+          originalAmount: originalPrice,
+          finalAmount: discountedPrice
+        };
+        
+        setAppliedCoupon(appliedCouponData);
+      }
+    } else {
+      setAppliedCoupon(null);
+    }
+  }, [selected, couponDetails, packages]);
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [showLoginModal, setShowLoginModal] = useState(false);
+
+  // دالة لحساب السعر بعد تطبيق الكوبون
+  const calculateDiscountedPrice = (originalPrice: number, coupon: any) => {
+    if (!coupon || !coupon.status?.isValid) return originalPrice;
+    
+    if (originalPrice < coupon.minOrderAmount) return originalPrice;
+    
+    let discountAmount = 0;
+    if (coupon.type === 'percentage') {
+      discountAmount = (originalPrice * coupon.value) / 100;
+      if (coupon.maxDiscount && discountAmount > coupon.maxDiscount) {
+        discountAmount = coupon.maxDiscount;
+      }
+    } else if (coupon.type === 'fixed') {
+      discountAmount = coupon.value;
+    }
+    
+    return Math.max(0, originalPrice - discountAmount);
+  };
+
+  // دالة لجلب تفاصيل الكوبون
+  const fetchCouponDetails = async (couponCode: string) => {
+    try {
+      const response = await fetch(`/api/coupon/details/${encodeURIComponent(couponCode)}`);
+      const result = await response.json();
+      
+      if (result.success && result.data) {
+        return result.data;
+      }
+      return null;
+    } catch (error) {
+      console.error('Error fetching coupon details:', error);
+      return null;
+    }
+  };
+
+  // دالة للتعامل مع تطبيق الكوبون
+  const handleCouponApplication = async (couponCode: string) => {
+    if (!couponCode.trim()) {
+      setCouponDetails(null);
+      setAppliedCoupon(null);
+      setPackagesWithCoupon(packages);
+      return;
+    }
+
+    const details = await fetchCouponDetails(couponCode);
+    if (details && details.status?.isValid) {
+      setCouponDetails(details);
+      
+      // حساب الأسعار الجديدة لجميع الباقات
+      const updatedPackages = packages.map(pkg => {
+        const originalPrice = pkg.finalPrice || pkg.price;
+        const discountedPrice = calculateDiscountedPrice(originalPrice, details);
+        
+        return {
+          ...pkg,
+          couponDiscountedPrice: discountedPrice,
+          couponDiscountAmount: originalPrice - discountedPrice
+        };
+      });
+      
+      setPackagesWithCoupon(updatedPackages);
+    } else {
+      setCouponDetails(null);
+      setAppliedCoupon(null);
+      setPackagesWithCoupon(packages);
+    }
+  };
   const [showConfirmationModal, setShowConfirmationModal] = useState(false);
   const [currentOrderId, setCurrentOrderId] = useState<string | null>(null);
   const [isClient, setIsClient] = useState(false);
@@ -252,7 +379,8 @@ function PackagesPageContent() {
           value: value ? value.toString() : ''
         })),
         paymentMethod: 'card',
-        note: `طلب ${game.name} - ${packages.find(p => p._id === selected)?.title}`
+        note: `طلب ${game.name} - ${packages.find(p => p._id === selected)?.title}`,
+        ...(appliedCoupon?.code && { couponCode: appliedCoupon.code })
       };
 
       const response = await orderApiService.createOrder(orderData);
@@ -261,6 +389,20 @@ function PackagesPageContent() {
         notificationService.showSuccess('تم إنشاء الطلب بنجاح!');
         
         setCurrentOrderId(response.data._id);
+        
+        // تحديث appliedCoupon بناءً على بيانات الاستجابة من الخادم
+        if (response.data.couponApplied) {
+          const serverCouponData = response.data.couponApplied;
+          const updatedAppliedCoupon: AppliedCoupon = {
+            code: serverCouponData.code,
+            type: appliedCoupon?.type || 'percentage',
+            value: appliedCoupon?.value || 0,
+            discountAmount: serverCouponData.discountAmount || response.data.discountAmount || 0,
+            originalAmount: serverCouponData.originalAmount || response.data.originalAmount || 0,
+            finalAmount: response.data.totalAmount || 0
+          };
+          setAppliedCoupon(updatedAppliedCoupon);
+        }
         
         if (paymentMethod === 'card') {
           setShowConfirmationModal(false);
@@ -323,7 +465,8 @@ function PackagesPageContent() {
           value: value ? value.toString() : ''
         })),
         paymentMethod: transferType,
-        note: ''
+        note: '',
+        ...(appliedCoupon?.code && { couponCode: appliedCoupon.code })
       };
 
       const response = await orderApiService.createOrderWithWalletTransfer(
@@ -336,11 +479,33 @@ function PackagesPageContent() {
       );
 
       notificationService.success('نجح', 'تم إنشاء الطلب وإرسال بيانات التحويل بنجاح');
+      
+      // تحديث appliedCoupon بناءً على بيانات الاستجابة من الخادم
+      if (response?.data?.couponApplied) {
+        const serverCouponData = response.data.couponApplied;
+        const updatedAppliedCoupon: AppliedCoupon = {
+          code: serverCouponData.code,
+          type: appliedCoupon?.type || 'percentage',
+          value: appliedCoupon?.value || 0,
+          discountAmount: serverCouponData.discountAmount || response.data.discountAmount || 0,
+          originalAmount: serverCouponData.originalAmount || response.data.originalAmount || 0,
+          finalAmount: response.data.totalAmount || 0
+        };
+        setAppliedCoupon(updatedAppliedCoupon);
+      }
+      
       setShowConfirmationModal(false);
+      
+      // Redirect to success page with the new order ID
+      const orderId = response?.data?.orderId || response?.orderId;
+      router.push(`/payment-success?orderId=${orderId}`);
     } catch (error) {
       console.error('❌ [Packages] خطأ في إنشاء الطلب مع التحويل:', error);
       logger.error('Error creating order with wallet transfer:', error);
       notificationService.error('خطأ', 'حدث خطأ أثناء إنشاء الطلب مع بيانات التحويل');
+      
+      // Redirect to cancel page with error reason
+      router.push(`/payment-cancel?reason=order_creation_failed`);
       throw error;
     } finally {
       setIsCreatingOrder(false);
@@ -378,9 +543,15 @@ function PackagesPageContent() {
 
       notificationService.success('نجح', 'تم إرسال بيانات التحويل بنجاح');
       setShowConfirmationModal(false);
+      
+      // Redirect to success page
+      router.push(`/payment-success?orderId=${currentOrderId}`);
     } catch (error) {
       logger.error('Error submitting wallet transfer:', error);
       notificationService.error('خطأ', 'حدث خطأ أثناء إرسال بيانات التحويل');
+      
+      // Redirect to cancel page with error reason
+      router.push(`/payment-cancel?orderId=${currentOrderId}&reason=transfer_failed`);
       throw error;
     } finally {
       setIsCreatingOrder(false);
@@ -521,17 +692,29 @@ function PackagesPageContent() {
               </div>
             )}
 
+            {/* Coupon Section */}
+            <div className="mb-4 md:mb-6">
+              <h2 className="text-base md:text-lg font-bold mb-3 md:mb-4 flex items-center gap-2">
+                <span className="bg-[#232f47] text-[#00e6c0] rounded-full w-6 h-6 md:w-7 md:h-7 flex items-center justify-center font-bold text-sm md:text-base">2</span>
+                كوبون الخصم (اختياري)
+              </h2>
+              <PackagesCouponInput
+                onCouponChange={handleCouponApplication}
+                className="w-full"
+              />
+            </div>
+
             {/* Packages Section */}
             <div>
               <h2 className="text-base md:text-lg font-bold mb-3 md:mb-4 flex items-center gap-2">
-                <span className="bg-[#232f47] text-[#00e6c0] rounded-full w-6 h-6 md:w-7 md:h-7 flex items-center justify-center font-bold text-sm md:text-base">2</span>
+                <span className="bg-[#232f47] text-[#00e6c0] rounded-full w-6 h-6 md:w-7 md:h-7 flex items-center justify-center font-bold text-sm md:text-base">3</span>
                 اختر الباقة
               </h2>
               
-              {packages.length > 0 ? (
+              {packagesWithCoupon.length > 0 ? (
                 <>
                   <div className="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-3 gap-2 sm:gap-4 md:gap-6 lg:gap-8">
-                    {(isMobile && !showAllPackages ? packages.slice(0, 4) : packages).map((pkg) => (
+                    {(isMobile && !showAllPackages ? packagesWithCoupon.slice(0, 4) : packagesWithCoupon).map((pkg) => (
                       <PackageCard
                         key={pkg._id}
                         pkg={pkg}
@@ -541,13 +724,13 @@ function PackagesPageContent() {
                     ))}
                   </div>
                   
-                  {isMobile && packages.length > 4 && (
+                  {isMobile && packagesWithCoupon.length > 4 && (
                     <div className="flex justify-center mt-4">
                       <button
                         onClick={() => setShowAllPackages(!showAllPackages)}
                         className="px-4 py-2 bg-[#00e6c0] text-black rounded-lg font-medium hover:bg-[#00d4aa] transition-colors"
                       >
-                        {showAllPackages ? 'عرض أقل' : `عرض المزيد (${packages.length - 4}+)`}
+                        {showAllPackages ? 'عرض أقل' : `عرض المزيد (${packagesWithCoupon.length - 4}+)`}
                       </button>
                     </div>
                   )}
@@ -604,9 +787,10 @@ function PackagesPageContent() {
                 onWalletTransferSubmit={handleWalletTransferSubmit}
                 onCreateOrderWithTransfer={handleCreateOrderWithTransfer}
                 game={game}
-                selectedPackage={packages.find(p => p._id === selected) || null}
+                selectedPackage={packagesWithCoupon.find(p => p._id === selected) || packages.find(p => p._id === selected) || null}
                 accountInfo={accountInfo}
                 isLoading={isCreatingOrder}
+                appliedCoupon={appliedCoupon}
               />
             </Suspense>
           </section>

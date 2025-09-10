@@ -707,15 +707,19 @@ class OrderApiService {
     }
   }
 
-  async createSteamOrder(gameId: string, accountInfo: { fieldName: string; value: string }[]): Promise<{ success: boolean; data?: any; error?: string }> {
+  async createSteamOrder(gameId: string, accountInfo: { fieldName: string; value: string }[], couponCode?: string): Promise<{ success: boolean; data?: any; error?: string }> {
     try {
-      const orderData = {
+      const orderData: any = {
         gameId,
         accountInfo,
         paymentMethod: 'card',
         note: 'Steam game purchase'
         // packageId is intentionally omitted for Steam games
       };
+      
+      if (couponCode) {
+        orderData.couponCode = couponCode;
+      }
 
       const response = await this.api.authenticatedRequest<any>('/api/order', {
         method: 'POST',
