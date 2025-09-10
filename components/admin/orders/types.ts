@@ -67,6 +67,7 @@ export interface Order {
   readonly accountInfo?: readonly AccountInfo[];
   readonly items?: readonly OrderItem[];
   readonly totalAmount: number;
+  readonly currency?: string; // العملة المستخدمة في الطلب
   readonly status: OrderStatus;
   readonly paymentStatus?: PaymentStatus;
   readonly paymentMethod?: PaymentMethod;

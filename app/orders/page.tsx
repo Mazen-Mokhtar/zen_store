@@ -100,7 +100,7 @@ const OrderItem = React.memo<{
           <span>#{order._id.slice(-6).toUpperCase()}</span>
           <span>{formatDate(order.createdAt)}</span>
           <span className="font-bold text-green-400">
-            {order.totalAmount} {order.packageId ? order.packageId.currency : 'USD'}
+            {order.totalAmount} {order.currency || 'EGP'}
           </span>
         </div>
       </div>
@@ -158,7 +158,7 @@ const OrderItem = React.memo<{
 
         {/* Price */}
         <div className="text-center font-bold text-green-400">
-          {order.totalAmount} {order.packageId ? order.packageId.currency : 'USD'}
+          {order.totalAmount} {order.currency || 'EGP'}
         </div>
       </div>
     </article>

@@ -113,7 +113,7 @@ export function SteamGameDetailsClient({ game }: SteamGameDetailsClientProps) {
                   game._id, 
                   '', 
                   game.isOffer && game.finalPrice ? game.finalPrice : game.price || 0, 
-                  'EGP'
+                  game.currency || 'EGP'
                 );
               }).catch(err => logger.warn('Failed to load monitoring:', err));
               
@@ -299,11 +299,11 @@ export function SteamGameDetailsClient({ game }: SteamGameDetailsClientProps) {
                 <div className="flex items-center gap-2 sm:gap-3">
                   {hasDiscount && (
                     <span className="text-gray-400 line-through text-sm sm:text-lg">
-                      {game.originalPrice} EGP
+                      {game.originalPrice} {game.currency || 'EGP'}
                     </span>
                   )}
                   <span className="text-xl sm:text-3xl font-bold text-green-400">
-                    {currentPrice} EGP
+                    {currentPrice} {game.currency || 'EGP'}
                   </span>
                 </div>
               </div>
@@ -338,7 +338,7 @@ export function SteamGameDetailsClient({ game }: SteamGameDetailsClientProps) {
                   ) : (
                     <>
                       <ShoppingCart size={20} />
-                      Buy Now - {currentPrice} EGP
+                      Buy Now - {currentPrice} {game.currency || 'EGP'}
                     </>
                   )}
                 </button>
@@ -449,7 +449,7 @@ export function SteamGameDetailsClient({ game }: SteamGameDetailsClientProps) {
                   </div>
                   <div className="flex justify-between">
                     <span className="text-gray-400">Price:</span>
-                    <span className="text-green-400 font-bold">{currentPrice} EGP</span>
+                    <span className="text-green-400 font-bold">{currentPrice} {game.currency || 'EGP'}</span>
                   </div>
                   {hasDiscount && (
                     <div className="flex justify-between">
@@ -501,11 +501,11 @@ export function SteamGameDetailsClient({ game }: SteamGameDetailsClientProps) {
             <div className="flex items-center gap-2">
               {hasDiscount && (
                 <span className="text-gray-400 line-through text-sm">
-                  {game.originalPrice} EGP
+                  {game.originalPrice} {game.currency || 'EGP'}
                 </span>
               )}
               <span className="text-xl font-bold text-green-400">
-                {currentPrice} EGP
+                {currentPrice} {game.currency || 'EGP'}
               </span>
             </div>
           </div>

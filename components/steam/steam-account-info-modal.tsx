@@ -164,13 +164,13 @@ export function SteamAccountInfoModal({
               <div className="flex items-center justify-between">
                 <span className="text-gray-400">Original Price:</span>
                 <span className="text-white">
-                  {game.isOffer && game.finalPrice ? game.finalPrice : game.price || 0} EGP
+                  {game.isOffer && game.finalPrice ? game.finalPrice : game.price || 0} {game.currency || 'EGP'}
                 </span>
               </div>
               {appliedCoupon && (
                 <div className="flex items-center justify-between">
                   <span className="text-gray-400">Coupon Discount:</span>
-                  <span className="text-green-400">-{appliedCoupon.discountAmount} EGP</span>
+                  <span className="text-green-400">-{appliedCoupon.discountAmount} {game.currency || 'EGP'}</span>
                 </div>
               )}
               <hr className="border-gray-600" />
@@ -180,7 +180,7 @@ export function SteamAccountInfoModal({
                   {appliedCoupon 
                     ? (game.isOffer && game.finalPrice ? game.finalPrice : game.price || 0) - appliedCoupon.discountAmount
                     : (game.isOffer && game.finalPrice ? game.finalPrice : game.price || 0)
-                  } EGP
+                  } {game.currency || 'EGP'}
                 </span>
               </div>
             </div>

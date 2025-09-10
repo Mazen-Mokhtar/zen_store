@@ -41,10 +41,11 @@ export async function generateMetadata({ params }: SteamGamePageProps): Promise<
     };
   }
 
+  const currency = game.currency || 'EGP';
   const price = game.isOffer && game.finalPrice 
-    ? `${game.finalPrice} EGP` 
+    ? `${game.finalPrice} ${currency}` 
     : game.price 
-    ? `${game.price} EGP` 
+    ? `${game.price} ${currency}` 
     : 'Price not available';
 
   return {

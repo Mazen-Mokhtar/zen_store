@@ -48,6 +48,7 @@ export interface Game {
   isOffer?: boolean;
   finalPrice?: number;
   discountPercentage?: number;
+  currency?: string;
   category?: string;
   isPopular?: boolean;
   offer?: string;

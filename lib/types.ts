@@ -25,6 +25,7 @@ export interface Order {
   status: 'pending' | 'processing' | 'paid' | 'delivered' | 'rejected';
   paymentMethod: 'card' | 'cash' | 'wallet-transfer' | 'insta-transfer' | 'fawry-transfer';
   totalAmount: number;
+  currency: string; // العملة المستخدمة في الطلب
   originalAmount?: number;
   discountAmount?: number;
   couponCode?: string;

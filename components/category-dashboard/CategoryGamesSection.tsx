@@ -201,12 +201,12 @@ export function CategoryGamesSection({
                       {/* Original Price (if there's a discount) */}
                       {game.originalPrice && game.originalPrice > game.price && (
                         <div className="text-gray-400 text-xs line-through">
-                          {game.originalPrice} EGP
+                          {game.originalPrice} {game.currency || 'EGP'}
                         </div>
                       )}
                       {/* Current Price */}
                       <div className="bg-green-600 text-white font-bold text-xs px-2 py-1 rounded-lg shadow-md">
-                        {game.price} EGP
+                        {game.price} {game.currency || 'EGP'}
                       </div>
                       {/* Discount Badge */}
                       {game.originalPrice && game.originalPrice > game.price && (
@@ -240,7 +240,7 @@ export function CategoryGamesSection({
                 <div className="absolute inset-0 bg-black/80 flex flex-col items-center justify-center p-4">
                   <div className="text-white text-center">
                     <div className="text-lg font-bold mb-2">
-                      {game.price} EGP
+                      {game.price} {game.currency || 'EGP'}
                     </div>
                     {game.type === 'steam' ? (
                       <button 

@@ -72,12 +72,12 @@ const GameCard = memo<{
               {/* Original Price (if there's a discount) */}
               {item.originalPrice && item.originalPrice > item.price && (
                 <div className="text-gray-400 text-[10px] md:text-xs line-through">
-                  {item.originalPrice} EGP
+                  {item.originalPrice} {item.currency || 'EGP'}
                 </div>
               )}
               {/* Current Price */}
               <div className="bg-green-600 text-white font-bold text-xs md:text-sm px-2 md:px-3 py-1 md:py-1.5 rounded-md md:rounded-lg shadow-md">
-                {item.price} EGP
+                {item.price} {item.currency || 'EGP'}
               </div>
               {/* Discount Badge */}
               {discountPercentage > 0 && (
@@ -115,7 +115,7 @@ const GameCard = memo<{
             </h4>
             <div className="text-white text-center">
               <div className="text-base md:text-lg font-bold mb-3">
-                {item.price} EGP
+                {item.price} {item.currency || 'EGP'}
               </div>
               {item.type === 'steam' ? (
                 <button 

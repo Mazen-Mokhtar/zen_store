@@ -70,10 +70,10 @@ const OrderRow = React.memo<OrderRowProps>(({ index, style, data }) => {
     });
   }, []);
 
-  const formatCurrency = useCallback((amount: number) => {
+  const formatCurrency = useCallback((amount: number, currency: string = 'EGP') => {
     return new Intl.NumberFormat('ar-SA', {
       style: 'currency',
-      currency: 'SAR',
+      currency: currency,
       minimumFractionDigits: 2
     }).format(amount);
   }, []);
@@ -119,7 +119,7 @@ const OrderRow = React.memo<OrderRowProps>(({ index, style, data }) => {
               <div className="grid grid-cols-2 gap-2 text-sm">
                 <div className="flex items-center gap-1 text-gray-600 dark:text-gray-400">
                   <CreditCard className="w-3 h-3" />
-                  <span>{formatCurrency(order.total)}</span>
+                  <span>{formatCurrency(order.total, order.currency)}</span>
                 </div>
                 <div className="flex items-center gap-1 text-gray-600 dark:text-gray-400">
                   <Calendar className="w-3 h-3" />
@@ -195,7 +195,7 @@ const OrderRow = React.memo<OrderRowProps>(({ index, style, data }) => {
 
         {/* Total */}
         <div className="font-medium text-gray-900 dark:text-white">
-          {formatCurrency(order.total)}
+          {formatCurrency(order.total, order.currency)}
         </div>
 
         {/* Status */}

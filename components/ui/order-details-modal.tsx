@@ -90,7 +90,7 @@ const OrderDetailsModalComponent: React.FC<OrderDetailsModalProps> = ({
                 </p>
                 <div className="flex items-center gap-2">
                   <span className="text-2xl font-bold text-green-400">
-                    {order.totalAmount} {order.packageId ? order.packageId.currency : 'USD'}
+                    {order.totalAmount} {order.currency || 'EGP'}
                   </span>
                   <div className="flex items-center gap-1 text-sm text-gray-500">
                     {order.paymentMethod === 'card' ? (
@@ -185,8 +185,8 @@ const OrderDetailsModalComponent: React.FC<OrderDetailsModalProps> = ({
                 <div className="flex justify-between">
                   <span className="text-gray-400">مبلغ الاسترداد:</span>
                   <span className="text-red-400 font-bold">
-                    {order.refundAmount} {order.packageId ? order.packageId.currency : 'USD'}
-                  </span>
+                        {order.refundAmount} {order.currency || 'EGP'}
+                      </span>
                 </div>
                 <div className="flex justify_between">
                   <span className="text-gray-400">تاريخ الاسترداد:</span>
