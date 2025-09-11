@@ -59,9 +59,9 @@ export const generateProductSchema = (product: {
 });
 
 export const generateOrganizationSchema = () => ({
-  name: 'Zen Store',
-  url: 'https://zenstore.com',
-  logo: 'https://zenstore.com/logo.png',
+  name: 'Wivz',
+  url: 'https://wivz.com',
+  logo: 'https://wivz.com/logo.png',
   description: 'Ultimate gaming destination with secure payments and instant delivery',
   contactPoint: {
     '@type': 'ContactPoint',

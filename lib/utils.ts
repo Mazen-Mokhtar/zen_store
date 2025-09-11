@@ -52,7 +52,7 @@ export function decodeJWT(token: string): any {
     const decoded = Buffer.from(payload, 'base64url').toString('utf8');
     return JSON.parse(decoded);
   } catch (error) {
-    console.error('Error decoding JWT:', error);
+
     return null;
   }
 }
@@ -63,26 +63,26 @@ export function decodeJWT(token: string): any {
 export const logger = {
   log: (...args: any[]) => {
     if (process.env.NODE_ENV === 'development') {
-      console.log(...args);
+  
     }
   },
   warn: (...args: any[]) => {
     if (process.env.NODE_ENV === 'development') {
-      console.warn(...args);
+  
     }
   },
   error: (...args: any[]) => {
     // Keep errors in production for debugging critical issues
-    console.error(...args);
+
   },
   debug: (...args: any[]) => {
     if (process.env.NODE_ENV === 'development') {
-      console.debug(...args);
+    
     }
   },
   info: (...args: any[]) => {
     if (process.env.NODE_ENV === 'development') {
-      console.info(...args);
+  
     }
   }
 };

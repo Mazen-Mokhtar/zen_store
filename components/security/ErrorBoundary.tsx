@@ -63,7 +63,7 @@ export class ErrorBoundary extends Component<Props, State> {
     };
 
     // Log error (in production, send to monitoring service)
-    console.error('🚨 React Error Boundary:', errorData);
+
     
     // In production, send to error monitoring service
     if (process.env.NODE_ENV === 'production') {
@@ -248,7 +248,7 @@ export function useErrorHandler() {
       ...errorInfo
     };
 
-    console.error('🚨 Error Handler:', errorData);
+
     
     // In production, send to monitoring service
     if (process.env.NODE_ENV === 'production') {

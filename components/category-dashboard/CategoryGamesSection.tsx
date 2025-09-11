@@ -125,7 +125,7 @@ export function CategoryGamesSection({
       // Add small delay for smooth transition
       await new Promise(resolve => setTimeout(resolve, 200));
     } catch (error) {
-      console.error('Error changing page:', error);
+
     } finally {
       setIsTransitioning(false);
     }
@@ -299,7 +299,7 @@ export function CategoryGamesSection({
                     try {
                       onLoadMore();
                     } catch (error) {
-                      console.error('Error loading more games:', error);
+                
                     }
                   }
                 }}

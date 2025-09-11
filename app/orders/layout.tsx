@@ -23,24 +23,6 @@ export const metadata: Metadata = {
     noarchive: true,
     nosnippet: true,
   },
-  keywords: 'orders, gaming orders, order tracking, payment status, game delivery',
-  openGraph: {
-    title: 'My Orders - Zen Store',
-    description: 'View and manage your game orders',
-    type: 'website',
-    siteName: 'Zen Store',
-  },
-  twitter: {
-    card: 'summary',
-    title: 'My Orders - Zen Store',
-    description: 'View and manage your game orders',
-  },
-  robots: {
-    index: false,
-    follow: false,
-    noarchive: true,
-    nosnippet: true,
-  },
 };
 
 export default function OrdersLayout({

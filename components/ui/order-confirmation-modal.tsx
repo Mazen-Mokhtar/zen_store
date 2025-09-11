@@ -8,6 +8,7 @@ import type { AppliedCoupon } from '@/lib/types';
 import PaymentMethodSelector from '@/components/payment/PaymentMethodSelector';
 import WalletTransferOptions, { WalletTransferType } from '@/components/payment/WalletTransferOptions';
 import WalletTransferForm, { WalletTransferData } from '@/components/payment/WalletTransferForm';
+import { useScrollLock } from '@/hooks/useScrollLock';
 
 // Security utility for sanitizing display text
 const sanitizeDisplayText = (text: string): string => {
@@ -60,6 +61,8 @@ export function OrderConfirmationModal({
   isLoading = false,
   appliedCoupon = null
 }: OrderConfirmationModalProps) {
+  // Prevent body scrolling when modal is open
+  useScrollLock(isOpen);
   // Payment flow state
   const [currentStep, setCurrentStep] = useState<'confirmation' | 'payment-method' | 'wallet-options' | 'wallet-form'>('confirmation');
   const [selectedPaymentMethod, setSelectedPaymentMethod] = useState<PaymentMethod>('card');
@@ -109,7 +112,7 @@ export function OrderConfirmationModal({
       await onWalletTransferSubmit(data, selectedTransferType);
       // Don't close modal here - let the parent handle redirect
     } catch (error) {
-      console.error('Error submitting wallet transfer:', error);
+
       // Keep the modal open on error so user can retry
     } finally {
       setIsSubmittingTransfer(false);

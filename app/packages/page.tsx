@@ -497,8 +497,8 @@ function PackagesPageContent() {
       setShowConfirmationModal(false);
       
       // Redirect to success page with the new order ID
-      const orderId = response?.data?.orderId || response?.orderId;
-      router.push(`/payment-success?orderId=${orderId}`);
+      const orderId = response?.data?._id || response?.data?.id;
+      router.push(`/payment-success?orderId=${orderId}&gameId=${game._id}&gameName=${encodeURIComponent(game.name)}`);
     } catch (error) {
       console.error('❌ [Packages] خطأ في إنشاء الطلب مع التحويل:', error);
       logger.error('Error creating order with wallet transfer:', error);
@@ -545,7 +545,7 @@ function PackagesPageContent() {
       setShowConfirmationModal(false);
       
       // Redirect to success page
-      router.push(`/payment-success?orderId=${currentOrderId}`);
+      router.push(`/payment-success?orderId=${currentOrderId}&gameId=${game._id}&gameName=${encodeURIComponent(game.name)}`);
     } catch (error) {
       logger.error('Error submitting wallet transfer:', error);
       notificationService.error('خطأ', 'حدث خطأ أثناء إرسال بيانات التحويل');
@@ -627,14 +627,14 @@ function PackagesPageContent() {
             <div className="flex items-center gap-1 cursor-pointer" onClick={() => router.push('/category')}>
               <div className="flex items-center gap-0">
                 <Image
-                  alt="Zen Store Logo 2"
+                  alt="Wivz Logo 2"
                   width={64}
                   height={128}
                   className="object-contain"
                   src="/images/my-logo.png"
                 />
                 <Image
-                  alt="Zen Store Logo 1"
+                  alt="Wivz Logo 1"
                   width={64}
                   height={128}
                   className="object-contain"

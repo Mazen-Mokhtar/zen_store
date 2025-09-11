@@ -1,11 +1,7 @@
-import type { Metadata } from 'next';
 import { Suspense } from 'react';
 import { LoadingSpinner } from '@/components/ui/loading-spinner';
 
-export const metadata: Metadata = {
-  title: 'Steam Games - Endex',
-  description: 'Discover and purchase Steam games',
-};
+// Note: Metadata is handled by the page.tsx generateMetadata function
 
 export default function SteamGameLayout({
   children,

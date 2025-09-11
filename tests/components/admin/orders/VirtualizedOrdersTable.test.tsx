@@ -18,32 +18,41 @@ jest.mock('react-window', () => ({
 const mockOrders: Order[] = [
   {
     id: '1',
-    userId: 'user1',
-    items: [{ id: 'item1', name: 'Test Game', price: 29.99, quantity: 1 }],
-    total: 29.99,
+    _id: '1',
+    userId: { _id: 'user1', email: 'user1@example.com' },
+    userEmail: 'user1@test.com',
+    userName: 'User 1',
+    gameId: { _id: 'game1', name: 'Test Game' },
+    accountInfo: [{ fieldName: 'username', value: 'testuser1' }],
+    totalAmount: 29.99,
     status: 'pending',
-    paymentStatus: 'pending',
-    createdAt: new Date('2024-01-01'),
-    updatedAt: new Date('2024-01-01'),
+    paymentMethod: 'card',
+    currency: 'USD',
+    createdAt: '2024-01-01T00:00:00.000Z',
+    updatedAt: '2024-01-01T00:00:00.000Z',
   },
   {
     id: '2',
-    userId: 'user2',
-    items: [{ id: 'item2', name: 'Another Game', price: 49.99, quantity: 2 }],
-    total: 99.98,
-    status: 'completed',
-    paymentStatus: 'paid',
-    createdAt: new Date('2024-01-02'),
-    updatedAt: new Date('2024-01-02'),
-  },
-];
+    _id: '2',
+    userId: { _id: 'user2', email: 'user2@example.com' },
+    userEmail: 'user2@test.com',
+    userName: 'User 2',
+    gameId: { _id: 'game2', name: 'Another Game' },
+    accountInfo: [{ fieldName: 'username', value: 'testuser2' }],
+    totalAmount: 99.98,
+    status: 'delivered',
+    paymentMethod: 'card',
+    currency: 'USD',
+    createdAt: '2024-01-02T00:00:00.000Z',
+     updatedAt: '2024-01-02T00:00:00.000Z',
+   },
+ ];
 
 describe('VirtualizedOrdersTable', () => {
   const defaultProps = {
     orders: mockOrders,
-    onOrderSelect: jest.fn(),
-    onStatusUpdate: jest.fn(),
-    selectedOrders: [],
+    onViewOrder: jest.fn(),
+    onUpdateStatus: jest.fn(),
     loading: false,
   };
 
@@ -74,20 +83,20 @@ describe('VirtualizedOrdersTable', () => {
     expect(screen.getByText('$99.98')).toBeInTheDocument();
   });
 
-  it('handles order selection', () => {
+  it('handles order view action', () => {
     render(<VirtualizedOrdersTable {...defaultProps} />);
-    const checkbox = screen.getAllByRole('checkbox')[0];
-    fireEvent.click(checkbox);
-    expect(defaultProps.onOrderSelect).toHaveBeenCalledWith('1');
+    const viewButton = screen.getAllByLabelText('View order details')[0];
+    fireEvent.click(viewButton);
+    expect(defaultProps.onViewOrder).toHaveBeenCalledWith(mockOrders[0]);
   });
 
   it('handles status updates', async () => {
     render(<VirtualizedOrdersTable {...defaultProps} />);
-    const statusSelect = screen.getAllByDisplayValue('pending')[0];
-    fireEvent.change(statusSelect, { target: { value: 'completed' } });
+    const statusButton = screen.getAllByText('Mark as Completed')[0];
+    fireEvent.click(statusButton);
     
     await waitFor(() => {
-      expect(defaultProps.onStatusUpdate).toHaveBeenCalledWith('1', 'completed');
+      expect(defaultProps.onUpdateStatus).toHaveBeenCalledWith('1', 'completed');
     });
   });
 
@@ -102,13 +111,10 @@ describe('VirtualizedOrdersTable', () => {
 
   it('handles keyboard navigation', () => {
     render(<VirtualizedOrdersTable {...defaultProps} />);
-    const firstRow = screen.getAllByRole('checkbox')[0];
+    const viewButton = screen.getAllByLabelText('View order details')[0];
     
-    fireEvent.keyDown(firstRow, { key: 'Enter' });
-    expect(defaultProps.onOrderSelect).toHaveBeenCalledWith('1');
-    
-    fireEvent.keyDown(firstRow, { key: ' ' });
-    expect(defaultProps.onOrderSelect).toHaveBeenCalledWith('1');
+    fireEvent.keyDown(viewButton, { key: 'Enter' });
+    expect(defaultProps.onViewOrder).toHaveBeenCalledWith(mockOrders[0]);
   });
 
   it('displays correct accessibility attributes', () => {

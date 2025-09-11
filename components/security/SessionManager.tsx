@@ -96,7 +96,7 @@ export default function SessionManagerComponent({
 
       setUserSessions(mockUserSessions);
     } catch (error) {
-      console.error('Error checking session status:', error);
+
     } finally {
       setLoading(false);
     }
@@ -116,7 +116,7 @@ export default function SessionManagerComponent({
         setShowWarning(false);
       }
     } catch (error) {
-      console.error('Error extending session:', error);
+
     }
   }, [checkSessionStatus]);
 
@@ -137,7 +137,7 @@ export default function SessionManagerComponent({
         await checkSessionStatus();
       }
     } catch (error) {
-      console.error('Error logging out from session:', error);
+
     }
   }, [checkSessionStatus]);
 
@@ -153,7 +153,7 @@ export default function SessionManagerComponent({
         await checkSessionStatus();
       }
     } catch (error) {
-      console.error('Error logging out from all sessions:', error);
+
     }
   }, [checkSessionStatus]);
 

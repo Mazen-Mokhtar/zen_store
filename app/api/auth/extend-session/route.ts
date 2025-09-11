@@ -44,7 +44,7 @@ export async function POST(request: NextRequest) {
 
     // Validate IP and user agent match (basic security check)
     if (sessionData.ipAddress && sessionData.ipAddress !== clientIP) {
-      console.warn(`Session extension from different IP: ${clientIP} vs ${sessionData.ipAddress}`);
+      
       // In production, you might want to reject this or require re-authentication
     }
 
@@ -96,7 +96,7 @@ export async function POST(request: NextRequest) {
 
     return response;
   } catch (error) {
-    console.error('Error extending session:', error);
+
     return NextResponse.json(
       { error: 'Internal server error' },
       { status: 500 }

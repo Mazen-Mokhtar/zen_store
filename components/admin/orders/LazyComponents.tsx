@@ -4,16 +4,18 @@ import { lazy, Suspense, ComponentType } from 'react';
 import { LoadingSkeleton } from './ErrorBoundary';
 import type { 
   OrdersTableProps, 
+  VirtualizedOrdersTableProps,
   OrdersFiltersProps, 
   PaginationProps, 
-  OrderDetailsModalProps 
+  OrderDetailsModalProps,
+  Order
 } from './types';
 
 // Lazy load components for better bundle splitting
 const LazyOrdersTable = lazy(() => import('./OrdersTable').then(module => ({ default: module.OrdersTable })));
 const LazyVirtualizedOrdersTable = lazy(() => import('./VirtualizedOrdersTable'));
 const LazyOrdersFilters = lazy(() => import('./OrdersFilters').then(module => ({ default: module.OrdersFilters })));
-const LazyPagination = lazy(() => import('./Pagination').then(module => ({ default: module.default })));
+const LazyPagination = lazy(() => import('./Pagination'));
 const LazyOrderDetailsModal = lazy(() => import('./OrderDetailsModal'));
 
 // Higher-order component for lazy loading with error boundary
@@ -31,7 +33,7 @@ function withLazyLoading<T extends object>(
 }
 
 // Lazy-loaded components with proper typing
-export const LazyOrdersTableComponent = withLazyLoading<OrdersTableProps>(
+export const LazyOrdersTableComponent = withLazyLoading<OrdersTableProps & { orders: Order[] }>(
   LazyOrdersTable,
   <div className="animate-pulse">
     <div className="h-8 bg-gray-200 rounded mb-4"></div>
@@ -43,7 +45,7 @@ export const LazyOrdersTableComponent = withLazyLoading<OrdersTableProps>(
   </div>
 );
 
-export const LazyVirtualizedOrdersTableComponent = withLazyLoading<OrdersTableProps>(
+export const LazyVirtualizedOrdersTableComponent = withLazyLoading<VirtualizedOrdersTableProps & { orders: Order[] }>(
   LazyVirtualizedOrdersTable,
   <div className="animate-pulse">
     <div className="h-8 bg-gray-200 rounded mb-4"></div>
@@ -77,7 +79,7 @@ export const LazyPaginationComponent = withLazyLoading<PaginationProps>(
   </div>
 );
 
-export const LazyOrderDetailsModalComponent = withLazyLoading<OrderDetailsModalProps>(
+export const LazyOrderDetailsModalComponent = withLazyLoading<OrderDetailsModalProps & { order: Order }>(
   LazyOrderDetailsModal,
   <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
     <div className="bg-white rounded-lg p-6 max-w-2xl w-full mx-4 animate-pulse">

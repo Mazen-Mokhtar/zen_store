@@ -149,7 +149,7 @@ const WalletTransferForm: React.FC<WalletTransferFormProps> = ({
         await onSubmit(transferData);
       }
     } catch (error) {
-      console.error('Error submitting transfer:', error);
+
       // Keep form open on error so user can retry
     } finally {
       setIsSubmittingForm(false);

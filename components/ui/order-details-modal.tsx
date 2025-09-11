@@ -5,6 +5,7 @@ import { X, Package, Calendar, CreditCard, Banknote, User, Clock, CheckCircle, X
 import Image from 'next/image';
 import type { Order } from '@/lib/types';
 import { ORDER_STATUS_CONFIG } from '@/lib/types';
+import { useScrollLock } from '@/hooks/useScrollLock';
 
 interface OrderDetailsModalProps {
   order: Order;
@@ -24,6 +25,9 @@ const OrderDetailsModalComponent: React.FC<OrderDetailsModalProps> = ({
   order,
   onClose
 }) => {
+  // Prevent body scrolling when modal is open
+  useScrollLock(true);
+  
   const statusInfo = ORDER_STATUS_CONFIG[order.status];
   const StatusIcon = statusIconMap[order.status];
 

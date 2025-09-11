@@ -7,6 +7,7 @@ import type { SteamGame, AppliedCoupon } from '@/lib/types';
 import PaymentMethodSelector from '@/components/payment/PaymentMethodSelector';
 import WalletTransferOptions, { WalletTransferType } from '@/components/payment/WalletTransferOptions';
 import WalletTransferForm, { WalletTransferData } from '@/components/payment/WalletTransferForm';
+import { useScrollLock } from '@/hooks/useScrollLock';
 
 // Security utility for sanitizing display text
 const sanitizeDisplayText = (text: string): string => {
@@ -62,6 +63,9 @@ export function SteamOrderConfirmationModal({
   const [selectedPaymentMethod, setSelectedPaymentMethod] = useState<PaymentMethod>('card');
   const [selectedTransferType, setSelectedTransferType] = useState<WalletTransferType>('wallet-transfer');
   const [isSubmittingTransfer, setIsSubmittingTransfer] = useState(false);
+  
+  // Prevent body scrolling when modal is open
+  useScrollLock(isOpen);
 
   // Security: Early return with validation
   if (!isOpen || !validateSteamGameProps(game)) return null;
@@ -107,7 +111,7 @@ export function SteamOrderConfirmationModal({
       const response = await onWalletTransferSubmit(data, selectedTransferType);
       // Don't close modal here - let the parent handle redirect
     } catch (error) {
-      console.error('❌ [Frontend] خطأ في إرسال تحويل المحفظة:', error);
+
     } finally {
       setIsSubmittingTransfer(false);
     }
@@ -279,9 +283,9 @@ export function SteamOrderConfirmationModal({
                 <div className="flex items-center justify-between">
                   <span className="text-gray-300">نوع الخصم:</span>
                   <span className="text-white">
-                    {appliedCoupon.discountType === 'percentage' 
-                      ? `${appliedCoupon.discountValue}%` 
-                      : `${appliedCoupon.discountValue} EGP`}
+                    {appliedCoupon.type === 'percentage' 
+                       ? `${appliedCoupon.value}%` 
+                       : `${appliedCoupon.value} EGP`}
                   </span>
                 </div>
                 <div className="flex items-center justify-between">

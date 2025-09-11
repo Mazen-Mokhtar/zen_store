@@ -2,6 +2,7 @@
 
 import React, { useState } from 'react';
 import { CreditCard, Wallet } from 'lucide-react';
+import { useScrollLock } from '@/hooks/useScrollLock';
 
 export type PaymentMethodType = 'card' | 'wallet-transfer';
 
@@ -19,6 +20,9 @@ const PaymentMethodSelector: React.FC<PaymentMethodSelectorProps> = ({
   isLoading = false
 }) => {
   const [processingMethod, setProcessingMethod] = useState<PaymentMethodType | null>(null);
+  
+  // Prevent body scrolling when modal is open
+  useScrollLock(true);
 
   const handleMethodSelect = async (method: PaymentMethodType) => {
     setProcessingMethod(method);

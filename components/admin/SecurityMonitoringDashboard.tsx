@@ -29,7 +29,7 @@ const SecurityMonitoringDashboard: React.FC = () => {
         setEvents(data.events || []);
       }
     } catch (error) {
-      console.error('Failed to fetch security events:', error);
+
     } finally {
       setLoading(false);
     }
@@ -52,7 +52,7 @@ const SecurityMonitoringDashboard: React.FC = () => {
           );
         }
     } catch (error) {
-      console.error('Failed to block IP:', error);
+
     }
   };
 

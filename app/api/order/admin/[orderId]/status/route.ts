@@ -91,7 +91,7 @@ export async function PATCH(
     });
 
   } catch (error) {
-    console.error('Error updating order status:', error);
+
     return NextResponse.json(
       { error: 'خطأ في الخادم الداخلي' },
       { status: 500 }

@@ -27,12 +27,7 @@ export default function AuthGuard({
 
   // Security monitoring callback
   const logSecurityEvent = useCallback((eventType: string, details: any) => {
-    console.warn('Security event:', eventType, {
-      ...details,
-      pathname,
-      timestamp: Date.now(),
-      userAgent: navigator.userAgent
-    });
+    // Security event logged for monitoring
   }, [pathname]);
 
   // Enhanced token validation

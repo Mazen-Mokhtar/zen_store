@@ -62,7 +62,7 @@ export async function POST(request: NextRequest) {
       loggedOutCount
     });
   } catch (error) {
-    console.error('Error logging out from all other sessions:', error);
+
     return NextResponse.json(
       { error: 'Internal server error' },
       { status: 500 }

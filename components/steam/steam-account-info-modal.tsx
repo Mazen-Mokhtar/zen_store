@@ -3,6 +3,7 @@
 import { useState } from 'react';
 import { X, User, Lock, AlertCircle } from 'lucide-react';
 import type { SteamGame, AppliedCoupon } from '@/lib/types';
+import { useScrollLock } from '@/hooks/useScrollLock';
 
 interface SteamAccountInfoModalProps {
   isOpen: boolean;
@@ -48,6 +49,9 @@ export function SteamAccountInfoModal({
   const [accountInfo, setAccountInfo] = useState<Record<string, string>>({});
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [isFormValid, setIsFormValid] = useState(true);
+  
+  // Prevent body scrolling when modal is open
+  useScrollLock(isOpen);
 
   // Email validation function
   const isValidEmail = (email: string): boolean => {

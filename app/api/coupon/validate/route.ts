@@ -40,7 +40,7 @@ export async function POST(request: NextRequest) {
 
     const headers = await getAuthHeaders();
     
-    console.log('Forwarding coupon validation request to backend API');
+
     
     const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/coupon/validate`, {
       method: 'POST',
@@ -71,7 +71,7 @@ export async function POST(request: NextRequest) {
     }
 
     if (!response.ok) {
-      console.error('Backend API error:', data);
+
       return NextResponse.json(
         { 
           isValid: false, 
@@ -96,7 +96,7 @@ export async function POST(request: NextRequest) {
       } as CouponValidationResponse);
     }
   } catch (error) {
-    console.error('Error validating coupon:', error);
+
     return NextResponse.json(
       { 
         isValid: false, 

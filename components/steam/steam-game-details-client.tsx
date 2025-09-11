@@ -88,7 +88,7 @@ export function SteamGameDetailsClient({ game }: SteamGameDetailsClientProps) {
     try {
       setIsCreatingOrder(true);
       
-      console.log('Creating order with coupon:', appliedCoupon);
+
       
       const response = await orderApiService.createSteamOrder(
         game._id,
@@ -162,7 +162,7 @@ export function SteamGameDetailsClient({ game }: SteamGameDetailsClientProps) {
       setShowConfirmationModal(false);
       
       // Redirect to success page
-      router.push(`/payment-success?orderId=${currentOrderId}`);
+      router.push(`/payment-success?orderId=${currentOrderId}&gameId=${game._id}&gameName=${encodeURIComponent(game.name)}`);
     } catch (error) {
       logger.error('Error submitting wallet transfer:', error);
       notificationService.error('خطأ', 'حدث خطأ أثناء إرسال بيانات التحويل');
@@ -201,8 +201,8 @@ export function SteamGameDetailsClient({ game }: SteamGameDetailsClientProps) {
       setShowConfirmationModal(false);
       
       // Redirect to success page with the new order ID
-      const orderId = response?.data?.orderId || response?.orderId;
-      router.push(`/payment-success?orderId=${orderId}`);
+      const orderId = response?.data?._id || response?.data?.id;
+      router.push(`/payment-success?orderId=${orderId}&gameId=${game._id}&gameName=${encodeURIComponent(game.name)}`);
     } catch (error) {
       logger.error('Error creating order with wallet transfer:', error);
       notificationService.error('خطأ', 'حدث خطأ أثناء إنشاء الطلب مع بيانات التحويل');

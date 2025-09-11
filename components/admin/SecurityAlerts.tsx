@@ -153,7 +153,7 @@ const SecurityAlerts: React.FC<SecurityAlertsProps> = ({
       
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to fetch security alerts');
-      console.error('Error fetching security alerts:', err);
+
     } finally {
       setLoading(false);
     }
@@ -209,7 +209,7 @@ const SecurityAlerts: React.FC<SecurityAlertsProps> = ({
       oscillator.start(audioContext.currentTime);
       oscillator.stop(audioContext.currentTime + 0.3);
     } catch (err) {
-      console.warn('Could not play alert sound:', err);
+
     }
   };
 

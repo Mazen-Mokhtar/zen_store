@@ -1,4 +1,4 @@
-# Zen Store - Gaming Platform
+# Wivz - Gaming Platform
 
 A modern, comprehensive gaming platform built with Next.js frontend and NestJS backend, featuring advanced functionality for managing games, packages, and user interactions.
 

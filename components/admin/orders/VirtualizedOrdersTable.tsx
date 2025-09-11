@@ -1,8 +1,9 @@
 'use client';
 
 import React, { useMemo, useCallback, useState, useRef, useEffect } from 'react';
-import { List } from 'react-window';
-import { Order, OrderStatus } from './types';
+const ReactWindow = require('react-window');
+const FixedSizeList = ReactWindow.FixedSizeList;
+import { Order, OrderStatus, SortField, SortDirection } from './types';
 import { statusColors, ORDER_STATUS_LABELS } from './constants';
 import { sanitizeInput } from '@/lib/security';
 import { Button } from '@/components/ui/button';
@@ -24,6 +25,11 @@ interface VirtualizedOrdersTableProps {
   currentPage?: number;
   itemsPerPage?: number;
   className?: string;
+  // Additional props for compatibility with types.ts
+  onStatusUpdate?: (orderId: string, status: OrderStatus, adminNote?: string) => Promise<void>;
+  onViewDetails?: (order: Order) => void;
+  sort?: { field: SortField; direction: SortDirection };
+  onSortChange?: (sort: { field: SortField; direction: SortDirection }) => void;
 }
 
 interface OrderRowProps {
@@ -50,7 +56,7 @@ const OrderRow = React.memo<OrderRowProps>(({ index, style, data }) => {
       setIsUpdating(true);
       await onUpdateStatus(order.id, newStatus);
     } catch (error) {
-      console.error('Error updating order status:', error);
+
     } finally {
       setIsUpdating(false);
     }
@@ -98,28 +104,28 @@ const OrderRow = React.memo<OrderRowProps>(({ index, style, data }) => {
                 <div className="flex items-center gap-2">
                   <Package className="w-4 h-4 text-gray-500" />
                   <span className="font-medium text-sm text-gray-900 dark:text-white">
-                    #{sanitizeInput(order.orderNumber)}
+                    #{sanitizeInput(order.orderNumber || order.id.slice(-8))}
                   </span>
                 </div>
                 <Badge 
                   variant="secondary"
-                  className={`${statusColors[order.status]} text-xs`}
+                  className={`${statusColors[order.status as keyof typeof statusColors]} text-xs`}
                 >
-                  {ORDER_STATUS_LABELS[order.status]}
+                  {ORDER_STATUS_LABELS[order.status as keyof typeof ORDER_STATUS_LABELS]}
                 </Badge>
               </div>
 
               {/* Customer Info */}
               <div className="flex items-center gap-2 text-sm text-gray-600 dark:text-gray-400">
                 <User className="w-4 h-4" />
-                <span>{sanitizeInput(order.customerName)}</span>
+                <span>{sanitizeInput(order.customerName || order.userName || order.userEmail || 'غير محدد')}</span>
               </div>
 
               {/* Order Details */}
               <div className="grid grid-cols-2 gap-2 text-sm">
                 <div className="flex items-center gap-1 text-gray-600 dark:text-gray-400">
                   <CreditCard className="w-3 h-3" />
-                  <span>{formatCurrency(order.total, order.currency)}</span>
+                  <span>{formatCurrency(order.total || order.totalAmount, order.currency)}</span>
                 </div>
                 <div className="flex items-center gap-1 text-gray-600 dark:text-gray-400">
                   <Calendar className="w-3 h-3" />
@@ -180,12 +186,12 @@ const OrderRow = React.memo<OrderRowProps>(({ index, style, data }) => {
       <div className="grid grid-cols-7 gap-4 px-6 py-4 items-center">
         {/* Order Number */}
         <div className="font-medium text-gray-900 dark:text-white">
-          #{sanitizeInput(order.orderNumber)}
+          #{sanitizeInput(order.orderNumber || order.id.slice(-8))}
         </div>
 
         {/* Customer */}
         <div className="text-gray-600 dark:text-gray-400">
-          {sanitizeInput(order.customerName)}
+          {sanitizeInput(order.customerName || order.userName || order.userEmail || 'غير محدد')}
         </div>
 
         {/* Date */}
@@ -195,16 +201,16 @@ const OrderRow = React.memo<OrderRowProps>(({ index, style, data }) => {
 
         {/* Total */}
         <div className="font-medium text-gray-900 dark:text-white">
-          {formatCurrency(order.total, order.currency)}
+          {formatCurrency(order.total || order.totalAmount, order.currency)}
         </div>
 
         {/* Status */}
         <div>
           <Badge 
             variant="secondary"
-            className={statusColors[order.status]}
+            className={statusColors[order.status as keyof typeof statusColors]}
           >
-            {ORDER_STATUS_LABELS[order.status]}
+            {ORDER_STATUS_LABELS[order.status as keyof typeof ORDER_STATUS_LABELS]}
           </Badge>
         </div>
 
@@ -268,7 +274,7 @@ export const VirtualizedOrdersTable = React.memo<VirtualizedOrdersTableProps>(({
   className = ''
 }) => {
   const [isMobile, setIsMobile] = useState(false);
-  const listRef = useRef<List>(null);
+  const listRef = useRef<typeof FixedSizeList>(null);
 
   // Check for mobile viewport
   useEffect(() => {
@@ -365,7 +371,7 @@ export const VirtualizedOrdersTable = React.memo<VirtualizedOrdersTableProps>(({
 
       {/* Virtualized List */}
       <div className="relative">
-        <List
+        <FixedSizeList
           ref={listRef}
           height={listHeight}
           itemCount={orders.length}
@@ -375,7 +381,7 @@ export const VirtualizedOrdersTable = React.memo<VirtualizedOrdersTableProps>(({
           className="scrollbar-thin scrollbar-thumb-gray-300 dark:scrollbar-thumb-gray-600"
         >
           {OrderRow}
-        </List>
+        </FixedSizeList>
       </div>
 
       {/* Performance Info */}

@@ -24,10 +24,10 @@ async function getAuthHeaders() {
 
 export async function GET(
   request: NextRequest,
-  { params }: { params: { couponCode: string } }
+  { params }: { params: Promise<{ couponCode: string }> }
 ) {
   try {
-    const { couponCode } = params;
+    const { couponCode } = await params;
     
     if (!couponCode || couponCode.trim().length === 0) {
       return NextResponse.json(
@@ -41,7 +41,7 @@ export async function GET(
 
     const headers = await getAuthHeaders();
     
-    console.log('Fetching coupon details from backend API for code:', couponCode);
+
     
     const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/coupon/details/${encodeURIComponent(couponCode)}`, {
       method: 'GET',
@@ -50,7 +50,7 @@ export async function GET(
 
     if (!response.ok) {
       const errorText = await response.text();
-      console.error('Backend API error:', response.status, errorText);
+
       
       if (response.status === 404) {
         return NextResponse.json(
@@ -73,12 +73,12 @@ export async function GET(
 
     const result = await response.json();
     
-    console.log('Backend API response:', result);
+
     
     return NextResponse.json(result);
     
   } catch (error) {
-    console.error('Error fetching coupon details:', error);
+
     return NextResponse.json(
       { 
         success: false, 

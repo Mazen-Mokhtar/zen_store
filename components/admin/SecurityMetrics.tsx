@@ -287,7 +287,6 @@ const SecurityMetrics: React.FC<SecurityMetricsProps> = ({
       
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to calculate security metrics');
-      console.error('Error calculating security metrics:', err);
     } finally {
       setLoading(false);
     }

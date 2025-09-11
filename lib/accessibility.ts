@@ -278,43 +278,7 @@ export class AccessibilityManager {
 // Export singleton instance
 export const a11yManager = AccessibilityManager.getInstance();
 
-// React hooks for accessibility
-export const useAnnouncement = () => {
-  const announce = (message: string, priority: 'polite' | 'assertive' = 'polite') => {
-    a11yManager.announce(message, priority);
-  };
-
-  return { announce };
-};
-
-export const useFocusManagement = () => {
-  const focusElement = (selector: string | HTMLElement) => {
-    return a11yManager.focusElement(selector);
-  };
-
-  const restoreFocus = () => {
-    return a11yManager.restoreFocus();
-  };
-
-  const trapFocus = (container: HTMLElement) => {
-    return a11yManager.trapFocus(container);
-  };
-
-  return { focusElement, restoreFocus, trapFocus };
-};
-
-export const useKeyboardNavigation = (onEscape?: () => void) => {
-  React.useEffect(() => {
-    const handleKeyDown = (e: KeyboardEvent) => {
-      if (e.key === 'Escape' && onEscape) {
-        onEscape();
-      }
-    };
-
-    document.addEventListener('keydown', handleKeyDown);
-    return () => document.removeEventListener('keydown', handleKeyDown);
-  }, [onEscape]);
-};
+// React hooks are available in accessibility.tsx
 
 // Accessibility testing utilities
 export const a11yTesting = {
@@ -412,52 +376,6 @@ export const a11yTesting = {
   }
 };
 
-// React component for accessibility enhancements
-interface A11yEnhancerProps {
-  children: React.ReactNode;
-  announcePageChanges?: boolean;
-  trapFocus?: boolean;
-}
-
-export const A11yEnhancer: React.FC<A11yEnhancerProps> = ({
-  children,
-  announcePageChanges = true,
-  trapFocus = false
-}) => {
-  const containerRef = React.useRef<HTMLDivElement>(null);
-
-  React.useEffect(() => {
-    if (announcePageChanges) {
-      const title = document.title;
-      a11yManager.announce(`Page loaded: ${title}`);
-    }
-
-    if (trapFocus && containerRef.current) {
-      const cleanup = a11yManager.trapFocus(containerRef.current);
-      return cleanup;
-    }
-  }, [announcePageChanges, trapFocus]);
-
-  return (
-    <div ref={containerRef} className="a11y-enhanced">
-      {children}
-    </div>
-  );
-};
-
-// Higher-order component for accessibility
-export const withA11y = <P extends object>(
-  WrappedComponent: React.ComponentType<P>
-) => {
-  const A11yWrappedComponent = (props: P) => (
-    <A11yEnhancer>
-      <WrappedComponent {...props} />
-    </A11yEnhancer>
-  );
-
-  A11yWrappedComponent.displayName = `withA11y(${WrappedComponent.displayName || WrappedComponent.name})`;
-  
-  return A11yWrappedComponent;
-};
+// React components are available in accessibility.tsx
 
 export default AccessibilityManager;

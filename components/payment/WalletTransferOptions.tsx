@@ -2,6 +2,7 @@
 
 import React, { useState } from 'react';
 import { Wallet, Instagram, CreditCard, ArrowRight } from 'lucide-react';
+import { useScrollLock } from '@/hooks/useScrollLock';
 
 export type WalletTransferType = 'wallet-transfer' | 'insta-transfer' | 'fawry-transfer';
 
@@ -21,6 +22,9 @@ const WalletTransferOptions: React.FC<WalletTransferOptionsProps> = ({
   isLoading = false
 }) => {
   const [processingOption, setProcessingOption] = useState<WalletTransferType | null>(null);
+  
+  // Prevent body scrolling when modal is open
+  useScrollLock(true);
 
   const handleOptionSelect = async (option: WalletTransferType) => {
     setProcessingOption(option);

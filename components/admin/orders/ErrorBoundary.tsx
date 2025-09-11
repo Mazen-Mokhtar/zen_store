@@ -35,7 +35,7 @@ class ErrorBoundary extends Component<Props, State> {
     });
 
     // Log error to monitoring service
-    console.error('ErrorBoundary caught an error:', error, errorInfo);
+
     
     // Call custom error handler if provided
     if (this.props.onError) {

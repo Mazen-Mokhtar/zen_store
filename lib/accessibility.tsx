@@ -1,4 +1,5 @@
 // Accessibility utilities and helpers
+import React from 'react';
 import { logger } from './utils';
 
 export class AccessibilityManager {

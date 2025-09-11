@@ -24,14 +24,14 @@ class SessionMonitor {
     onSessionWarning?: (timeLeft: number) => void;
   }) {
     if (this.isMonitoring) {
-      console.log('📊 Session monitor already running');
+
       return;
     }
 
     this.onSessionExpired = callbacks?.onSessionExpired;
     this.onSessionWarning = callbacks?.onSessionWarning;
     
-    console.log('🚀 Starting session monitor');
+
     this.isMonitoring = true;
     
     // Start periodic checks
@@ -50,7 +50,7 @@ class SessionMonitor {
    * Stop monitoring the session
    */
   stop() {
-    console.log('🛑 Stopping session monitor');
+
     this.isMonitoring = false;
     
     if (this.checkInterval) {
@@ -72,7 +72,7 @@ class SessionMonitor {
       const isValid = authService.validateToken(token);
       
       if (!isValid) {
-        console.log('❌ Session expired, logging out user');
+
         this.handleSessionExpired();
         return;
       }
@@ -85,13 +85,13 @@ class SessionMonitor {
         const timeLeft = expiryTime - currentTime;
         
         if (timeLeft <= this.WARNING_THRESHOLD && timeLeft > 0) {
-          console.log(`⚠️ Session expires in ${Math.round(timeLeft / 60000)} minutes`);
+  
           this.onSessionWarning?.(timeLeft);
         }
       }
       
     } catch (error) {
-      console.error('❌ Error checking session:', error);
+
       // Don't logout on network errors, just log them
     }
   }
@@ -101,7 +101,7 @@ class SessionMonitor {
    */
   private handleVisibilityChange() {
     if (typeof document !== 'undefined' && !document.hidden && this.isMonitoring) {
-      console.log('👁️ Page became visible, checking session');
+
       this.checkSession();
     }
   }
@@ -131,7 +131,7 @@ class SessionMonitor {
         credentials: 'include'
       });
     } catch (error) {
-      console.error('❌ Error during logout:', error);
+
     } finally {
       // Redirect to login page
       if (typeof window !== 'undefined') {

@@ -66,7 +66,7 @@ const SecurityDashboard: React.FC<SecurityDashboardProps> = ({ className = '' })
       }
     } catch (err) {
       setError(err instanceof Error ? err.message : 'An error occurred');
-      console.error('Error fetching security data:', err);
+
     } finally {
       setLoading(false);
     }

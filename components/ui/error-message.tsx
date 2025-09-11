@@ -27,7 +27,6 @@ export const ErrorMessage: React.FC<ErrorMessageProps> = ({
             onClick={onRetry}
             className="inline-flex items-center gap-2 px-4 md:px-6 py-2 md:py-3 bg-green-500 text-black rounded-lg hover:bg-green-600 transition-colors focus:outline-none focus:ring-2 focus:ring-green-500 focus:ring-offset-2 focus:ring-offset-[#0D0E12] text-sm md:text-base font-medium"
             aria-label="Retry the failed operation"
-            aria-label="Retry the failed operation"
           >
             <RefreshCw className="h-4 w-4" aria-hidden="true" />
             Try Again

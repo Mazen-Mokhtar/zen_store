@@ -61,7 +61,7 @@ export default function RateLimitStatus({
           });
         }
       } catch (error) {
-        console.error('Error checking rate limit status:', error);
+  
       } finally {
         setLoading(false);
       }
@@ -182,7 +182,7 @@ export function useRateLimit(endpoint: string = 'general') {
         });
       }
     } catch (error) {
-      console.error('Error checking rate limit:', error);
+
     }
   }, [user, endpoint]);
 

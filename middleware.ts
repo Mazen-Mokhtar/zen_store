@@ -27,14 +27,14 @@ const userBasedRateLimit = createUserBasedRateLimitMiddleware({
 
 async function isUserAuthorized(req: NextRequest): Promise<boolean> {
   try {
-    console.log('🔍 Middleware: بدء التحقق من الصلاحيات');
+
     const authToken = req.cookies.get('auth_token')?.value;
     
-    console.log('🍪 Auth Token في Middleware:', authToken ? 'موجود' : 'غير موجود');
+
     
     // Check auth_token only (no more session dependency)
     if (!authToken) {
-      console.log('❌ لا يوجد auth_token في Middleware');
+
       return false;
     }
     
@@ -43,33 +43,29 @@ async function isUserAuthorized(req: NextRequest): Promise<boolean> {
     
     // Decode JWT token to check role locally
     try {
-      console.log('🔓 محاولة فك تشفير JWT في Middleware...');
+
       const tokenParts = token.split('.');
       if (tokenParts.length !== 3) {
-        console.log('❌ تنسيق JWT غير صحيح في Middleware');
+
         return false;
       }
       
       const payload = JSON.parse(atob(tokenParts[1]));
       const userRole = payload.role;
       
-      console.log('👤 معلومات المستخدم في Middleware:', {
-        userId: payload.userId,
-        role: userRole,
-        exp: new Date(payload.exp * 1000).toLocaleString()
-      });
+
       
       // Check if user has admin or superAdmin role
       const isAuthorized = userRole === 'admin' || userRole === 'superAdmin';
-      console.log('✅ نتيجة التحقق في Middleware:', isAuthorized ? 'مصرح' : 'غير مصرح');
+
       
       return isAuthorized;
     } catch (decodeError) {
-      console.error('❌ فشل فك تشفير JWT في Middleware:', decodeError);
+
       return false;
     }
   } catch (error) {
-    console.error('❌ فشل التحقق من الصلاحيات في Middleware:', error);
+
     return false;
   }
 }
@@ -143,7 +139,7 @@ export async function middleware(req: NextRequest) {
 
     return res;
   } catch (error) {
-    console.error('Middleware error:', error);
+
     return NextResponse.next();
   }
   // })(req);
@@ -288,7 +284,7 @@ function logSecurityEvent(eventType: string, details: Record<string, any>) {
     ...details
   };
   
-  console.warn(`🔒 Security Event [${eventType}]:`, logEntry);
+
   
   // In production, you would send this to a security monitoring service
   if (process.env.NODE_ENV === 'production') {

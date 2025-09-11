@@ -1,4 +1,5 @@
 // SEO utilities and helpers for better search engine optimization
+import React from 'react';
 import { logger } from './utils';
 
 export interface SEOConfig {
@@ -78,7 +79,7 @@ export class SEOManager {
       category: product.category || 'Gaming',
       brand: {
         '@type': 'Brand',
-        name: product.brand || 'Zen Store'
+        name: product.brand || 'Wivz'
       },
       offers: {
         '@type': 'Offer',
@@ -87,7 +88,7 @@ export class SEOManager {
         availability: `https://schema.org/${product.availability || 'InStock'}`,
         seller: {
           '@type': 'Organization',
-          name: 'Zen Store'
+          name: 'Wivz'
         }
       }
     }),
@@ -95,9 +96,9 @@ export class SEOManager {
     organization: () => ({
       '@context': 'https://schema.org',
       '@type': 'Organization',
-      name: 'Zen Store',
-      url: 'https://zenstore.com',
-      logo: 'https://zenstore.com/logo.png',
+      name: 'Wivz',
+      url: 'https://wivz.com',
+      logo: 'https://wivz.com/logo.png',
       description: 'Ultimate gaming destination with secure payments and instant delivery',
       contactPoint: {
         '@type': 'ContactPoint',
@@ -106,9 +107,9 @@ export class SEOManager {
         availableLanguage: ['English', 'Arabic']
       },
       sameAs: [
-        'https://facebook.com/zenstore',
-        'https://twitter.com/zenstore',
-        'https://instagram.com/zenstore'
+        'https://facebook.com/wivz',
+        'https://twitter.com/wivz',
+        'https://instagram.com/wivz'
       ]
     }),
 
@@ -126,12 +127,12 @@ export class SEOManager {
     website: () => ({
       '@context': 'https://schema.org',
       '@type': 'WebSite',
-      name: 'Zen Store',
-      url: 'https://zenstore.com',
+      name: 'Wivz',
+      url: 'https://wivz.com',
       description: 'Ultimate gaming destination',
       potentialAction: {
         '@type': 'SearchAction',
-        target: 'https://zenstore.com/search?q={search_term_string}',
+        target: 'https://wivz.com/search?q={search_term_string}',
         'query-input': 'required name=search_term_string'
       }
     })

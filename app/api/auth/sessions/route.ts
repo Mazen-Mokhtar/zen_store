@@ -49,7 +49,7 @@ export async function GET(request: NextRequest) {
       activeSessions: formattedSessions.filter(s => s.isActive).length
     });
   } catch (error) {
-    console.error('Error getting user sessions:', error);
+
     return NextResponse.json(
       { error: 'Internal server error' },
       { status: 500 }
@@ -89,7 +89,7 @@ export async function DELETE(request: NextRequest) {
       cleanedCount
     });
   } catch (error) {
-    console.error('Error cleaning up sessions:', error);
+
     return NextResponse.json(
       { error: 'Internal server error' },
       { status: 500 }

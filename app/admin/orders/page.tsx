@@ -49,6 +49,16 @@ export default function AdminOrdersPage() {
     refreshOrders
   } = useOrders();
 
+  // Create setFilters function for compatibility
+  const setFilters = useCallback((updater: any) => {
+    if (typeof updater === 'function') {
+      const newFilters = updater(filters);
+      updateFilters(newFilters);
+    } else {
+      updateFilters(updater);
+    }
+  }, [filters, updateFilters]);
+
   // Preload components on mount for better UX
   React.useEffect(() => {
     preloadAllComponents();
@@ -198,16 +208,21 @@ export default function AdminOrdersPage() {
               <LazyOrdersFiltersComponent 
                 filters={filters}
                 onFiltersChange={handleFiltersChange}
+                loading={loading}
               />
             </Suspense>
 
             {/* Orders Table - Always use regular table with server-side pagination */}
             <Suspense fallback={<LoadingSkeleton rows={5} />}>
-              <LazyOrdersTableComponent 
-                orders={filteredOrders}
+              <LazyOrdersTableComponent
+                orders={filteredOrders as any}
                 loading={loading}
                 onViewOrder={viewOrderDetails}
                 onUpdateStatus={handleUpdateOrderStatus}
+                onStatusUpdate={handleUpdateOrderStatus}
+                onViewDetails={viewOrderDetails}
+                sort={{ field: filters.sortBy || 'createdAt', direction: filters.sortOrder || 'desc' }}
+                onSortChange={(sort) => setFilters((prev: any) => ({ ...prev, sortBy: sort.field, sortOrder: sort.direction }))}
                 currentPage={pagination?.page || 1}
                 itemsPerPage={pagination?.limit || 20}
               />
@@ -231,6 +246,7 @@ export default function AdminOrdersPage() {
               <Suspense fallback={null}>
                 <LazyOrderDetailsModalComponent 
                   order={selectedOrder}
+                  isOpen={showOrderModal}
                   onClose={closeOrderModal}
                   onUpdateStatus={handleUpdateOrderStatus}
                   loading={loading}

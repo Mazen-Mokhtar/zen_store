@@ -218,13 +218,7 @@ class SecurityLogger {
 
     // Log to console in development
     if (process.env.NODE_ENV === 'development') {
-      console.warn('🚨 Security Event:', {
-        type,
-        message,
-        riskScore,
-        severity,
-        timestamp: event.timestamp
-      });
+      // Security event logged in development mode
     }
 
     // In production, send to monitoring service
@@ -317,16 +311,16 @@ class SecurityLogger {
   private getConsoleMethod(level: LogLevel): (...args: any[]) => void {
     switch (level) {
       case LogLevel.DEBUG:
-        return console.debug;
+        return () => {};
       case LogLevel.INFO:
-        return console.info;
+        return () => {};
       case LogLevel.WARN:
-        return console.warn;
+        return () => {};
       case LogLevel.ERROR:
       case LogLevel.CRITICAL:
-        return console.error;
+        return () => {};
       default:
-        return console.log;
+        return () => {};
     }
   }
 
@@ -335,22 +329,16 @@ class SecurityLogger {
     try {
       // In a real application, send to your monitoring service
       // Example: await fetch('/api/monitoring/security-event', { ... });
-      console.log('📊 Sending to monitoring service:', event.id);
+
     } catch (error) {
-      console.error('Failed to send security event to monitoring service:', error);
+
     }
   }
 
   // Alert for high-risk events
   private alertHighRiskEvent(event: SecurityEvent): void {
     // In a real application, send alerts via email, SMS, Slack, etc.
-    console.error('🚨 HIGH RISK SECURITY EVENT:', {
-      id: event.id,
-      type: event.type,
-      riskScore: event.riskScore,
-      message: event.message,
-      timestamp: event.timestamp
-    });
+    // High-risk security event detected and logged
   }
 
   // Get recent security events

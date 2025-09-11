@@ -44,7 +44,7 @@ export function PackagesCouponInput({
         onCouponChange?.('');
       }
     } catch (error) {
-      console.error('Error validating coupon:', error);
+
       setError('حدث خطأ أثناء التحقق من الكوبون');
       setAppliedCoupon(null);
       onCouponChange?.('');

@@ -2,11 +2,17 @@
 
 export interface Order {
   _id: string;
+  id: string; // Computed property for compatibility
   userId?: {
     _id: string;
     email: string;
     phone?: string;
   };
+  userName?: string; // Computed property for compatibility
+  userEmail?: string; // Computed property for compatibility
+  orderNumber?: string; // Computed property for compatibility
+  customerName?: string; // Computed property for compatibility
+  total?: number; // Alias for totalAmount
   gameId: {
     _id: string;
     name: string;
@@ -23,6 +29,7 @@ export interface Order {
   };
   accountInfo: { fieldName: string; value: string; _id?: string }[];
   status: 'pending' | 'processing' | 'paid' | 'delivered' | 'rejected';
+  paymentStatus?: 'pending' | 'paid' | 'failed' | 'refunded';
   paymentMethod: 'card' | 'cash' | 'wallet-transfer' | 'insta-transfer' | 'fawry-transfer';
   totalAmount: number;
   currency: string; // العملة المستخدمة في الطلب
@@ -50,6 +57,15 @@ export interface Order {
   };
   walletTransferNumber?: string;
   walletTransferSubmittedAt?: string;
+  instaTransferSubmittedAt?: string;
+  nameOfInsta?: string;
+  shippingAddress?: {
+    street?: string;
+    city?: string;
+    country?: string;
+    postalCode?: string;
+  };
+  items?: any[];
 }
 
 export interface CreateOrderData {
@@ -110,6 +126,7 @@ export interface SteamGame {
   description: string;
   type: 'steam';
   price?: number;
+  currency?: string; // Added currency property
   isOffer?: boolean;
   originalPrice?: number;
   finalPrice?: number;

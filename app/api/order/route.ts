@@ -120,20 +120,7 @@ export async function POST(request: Request) {
       requestBody: JSON.stringify(body, null, 2)
     });
     
-    // Log detailed error information for 400 status
-    if (response.status === 400) {
-      console.error('🔍 Detailed 400 Error Analysis:', {
-        responseBody: responseText,
-        requestData: {
-          gameId: body?.gameId,
-          packageId: body?.packageId,
-          couponCode: body?.couponCode,
-          accountInfo: body?.accountInfo,
-          paymentMethod: body?.paymentMethod
-        },
-        headers: Object.fromEntries(response.headers.entries())
-      });
-    }
+
 
     // Handle non-OK responses
     if (!response.ok) {

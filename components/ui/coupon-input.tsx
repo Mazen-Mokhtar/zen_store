@@ -8,6 +8,7 @@ import { cn } from '@/lib/utils';
 interface CouponInputProps {
   orderAmount: number;
   onCouponApplied?: (coupon: AppliedCoupon | null) => void;
+  onCouponRemoved?: () => void;
   className?: string;
   disabled?: boolean;
 }
@@ -15,6 +16,7 @@ interface CouponInputProps {
 export function CouponInput({
   orderAmount,
   onCouponApplied,
+  onCouponRemoved,
   className,
   disabled = false
 }: CouponInputProps) {
@@ -68,7 +70,7 @@ export function CouponInput({
         onCouponApplied?.(null);
       }
     } catch (error) {
-      console.error('Error validating coupon:', error);
+
       setError('حدث خطأ أثناء التحقق من الكوبون');
       setAppliedCoupon(null);
       onCouponApplied?.(null);
@@ -82,6 +84,7 @@ export function CouponInput({
     setAppliedCoupon(null);
     setError(null);
     onCouponApplied?.(null);
+    onCouponRemoved?.();
     setIsExpanded(false);
   };
 

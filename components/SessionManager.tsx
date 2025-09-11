@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation';
 import { sessionMonitor } from '@/lib/sessionMonitor';
 import { authService } from '@/lib/auth';
 import { toast } from 'sonner';
+import { useScrollLock } from '@/hooks/useScrollLock';
 
 interface SessionManagerProps {
   children: React.ReactNode;
@@ -15,6 +16,9 @@ export default function SessionManager({ children }: SessionManagerProps) {
   const [showWarning, setShowWarning] = useState(false);
   const [timeLeft, setTimeLeft] = useState(0);
   const [isAuthenticated, setIsAuthenticated] = useState(false);
+  
+  // Prevent body scrolling when warning modal is open
+  useScrollLock(showWarning);
 
   useEffect(() => {
     // Use the imported authService instance

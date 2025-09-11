@@ -8,6 +8,7 @@ import { ORDER_STATUS_OPTIONS, PAYMENT_STATUS_OPTIONS, SORT_OPTIONS } from './co
 interface OrdersFiltersProps {
   filters: OrderFilters;
   onFiltersChange: (filters: OrderFilters) => void;
+  loading?: boolean;
 }
 
 export const OrdersFilters: React.FC<OrdersFiltersProps> = ({
@@ -24,14 +25,14 @@ export const OrdersFilters: React.FC<OrdersFiltersProps> = ({
   const handleStatusFilterChange = (statusFilter: string) => {
     onFiltersChange({
       ...filters,
-      statusFilter
+      statusFilter: statusFilter as any
     });
   };
 
   const handlePaymentStatusChange = (paymentStatus: string) => {
     onFiltersChange({
       ...filters,
-      paymentStatus
+      paymentStatus: paymentStatus as any
     });
   };
 
@@ -52,7 +53,7 @@ export const OrdersFilters: React.FC<OrdersFiltersProps> = ({
   const handleSortChange = (sortBy: string, sortOrder: 'asc' | 'desc') => {
     onFiltersChange({
       ...filters,
-      sortBy,
+      sortBy: sortBy as any,
       sortOrder
     });
   };

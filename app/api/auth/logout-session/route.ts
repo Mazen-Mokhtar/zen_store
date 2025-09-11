@@ -73,7 +73,7 @@ export async function POST(request: NextRequest) {
 
     return response;
   } catch (error) {
-    console.error('Error logging out session:', error);
+
     return NextResponse.json(
       { error: 'Internal server error' },
       { status: 500 }

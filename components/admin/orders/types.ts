@@ -1,9 +1,31 @@
-// Base types
-export type OrderStatus = 'pending' | 'paid' | 'delivered' | 'rejected' | 'processing';
+// Base types - OrderStatus is now imported from lib/types
 export type PaymentStatus = 'pending' | 'paid' | 'failed' | 'refunded';
 export type PaymentMethod = 'card' | 'cash' | 'wallet-transfer' | 'insta-transfer' | 'fawry-transfer';
 export type SortDirection = 'asc' | 'desc';
 export type SortField = 'createdAt' | 'totalAmount' | 'status' | 'userEmail';
+
+// Import Order type from lib/types
+import { Order, OrderStatus as LibOrderStatus } from '@/lib/types';
+
+// Re-export Order and OrderStatus from lib/types for consistency
+export type { Order };
+export type OrderStatus = LibOrderStatus;
+
+// VirtualizedOrdersTable props interface
+export interface VirtualizedOrdersTableProps {
+  orders: readonly Order[];
+  loading?: boolean;
+  onViewOrder: (order: Order) => void;
+  onUpdateStatus: (orderId: string, status: OrderStatus, adminNote?: string) => Promise<void>;
+  currentPage?: number;
+  itemsPerPage?: number;
+  className?: string;
+  // Additional props for compatibility
+  onStatusUpdate?: (orderId: string, status: OrderStatus, adminNote?: string) => Promise<void>;
+  onViewDetails?: (order: Order) => void;
+  sort?: { field: SortField; direction: SortDirection };
+  onSortChange?: (sort: { field: SortField; direction: SortDirection }) => void;
+}
 
 // User interface
 export interface OrderUser {
@@ -55,35 +77,7 @@ export interface ShippingAddress {
   readonly postalCode: string;
 }
 
-// Main Order interface
-export interface Order {
-  readonly id: string;
-  readonly _id?: string;
-  readonly userId?: OrderUser;
-  readonly userEmail?: string;
-  readonly userName?: string;
-  readonly gameId?: OrderGame;
-  readonly packageId?: OrderPackage;
-  readonly accountInfo?: readonly AccountInfo[];
-  readonly items?: readonly OrderItem[];
-  readonly totalAmount: number;
-  readonly currency?: string; // العملة المستخدمة في الطلب
-  readonly status: OrderStatus;
-  readonly paymentStatus?: PaymentStatus;
-  readonly paymentMethod?: PaymentMethod;
-  readonly adminNote?: string;
-  readonly isReviewed?: boolean;
-  readonly createdAt: string;
-  readonly updatedAt?: string;
-  readonly __v?: number;
-  // Wallet transfer specific fields
-  readonly walletTransferImage?: OrderImage;
-  readonly walletTransferNumber?: string;
-  readonly walletTransferSubmittedAt?: string;
-  readonly nameOfInsta?: string;
-  readonly instaTransferSubmittedAt?: string;
-  readonly shippingAddress?: ShippingAddress;
-}
+// Remove duplicate Order interface - using the one from lib/types
 
 // Filter interfaces
 export interface OrderFilters {
@@ -133,7 +127,7 @@ export interface OrdersState {
 // API Response interfaces
 export interface OrdersApiResponse {
   readonly success: boolean;
-  readonly data: readonly Order[];
+  readonly data: Order[];
   readonly pagination: PaginationConfig;
   readonly message?: string;
 }
@@ -162,12 +156,16 @@ export interface UseOrdersReturn {
 
 // Component prop types
 export interface OrdersTableProps {
-  readonly orders: readonly Order[];
-  readonly loading: boolean;
-  readonly onStatusUpdate: (orderId: string, status: OrderStatus, adminNote?: string) => Promise<void>;
-  readonly onViewDetails: (order: Order) => void;
-  readonly sort: SortConfig;
-  readonly onSortChange: (field: SortField, direction?: SortDirection) => void;
+  orders: readonly Order[];
+  loading: boolean;
+  onStatusUpdate: (orderId: string, status: OrderStatus, adminNote?: string) => Promise<void>;
+  onViewDetails: (order: Order) => void;
+  onViewOrder: (order: Order) => void;
+  onUpdateStatus: (orderId: string, status: OrderStatus, adminNote?: string) => Promise<void>;
+  sort: SortConfig;
+  onSortChange: (sort: SortConfig) => void;
+  currentPage?: number;
+  itemsPerPage?: number;
 }
 
 export interface OrdersFiltersProps {
@@ -192,7 +190,8 @@ export interface OrderDetailsModalProps {
   readonly order: Order | null;
   readonly isOpen: boolean;
   readonly onClose: () => void;
-  readonly onStatusUpdate: (orderId: string, status: OrderStatus, adminNote?: string) => Promise<void>;
+  readonly onUpdateStatus: (orderId: string, status: OrderStatus, adminNote?: string) => Promise<void>;
+  readonly loading?: boolean;
 }
 
 // Utility types

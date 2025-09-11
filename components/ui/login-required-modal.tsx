@@ -3,6 +3,7 @@
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { Lock, User, ArrowRight } from 'lucide-react';
+import { useScrollLock } from '@/hooks/useScrollLock';
 
 interface LoginRequiredModalProps {
   isOpen: boolean;
@@ -12,6 +13,9 @@ interface LoginRequiredModalProps {
 
 export function LoginRequiredModal({ isOpen, onClose, onLogin }: LoginRequiredModalProps) {
   const router = useRouter();
+  
+  // Prevent body scrolling when modal is open
+  useScrollLock(isOpen);
 
   if (!isOpen) return null;
 

@@ -49,7 +49,7 @@ export async function POST(request: NextRequest) {
       message: 'Logged out successfully'
     });
   } catch (error) {
-    console.error('Error during logout:', error);
+
     return NextResponse.json(
       { error: 'Logout failed' },
       { status: 500 }

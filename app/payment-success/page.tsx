@@ -47,7 +47,7 @@ export default function PaymentSuccessPage() {
     <div className="bg-[#0D0E12] min-h-screen text-white">
       {/* Header */}
       <header className="flex items-center justify-between px-4 py-2 bg-[#1b2631]">
-        <Logo size="lg" textSize="lg" />
+        <Logo size="lg" textSize="lg" showText={false} />
         <AuthStatus />
       </header>
 
@@ -59,9 +59,9 @@ export default function PaymentSuccessPage() {
             <div className="w-24 h-24 bg-green-500/20 rounded-full flex items-center justify-center mx-auto mb-4">
               <CheckCircle className="w-12 h-12 text-green-400" />
             </div>
-            <h1 className="text-3xl font-bold text-white mb-2">تم الدفع بنجاح!</h1>
+            <h1 className="text-3xl font-bold text-white mb-2">🎉 تم الدفع بنجاح!</h1>
             <p className="text-gray-400 mb-6">
-              شكراً لك على الشراء. سيتم معالجة طلبك قريباً.
+              شكراً لك على ثقتك بنا
             </p>
           </div>
 
@@ -100,7 +100,17 @@ export default function PaymentSuccessPage() {
             </button>
             
             <button
-              onClick={handleContinueShopping}
+              onClick={() => {
+                const urlParams = new URLSearchParams(window.location.search);
+                const gameId = urlParams.get('gameId');
+                const gameName = urlParams.get('gameName');
+                
+                if (gameId && gameName) {
+                  router.push(`/packages?gameId=${gameId}&gameName=${encodeURIComponent(gameName)}`);
+                } else {
+                  router.push('/dashboard');
+                }
+              }}
               className="w-full border border-[#00e6c0] text-[#00e6c0] font-bold py-3 px-6 rounded-lg hover:bg-[#00e6c0] hover:text-[#151e2e] transition-colors flex items-center justify-center gap-2"
             >
               <ArrowRight className="w-5 h-5" />

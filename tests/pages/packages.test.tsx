@@ -225,7 +225,7 @@ describe('PackagesPage', () => {
       expect(screen.getByText('Test Game')).toBeInTheDocument();
     });
 
-    const packageCard = screen.getByText('100 Diamonds').closest('.square-card');
+    const packageCard = screen.getByText('100 Diamonds').closest('.square-card') as HTMLElement;
     
     // Test keyboard navigation
     packageCard?.focus();

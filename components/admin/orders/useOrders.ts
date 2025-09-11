@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useCallback, useMemo } from 'react';
 import { useRouter } from 'next/navigation';
-import { Order, OrderFilters, OrdersState } from './types';
+import { Order, OrderFilters, OrdersState, SortField, SortDirection } from './types';
 import { notificationService } from '@/lib/notifications';
 import { sanitizeInput } from '@/lib/security';
 import { 
@@ -34,6 +34,7 @@ const initialState: OrdersState = {
   orders: [],
   filteredOrders: [],
   loading: false,
+  error: null,
   selectedOrder: null,
   showOrderModal: false,
   filters: initialFilters,
@@ -95,8 +96,8 @@ export const useOrders = () => {
       const queryParams = new URLSearchParams();
       
       // Add pagination params
-      queryParams.append('page', pagination.page.toString());
-      queryParams.append('limit', pagination.limit.toString());
+      queryParams.append('page', (pagination?.page || 1).toString());
+      queryParams.append('limit', (pagination?.limit || 20).toString());
       
       // Add filter params
       if (filters.statusFilter && filters.statusFilter !== 'all') {
@@ -278,7 +279,7 @@ export const useOrders = () => {
       
       notificationService.success('نجح التحديث', 'تم تحديث حالة الطلب بنجاح');
     } catch (error) {
-      console.error('Error updating order status:', error);
+
       const errorMessage = error instanceof Error ? error.message : 'حدث خطأ في تحديث حالة الطلب';
       notificationService.error('خطأ في التحديث', errorMessage);
       setState(prev => ({ ...prev, loading: false }));
@@ -320,7 +321,7 @@ export const useOrders = () => {
       
       notificationService.success('تم التصدير', 'تم تصدير البيانات بنجاح');
     } catch (error) {
-      console.error('Error exporting orders:', error);
+
       notificationService.error('خطأ في التصدير', 'حدث خطأ أثناء تصدير البيانات');
     }
   }, [state.filteredOrders]);
@@ -345,7 +346,8 @@ export const useOrders = () => {
 
   // Enhanced update filters with validation and server-side fetch
   const updateFilters = useCallback(async (filters: OrderFilters) => {
-    const sanitizedFilters: OrderFilters = {
+    // Create sanitized filters object as mutable
+    const sanitizedFilters: any = {
       searchTerm: '',
       statusFilter: 'all',
       paymentStatus: 'all',
@@ -365,7 +367,7 @@ export const useOrders = () => {
     if (filters.statusFilter && filters.statusFilter !== 'all') {
       const statusValidation = validateOrderStatus(filters.statusFilter);
       if (statusValidation.isValid) {
-        sanitizedFilters.statusFilter = statusValidation.sanitizedValue;
+        sanitizedFilters.statusFilter = statusValidation.sanitizedValue as any;
       } else {
         sanitizedFilters.statusFilter = 'all';
       }
@@ -394,12 +396,12 @@ export const useOrders = () => {
     if (filters.maxAmount) sanitizedFilters.maxAmount = filters.maxAmount;
 
     // Reset to first page when filters change
-    await fetchOrders(sanitizedFilters, { page: 1 });
+    await fetchOrders(sanitizedFilters as OrderFilters, { page: 1 });
   }, [fetchOrders]);
 
   // Update pagination
   const updatePagination = useCallback(async (page: number, limit?: number) => {
-    const newPagination = { page };
+    const newPagination: any = { page };
     if (limit) {
       newPagination.limit = limit;
     }
@@ -423,7 +425,7 @@ export const useOrders = () => {
       await fetchOrders();
       notificationService.success('تم التحديث', 'تم تحديث البيانات بنجاح');
     } catch (error) {
-      console.error('Error refreshing orders:', error);
+
       notificationService.error('خطأ في التحديث', 'حدث خطأ أثناء تحديث البيانات');
     }
   }, [fetchOrders]);

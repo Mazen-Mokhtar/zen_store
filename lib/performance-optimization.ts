@@ -25,7 +25,7 @@ export const imageOptimization = {
       link.rel = 'preload';
       link.as = 'image';
       link.href = src;
-      if (index === 0) link.fetchPriority = 'high';
+      if (index === 0) (link as any).fetchPriority = 'high';
       document.head.appendChild(link);
     });
   },

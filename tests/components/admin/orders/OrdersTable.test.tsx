@@ -41,28 +41,45 @@ jest.mock('../../../../components/admin/orders/Pagination', () => ({
 const mockOrders: Order[] = [
   {
     id: '1',
-    userId: 'user1',
-    items: [{ id: 'item1', name: 'Test Game 1', price: 29.99, quantity: 1 }],
-    total: 29.99,
+    _id: '1',
+    userId: { _id: 'user1', email: 'user1@example.com' },
+    userEmail: 'user1@test.com',
+    userName: 'User 1',
+    gameId: { _id: 'game1', name: 'Test Game 1' },
+    accountInfo: [{ fieldName: 'username', value: 'testuser1' }],
+    totalAmount: 29.99,
     status: 'pending',
-    paymentStatus: 'pending',
-    createdAt: new Date('2024-01-01'),
-    updatedAt: new Date('2024-01-01'),
+    paymentMethod: 'card',
+    currency: 'USD',
+    createdAt: '2024-01-01T00:00:00.000Z',
+    updatedAt: '2024-01-01T00:00:00.000Z',
   },
   {
     id: '2',
-    userId: 'user2',
-    items: [{ id: 'item2', name: 'Test Game 2', price: 49.99, quantity: 1 }],
-    total: 49.99,
-    status: 'completed',
-    paymentStatus: 'paid',
-    createdAt: new Date('2024-01-02'),
-    updatedAt: new Date('2024-01-02'),
-  },
-];
+    _id: '2',
+    userId: { _id: 'user2', email: 'user2@example.com' },
+    userEmail: 'user2@test.com',
+    userName: 'User 2',
+    gameId: { _id: 'game2', name: 'Test Game 2' },
+    accountInfo: [{ fieldName: 'username', value: 'testuser2' }],
+    totalAmount: 49.99,
+    status: 'delivered',
+    paymentMethod: 'card',
+    currency: 'USD',
+    createdAt: '2024-01-02T00:00:00.000Z',
+     updatedAt: '2024-01-02T00:00:00.000Z',
+   },
+ ];
 
 // Mock fetch for API calls
 global.fetch = jest.fn();
+
+const defaultProps = {
+  orders: mockOrders,
+  loading: false,
+  onViewOrder: jest.fn(),
+  onUpdateStatus: jest.fn(),
+};
 
 describe('OrdersTable', () => {
   beforeEach(() => {
@@ -74,7 +91,7 @@ describe('OrdersTable', () => {
   });
 
   it('renders without crashing', async () => {
-    render(<OrdersTable />);
+    render(<OrdersTable {...defaultProps} />);
     
     await waitFor(() => {
       expect(screen.getByTestId('virtualized-orders-table')).toBeInTheDocument();
@@ -82,12 +99,12 @@ describe('OrdersTable', () => {
   });
 
   it('displays loading state initially', () => {
-    render(<OrdersTable />);
+    render(<OrdersTable {...defaultProps} />);
     expect(screen.getByText('Loading...')).toBeInTheDocument();
   });
 
   it('loads and displays orders', async () => {
-    render(<OrdersTable />);
+    render(<OrdersTable {...defaultProps} />);
     
     await waitFor(() => {
       expect(screen.getByTestId('order-1')).toBeInTheDocument();
@@ -96,7 +113,7 @@ describe('OrdersTable', () => {
   });
 
   it('handles search functionality', async () => {
-    render(<OrdersTable />);
+    render(<OrdersTable {...defaultProps} />);
     
     await waitFor(() => {
       expect(screen.getByTestId('virtualized-orders-table')).toBeInTheDocument();
@@ -114,7 +131,7 @@ describe('OrdersTable', () => {
   });
 
   it('handles status filter changes', async () => {
-    render(<OrdersTable />);
+    render(<OrdersTable {...defaultProps} />);
     
     await waitFor(() => {
       expect(screen.getByTestId('virtualized-orders-table')).toBeInTheDocument();
@@ -132,7 +149,7 @@ describe('OrdersTable', () => {
   });
 
   it('handles date range filtering', async () => {
-    render(<OrdersTable />);
+    render(<OrdersTable {...defaultProps} />);
     
     await waitFor(() => {
       expect(screen.getByTestId('virtualized-orders-table')).toBeInTheDocument();
@@ -153,7 +170,7 @@ describe('OrdersTable', () => {
   });
 
   it('handles order selection', async () => {
-    render(<OrdersTable />);
+    render(<OrdersTable {...defaultProps} />);
     
     await waitFor(() => {
       expect(screen.getByTestId('order-1')).toBeInTheDocument();
@@ -172,7 +189,7 @@ describe('OrdersTable', () => {
       json: async () => ({ success: true }),
     });
     
-    render(<OrdersTable />);
+    render(<OrdersTable {...defaultProps} />);
     
     await waitFor(() => {
       expect(screen.getByTestId('order-1')).toBeInTheDocument();
@@ -209,7 +226,7 @@ describe('OrdersTable', () => {
       json: async () => ({ success: true }),
     });
     
-    render(<OrdersTable />);
+    render(<OrdersTable {...defaultProps} />);
     
     await waitFor(() => {
       expect(screen.getByTestId('order-1')).toBeInTheDocument();
@@ -230,7 +247,7 @@ describe('OrdersTable', () => {
   });
 
   it('handles pagination', async () => {
-    render(<OrdersTable />);
+    render(<OrdersTable {...defaultProps} />);
     
     await waitFor(() => {
       expect(screen.getByTestId('pagination')).toBeInTheDocument();
@@ -250,7 +267,7 @@ describe('OrdersTable', () => {
   it('handles API errors gracefully', async () => {
     (fetch as jest.Mock).mockRejectedValueOnce(new Error('API Error'));
     
-    render(<OrdersTable />);
+    render(<OrdersTable {...defaultProps} />);
     
     await waitFor(() => {
       expect(screen.getByText('Error loading orders. Please try again.')).toBeInTheDocument();
@@ -276,7 +293,7 @@ describe('OrdersTable', () => {
       blob: async () => new Blob(['csv data'], { type: 'text/csv' }),
     });
     
-    render(<OrdersTable />);
+    render(<OrdersTable {...defaultProps} />);
     
     await waitFor(() => {
       expect(screen.getByTestId('virtualized-orders-table')).toBeInTheDocument();

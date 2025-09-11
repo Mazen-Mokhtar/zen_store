@@ -58,7 +58,7 @@ export const Logo: React.FC<LogoProps> = ({
       <div className="flex items-center gap-0">
         <Image
           src="/images/my-logo.png"
-          alt="Zen Store Logo 2"
+          alt="Wivz Logo 2"
           width={sizeConfig.width / 2}
           height={sizeConfig.height}
           className={cn('object-contain')}
@@ -66,7 +66,7 @@ export const Logo: React.FC<LogoProps> = ({
         />
         <Image
           src="/images/logo-4-v1.png"
-          alt="Zen Store Logo 1"
+          alt="Wivz Logo 1"
           width={sizeConfig.width / 2}
           height={sizeConfig.height}
           className={cn('object-contain')}

@@ -2,7 +2,7 @@
 
 import React, { memo, useCallback, useMemo } from 'react';
 import { FiEye, FiCheck, FiX, FiClock, FiRefreshCw, FiUser, FiCalendar, FiDollarSign, FiChevronDown } from 'react-icons/fi';
-import { Order } from './types';
+import { Order, SortField, SortDirection } from './types';
 import { statusColors, statusLabels, paymentStatusColors, paymentStatusLabels } from './constants';
 import { sanitizeInput } from '@/lib/security';
 
@@ -13,6 +13,11 @@ interface OrdersTableProps {
   loading?: boolean;
   currentPage?: number;
   itemsPerPage?: number;
+  // Additional props for compatibility with types.ts
+  onStatusUpdate?: (orderId: string, status: Order['status'], adminNote?: string) => Promise<void>;
+  onViewDetails?: (order: Order) => void;
+  sort?: { field: SortField; direction: SortDirection };
+  onSortChange?: (sort: { field: SortField; direction: SortDirection }) => void;
 }
 
 // Mobile Order Card Component
@@ -33,10 +38,10 @@ const MobileOrderCard = memo<{
   const statusIcon = useMemo(() => {
     switch (order.status) {
       case 'pending': return <FiClock className="w-4 h-4" />;
-      case 'confirmed': return <FiCheck className="w-4 h-4" />;
-      case 'shipped': return <FiRefreshCw className="w-4 h-4" />;
+      case 'processing': return <FiRefreshCw className="w-4 h-4" />;
+      case 'paid': return <FiCheck className="w-4 h-4" />;
       case 'delivered': return <FiCheck className="w-4 h-4" />;
-      case 'cancelled': return <FiX className="w-4 h-4" />;
+      case 'rejected': return <FiX className="w-4 h-4" />;
       default: return <FiClock className="w-4 h-4" />;
     }
   }, [order.status]);
@@ -88,7 +93,7 @@ const MobileOrderCard = memo<{
           <span className="text-xs text-gray-500 dark:text-gray-400">الحالة:</span>
           <span className={`inline-flex items-center px-2 py-1 rounded-full text-xs font-medium ${statusColors[order.status]}`}>
             {statusIcon}
-            <span className="mr-1">{statusLabels[order.status]}</span>
+            <span className="mr-1">{statusLabels[order.status as keyof typeof statusLabels]}</span>
           </span>
         </div>
       </div>
@@ -117,10 +122,10 @@ const DesktopOrderRow = memo<{
   const statusIcon = useMemo(() => {
     switch (order.status) {
       case 'pending': return <FiClock className="w-4 h-4" />;
-      case 'confirmed': return <FiCheck className="w-4 h-4" />;
-      case 'shipped': return <FiRefreshCw className="w-4 h-4" />;
+      case 'processing': return <FiRefreshCw className="w-4 h-4" />;
+      case 'paid': return <FiCheck className="w-4 h-4" />;
       case 'delivered': return <FiCheck className="w-4 h-4" />;
-      case 'cancelled': return <FiX className="w-4 h-4" />;
+      case 'rejected': return <FiX className="w-4 h-4" />;
       default: return <FiClock className="w-4 h-4" />;
     }
   }, [order.status]);
@@ -199,7 +204,7 @@ const DesktopOrderRow = memo<{
       <td className="px-6 py-5 whitespace-nowrap" role="gridcell">
         <span className={`inline-flex items-center px-3 py-1 rounded-full text-sm font-medium ${statusColors[order.status]}`}>
           {statusIcon}
-          <span className="mr-2">{statusLabels[order.status]}</span>
+          <span className="mr-2">{statusLabels[order.status as keyof typeof statusLabels]}</span>
         </span>
       </td>
       <td className="px-6 py-5 whitespace-nowrap text-right text-sm font-medium" role="gridcell">

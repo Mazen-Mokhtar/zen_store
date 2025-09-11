@@ -1,7 +1,7 @@
-# AI Assistant Prompt: Authentication & Error Handling for Zen Store
+# AI Assistant Prompt: Authentication & Error Handling for Wivz
 
 ## Project Overview
-You are working on the Zen Store e-commerce platform that consists of a Next.js frontend and a NestJS backend. The backend folder is **READ-ONLY** and should not be modified. Your task is to implement comprehensive authentication guards and JWT error handling for the frontend application.
+You are working on the Wivz e-commerce platform that consists of a Next.js frontend and a NestJS backend. The backend folder is **READ-ONLY** and should not be modified. Your task is to implement comprehensive authentication guards and JWT error handling for the frontend application.
 
 ## Current Architecture Analysis
 

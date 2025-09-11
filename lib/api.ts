@@ -820,12 +820,7 @@ class OrderApiService {
     walletTransferImage: File
   ): Promise<{ success: boolean; data?: any; error?: string }> {
     try {
-      console.log('🚀 [API] بدء إرسال بيانات تحويل المحفظة');
-      console.log('📋 [API] معرف الطلب:', orderId);
-      console.log('💳 [API] رقم التحويل:', walletTransferData.walletTransferNumber);
-      console.log('📱 [API] اسم إنستا:', walletTransferData.nameOfInsta || 'غير محدد');
-      console.log('🖼️ [API] حجم الصورة:', walletTransferImage.size, 'بايت');
-      console.log('📄 [API] نوع الصورة:', walletTransferImage.type);
+
       
       const formData = new FormData();
       formData.append('walletTransferNumber', walletTransferData.walletTransferNumber);
@@ -834,7 +829,7 @@ class OrderApiService {
       }
       formData.append('walletTransferImage', walletTransferImage);
 
-      console.log('🌐 [API] إرسال الطلب إلى:', `/api/order/${orderId}/wallet-transfer`);
+
       
       const response = await this.api.authenticatedRequest<any>(
         `/api/order/${orderId}/wallet-transfer`,
