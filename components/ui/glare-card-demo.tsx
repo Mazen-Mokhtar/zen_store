@@ -1,8 +1,10 @@
 "use client";
 
-import { GlareCard } from "@/components/ui/glare-card";
+import { memo, useCallback } from 'react';
 import { useRouter } from "next/navigation";
 import Image from "next/image";
+import { GlareCard } from '@/components/ui/glare-card';
+import { LoadingSpinner } from '@/components/ui/loading-spinner';
 
 
 export type Category = {
@@ -12,10 +14,12 @@ export type Category = {
   type?: 'steam' | 'games' | 'subscription';
 };
 
-export function GlareCardDemo({ categories = [] }: { categories: Category[] }) {
+// Memoized component to prevent unnecessary re-renders
+export const GlareCardDemo = memo<{ categories: Category[] }>(({ categories = [] }) => {
   const router = useRouter();
 
-  const handleCategoryClick = (category: Category) => {
+  // Memoize the click handler to prevent unnecessary re-renders
+  const handleCategoryClick = useCallback((category: Category) => {
     // Check if category type is steam or if name contains steam
     const isSteamCategory = category.type === 'steam' || 
                            category.name.toLowerCase().includes('steam') ||
@@ -28,7 +32,7 @@ export function GlareCardDemo({ categories = [] }: { categories: Category[] }) {
       // Navigate to regular dashboard for other categories
       router.push(`/dashboard?category=${category._id}`);
     }
-  };
+  }, [router]);
 
   return (
     <div className="grid grid-cols-1 md:grid-cols-3 gap-10">
@@ -55,4 +59,6 @@ export function GlareCardDemo({ categories = [] }: { categories: Category[] }) {
       ))}
     </div>
   );
-}
+});
+
+GlareCardDemo.displayName = 'GlareCardDemo';

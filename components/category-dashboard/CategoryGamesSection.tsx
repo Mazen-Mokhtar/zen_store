@@ -188,7 +188,9 @@ export function CategoryGamesSection({
                 width={200} 
                 height={200} 
                 className="w-full h-full object-cover rounded-2xl group-hover:brightness-110 transition-all" 
-                unoptimized 
+                sizes="(max-width: 768px) 50vw, (max-width: 1024px) 33vw, 200px"
+                loading="lazy"
+                priority={false}
               />
               
               {/* Game Info Overlay */}

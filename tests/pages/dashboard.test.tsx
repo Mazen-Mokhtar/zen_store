@@ -131,7 +131,7 @@ describe('DashboardPage', () => {
     const regularGame = screen.getByText('Popular Game 1');
     fireEvent.click(regularGame);
 
-    expect(mockRouter.push).toHaveBeenCalledWith('/packages?gameId=game1&gameName=Popular%20Game%201');
+    expect(mockRouter.push).toHaveBeenCalledWith('/packages?gameId=game1');
 
     // Click on Steam game
     const steamGame = screen.getByText('Steam Game 1');

@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { memo } from 'react';
 
 interface LoadingSpinnerProps {
   size?: 'sm' | 'md' | 'lg';
@@ -7,7 +7,8 @@ interface LoadingSpinnerProps {
   className?: string;
 }
 
-export const LoadingSpinner: React.FC<LoadingSpinnerProps> = ({ 
+// Memoized component to prevent unnecessary re-renders
+export const LoadingSpinner = memo<LoadingSpinnerProps>(({ 
   size = 'md', 
   color = 'border-green-500',
   text = 'Loading...',
@@ -33,4 +34,6 @@ export const LoadingSpinner: React.FC<LoadingSpinnerProps> = ({
       )}
     </div>
   );
-};
+});
+
+LoadingSpinner.displayName = 'LoadingSpinner';

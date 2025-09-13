@@ -3,9 +3,9 @@
 import React, { useState, useCallback, useMemo, Suspense } from 'react';
 import { LoadingSpinner } from '@/components/ui/loading-spinner';
 import { NotificationToast } from '@/components/ui/notification-toast';
+import ErrorBoundary from '../../../components/admin/orders/ErrorBoundary';
 import { 
   OrdersHeader, 
-  ErrorBoundary,
   LoadingSkeleton,
   ErrorMessage,
   useOrders 

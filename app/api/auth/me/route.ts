@@ -102,6 +102,11 @@ export async function GET(request: NextRequest) {
                 profileImage: fullUser.profileImage?.secure_url || fullUser.profileImage
               }
             }
+          }, {
+            headers: {
+              'Cache-Control': 'private, s-maxage=300, stale-while-revalidate=600',
+              'CDN-Cache-Control': 'private, s-maxage=300'
+            }
           });
         } else {
           // If backend call fails, return basic user info from token
@@ -115,6 +120,11 @@ export async function GET(request: NextRequest) {
                 name: null,
                 profileImage: null
               }
+            }
+          }, {
+            headers: {
+              'Cache-Control': 'private, s-maxage=180, stale-while-revalidate=360',
+              'CDN-Cache-Control': 'private, s-maxage=180'
             }
           });
         }
@@ -132,6 +142,11 @@ export async function GET(request: NextRequest) {
               name: null,
               profileImage: null
             }
+          }
+        }, {
+          headers: {
+            'Cache-Control': 'private, s-maxage=180, stale-while-revalidate=360',
+            'CDN-Cache-Control': 'private, s-maxage=180'
           }
         });
       }

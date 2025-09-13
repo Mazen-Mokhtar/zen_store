@@ -1,4 +1,25 @@
 /** @type {import('next').NextConfig} */
+const withBundleAnalyzer = require('@next/bundle-analyzer')({
+  enabled: process.env.ANALYZE === 'true',
+});
+const fs = require('fs');
+const path = require('path');
+
+// Cleanup function to remove .next folder before build
+const cleanupNextFolder = () => {
+  const nextDir = path.join(__dirname, '.next');
+  if (fs.existsSync(nextDir)) {
+    fs.rmSync(nextDir, { recursive: true, force: true });
+    console.log('🧹 Cleaned up .next folder');
+  }
+};
+
+// Run cleanup only once when build script starts
+if (process.env.npm_lifecycle_event === 'build' && !process.env.CLEANUP_DONE) {
+  cleanupNextFolder();
+  process.env.CLEANUP_DONE = 'true';
+}
+
 const nextConfig = {
   // HTTP Agent configuration for better connectivity
   httpAgentOptions: {
@@ -30,87 +51,62 @@ const nextConfig = {
   // Bundle optimization
   experimental: {
     optimizeCss: true,
-    optimizePackageImports: ['lucide-react', '@radix-ui/react-icons'],
+    optimizePackageImports: ['lucide-react', '@radix-ui/react-icons', 'framer-motion', 'react-icons'],
+    esmExternals: true,
+    scrollRestoration: true,
+    webpackBuildWorker: true,
+    optimizeServerReact: true,
+    serverMinification: true,
+    serverSourceMaps: false,
   },
   
   // Server external packages
   serverExternalPackages: ['sharp'],
   
-  turbopack: {
-    rules: {
-      '*.svg': {
-        loaders: ['@svgr/webpack'],
-        as: '*.js',
-      },
-    },
-  },
-  
-  // Webpack optimization
+  // Enhanced webpack configuration for performance
   webpack: (config, { buildId, dev, isServer, defaultLoaders, webpack }) => {
-    // Bundle analyzer in development
-    if (!dev && !isServer) {
+    // Simple SVG handling
+    config.module.rules.push({
+      test: /\.svg$/,
+      use: ['@svgr/webpack'],
+    });
+    
+    // Optimize bundle splitting
+    if (!isServer) {
       config.optimization.splitChunks = {
-        chunks: 'all',
-        maxInitialRequests: 25,
-        maxAsyncRequests: 20,
-        maxInitialRequests: 25,
-        maxAsyncRequests: 20,
+        ...config.optimization.splitChunks,
         cacheGroups: {
-          default: {
-            minChunks: 2,
-            priority: -20,
+          ...config.optimization.splitChunks.cacheGroups,
+          // Separate framer-motion into its own chunk
+          framerMotion: {
+            name: 'framer-motion',
+            test: /[\\/]node_modules[\\/]framer-motion[\\/]/,
+            chunks: 'all',
+            priority: 30,
             reuseExistingChunk: true,
           },
-          vendor: {
-            test: /[\\/]node_modules[\\/]/,
-            name: 'vendors',
-            priority: -10,
+          // Separate react-icons into its own chunk
+          reactIcons: {
+            name: 'react-icons',
+            test: /[\\/]node_modules[\\/]react-icons[\\/]/,
             chunks: 'all',
+            priority: 25,
+            reuseExistingChunk: true,
           },
-          react: {
-            test: /[\\/]node_modules[\\/](react|react-dom)[\\/]/,
-            name: 'react',
-            priority: 10,
+          // Separate lucide-react into its own chunk
+          lucideReact: {
+            name: 'lucide-react',
+            test: /[\\/]node_modules[\\/]lucide-react[\\/]/,
             chunks: 'all',
-          },
-          ui: {
-            test: /[\\/]node_modules[\\/](@radix-ui|lucide-react)[\\/]/,
-            name: 'ui',
-            priority: 5,
-            chunks: 'all',
-          },
-          // Separate chunk for large libraries
-          framerMotion: {
-            test: /[\\/]node_modules[\\/]framer-motion[\\/]/,
-            name: 'framer-motion',
-            priority: 8,
-            chunks: 'all',
-          },
-          // Separate chunk for large libraries
-          framerMotion: {
-            test: /[\\/]node_modules[\\/]framer-motion[\\/]/,
-            name: 'framer-motion',
-            priority: 8,
-            chunks: 'all',
+            priority: 25,
+            reuseExistingChunk: true,
           },
         },
       };
     }
     
-    // Optimize imports
-    config.resolve.alias = {
-      ...config.resolve.alias,
-      '@': require('path').resolve(__dirname),
-    };
-    
-    // Add performance optimizations
-    if (!dev) {
-      config.optimization.usedExports = true;
-      config.optimization.sideEffects = false;
-    }
-    
-    // Add performance optimizations
-    if (!dev) {
+    // Tree shaking optimization - only in production to avoid caching conflicts
+    if (process.env.NODE_ENV === 'production') {
       config.optimization.usedExports = true;
       config.optimization.sideEffects = false;
     }
@@ -118,14 +114,12 @@ const nextConfig = {
     return config;
   },
   
-  // Compiler optimizations
+  // Compiler options
   compiler: {
     removeConsole: process.env.NODE_ENV === 'production' ? {
       exclude: ['error', 'warn'],
     } : false,
-    // Enable SWC minification
-    styledComponents: true,
-    // Enable SWC minification
+    // Enable styled-components
     styledComponents: true,
   },
   
@@ -151,185 +145,111 @@ const nextConfig = {
     ],
     unoptimized: false,
   },
-
-  // Environment variables that should be available on the client side
+  
+  // Environment variables
   env: {
     NEXT_PUBLIC_API_URL: process.env.NEXT_PUBLIC_API_URL,
     NEXT_PUBLIC_WHATSAPP_NUMBER: process.env.NEXT_PUBLIC_WHATSAPP_NUMBER,
   },
   
-  // Performance optimizations
+  // Security headers
   poweredByHeader: false,
   compress: true,
   
-  // Enhanced security headers configuration
+  // Headers configuration
   async headers() {
     return [
       {
         source: '/(.*)',
         headers: [
-          // Content Security Policy - Enhanced with nonce support
-          {
-            key: 'Content-Security-Policy',
-            value: [
-              "default-src 'self'",
-              "script-src 'self' 'unsafe-inline' 'unsafe-eval' https://vercel.live https://www.googletagmanager.com https://www.google-analytics.com https://va.vercel-scripts.com",
-              "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com",
-              "img-src 'self' data: blob: https://res.cloudinary.com https://vercel.live https://images.unsplash.com https://www.google-analytics.com https://fra.cloud.appwrite.io https://images.pexels.com",
-              "media-src 'self' https://videos.pexels.com https://res.cloudinary.com",
-              "font-src 'self' https://fonts.gstatic.com https://fonts.googleapis.com",
-              "connect-src 'self' https://api.github.com https://vercel.live https://www.google-analytics.com ws://localhost:* wss://localhost:* " + (process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3000'),
-              "frame-ancestors 'none'",
-              "base-uri 'self'",
-              "form-action 'self'",
-              "upgrade-insecure-requests"
-            ].join('; ')
-          },
-          // X-Frame-Options - Enhanced clickjacking protection
           {
             key: 'X-Frame-Options',
-            value: 'DENY'
+            value: 'DENY',
           },
-          // X-Content-Type-Options - Prevent MIME type sniffing
           {
             key: 'X-Content-Type-Options',
-            value: 'nosniff'
+            value: 'nosniff',
           },
-          // X-XSS-Protection - Enable XSS filtering
-          {
-            key: 'X-XSS-Protection',
-            value: '1; mode=block'
-          },
-          // Strict-Transport-Security - Force HTTPS
-          {
-            key: 'Strict-Transport-Security',
-            value: 'max-age=31536000; includeSubDomains; preload'
-          },
-          // Referrer-Policy - Enhanced referrer control
           {
             key: 'Referrer-Policy',
-            value: 'strict-origin-when-cross-origin'
+            value: 'origin-when-cross-origin',
           },
-          // Permissions-Policy - Comprehensive feature control
           {
             key: 'Permissions-Policy',
-            value: [
-              'camera=()',
-              'microphone=()',
-              'geolocation=()',
-              'payment=()',
-              'usb=()',
-              'magnetometer=()',
-              'gyroscope=()',
-              'accelerometer=()',
-              'ambient-light-sensor=()',
-              'autoplay=()',
-              'encrypted-media=()',
-              'fullscreen=(self)',
-              'picture-in-picture=()'
-            ].join(', ')
+            value: 'camera=(), microphone=(), geolocation=()',
           },
-          // Cross-Origin-Embedder-Policy - Enhanced isolation
-          {
-            key: 'Cross-Origin-Embedder-Policy',
-            value: 'credentialless'
-          },
-          // Cross-Origin-Opener-Policy - Process isolation
-          {
-            key: 'Cross-Origin-Opener-Policy',
-            value: 'same-origin'
-          },
-          // Cross-Origin-Resource-Policy - Resource sharing control
-          {
-            key: 'Cross-Origin-Resource-Policy',
-            value: 'same-origin'
-          },
-          // X-DNS-Prefetch-Control - Control DNS prefetching
-          {
-            key: 'X-DNS-Prefetch-Control',
-            value: 'off'
-          },
-          // X-Download-Options - Prevent file execution in IE
-          {
-            key: 'X-Download-Options',
-            value: 'noopen'
-          },
-          // X-Permitted-Cross-Domain-Policies - Control cross-domain policies
-          {
-            key: 'X-Permitted-Cross-Domain-Policies',
-            value: 'none'
-          },
-          // Cache-Control for static assets
+        ],
+      },
+      {
+        source: '/api/(.*)',
+        headers: [
           {
             key: 'Cache-Control',
-            value: 'public, max-age=31536000, immutable'
+            value: 'no-store, max-age=0',
           },
-        ]
+        ],
       },
-      // Specific headers for static assets
       {
         source: '/_next/static/(.*)',
         headers: [
           {
             key: 'Cache-Control',
-            value: 'public, max-age=31536000, immutable'
+            value: 'public, max-age=31536000, immutable',
           },
-          {
-            key: 'X-Content-Type-Options',
-            value: 'nosniff'
-          }
-        ]
+        ],
       },
-      // Specific headers for API routes
       {
-        source: '/api/(.*)',
+        source: '/images/(.*)',
         headers: [
           {
-            key: 'X-Content-Type-Options',
-            value: 'nosniff'
-          },
-          {
-            key: 'X-Frame-Options',
-            value: 'DENY'
-          },
-          {
-            key: 'X-XSS-Protection',
-            value: '1; mode=block'
-          },
-          {
-            key: 'Strict-Transport-Security',
-            value: 'max-age=31536000; includeSubDomains'
-          },
-          {
             key: 'Cache-Control',
-            value: 'no-store, no-cache, must-revalidate'
+            value: 'public, max-age=86400',
           },
-          {
-            key: 'X-Robots-Tag',
-            value: 'noindex, nofollow, nosnippet, noarchive'
-          }
-        ]
+        ],
       },
-      // Headers for admin routes
+      // Font optimization headers
       {
-        source: '/admin/(.*)',
+        source: '/_next/static/css/(.*)',
         headers: [
           {
-            key: 'X-Robots-Tag',
-            value: 'noindex, nofollow, nosnippet, noarchive'
-          },
-          {
             key: 'Cache-Control',
-            value: 'no-store, no-cache, must-revalidate, private'
+            value: 'public, max-age=31536000, immutable',
           },
+        ],
+      },
+      // Preload critical resources
+      {
+        source: '/',
+        headers: [
           {
-            key: 'X-Frame-Options',
-            value: 'DENY'
-          }
-        ]
-      }
+            key: 'Link',
+            value: '</globals.css>; rel=preload; as=style, <https://fonts.googleapis.com>; rel=preconnect, <https://fonts.gstatic.com>; rel=preconnect; crossorigin',
+          },
+        ],
+      },
     ];
-  }
+  },
+  
+  // Redirects
+  async redirects() {
+    return [
+      {
+        source: '/home',
+        destination: '/',
+        permanent: true,
+      },
+    ];
+  },
+  
+  // Rewrites
+  async rewrites() {
+    return [
+      {
+        source: '/api/proxy/:path*',
+        destination: `${process.env.NEXT_PUBLIC_API_URL}/:path*`,
+      },
+    ];
+  },
 };
 
-module.exports = nextConfig;
+module.exports = withBundleAnalyzer(nextConfig);

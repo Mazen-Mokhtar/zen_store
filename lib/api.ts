@@ -75,7 +75,18 @@ export interface Package {
   };
   createdAt?: string;
   updatedAt?: string;
+  // Coupon-related properties (added dynamically)
+  couponDiscountedPrice?: number;
+  couponDiscountAmount?: number;
 }
+
+// Wallet transfer types
+export interface WalletTransferData {
+  walletTransferNumber: string;
+  nameOfInsta?: string;
+}
+
+export type WalletTransferType = 'wallet-transfer' | 'insta-transfer';
 
 // Import shared types from types module
 export type { Order, CreateOrderData } from './types';
@@ -140,6 +151,8 @@ class ApiService {
       try {
         // Prefer Next.js API proxy for same-origin cookie forwarding when using relative '/api' endpoints
         let url = endpoint.startsWith('http') ? endpoint : (endpoint.startsWith('/api') ? endpoint : `${API_BASE_URL}${endpoint}`);
+        
+
         
         const headers = new Headers({
           'X-CSRF-Token': this.getCSRFToken(),
@@ -514,14 +527,44 @@ class ApiService {
   }
 
   // Generic API methods with enhanced caching
-  async getGames(): Promise<any> {
-    const cacheKey = CACHE_KEYS.GAMES;
-    const cached = getCachedApiData(cacheKey);
-    if (cached) return cached;
+  async getGames(categoryId?: string): Promise<any> {
+    try {
+      const cacheKey = categoryId ? `${CACHE_KEYS.GAMES}:${categoryId}` : `${CACHE_KEYS.GAMES}:all`;
+      const cached = getCachedApiData(cacheKey);
+      if (cached) return cached;
 
-    const result = await this.getPublic('/game');
-    setCachedApiData(cacheKey, result, CACHE_TTL.MEDIUM);
-    return result;
+      // If no categoryId provided, get games from all categories
+      let endpoint = '/game';
+      if (categoryId) {
+        endpoint = `/game?categoryId=${categoryId}`;
+      } else {
+        // For dashboard, we'll get games from a default category or handle differently
+        // For now, let's use the first available category from the URL
+        endpoint = '/game?categoryId=68847d21bcb9d10e1b12e76a'; // Default category
+      }
+
+      const result = await this.getPublic(endpoint);
+      setCachedApiData(cacheKey, result, CACHE_TTL.MEDIUM);
+      return result;
+    } catch (error) {
+      logger.error('Failed to get games:', error);
+      return { success: false, data: [] };
+    }
+  }
+
+  async getPackages(): Promise<{ success: boolean; data: Package[] }> {
+    try {
+      const cacheKey = CACHE_KEYS.PACKAGES;
+      const cached = getCachedApiData<{ success: boolean; data: Package[] }>(cacheKey);
+      if (cached) return cached;
+
+      const result = await this.getPublic<{ success: boolean; data: Package[] }>('/packages');
+      setCachedApiData(cacheKey, result, CACHE_TTL.MEDIUM);
+      return result;
+    } catch (error) {
+      logger.error('Failed to get packages:', error);
+      return { success: false, data: [] };
+    }
   }
 
   async getGamePackages(gameId: string): Promise<any> {
@@ -778,12 +821,7 @@ class OrderApiService {
     walletTransferImage: File
   ): Promise<{ success: boolean; data?: any; error?: string }> {
     try {
-      logger.info('🚀 [OrderAPI] Creating order with wallet transfer', {
-        gameId: orderData.gameId,
-        packageId: orderData.packageId,
-        paymentMethod: orderData.paymentMethod,
-        walletTransferNumber: walletTransferData.walletTransferNumber
-      });
+
 
       // First create the order
       const orderResult = await this.createOrder(orderData);
@@ -792,7 +830,7 @@ class OrderApiService {
       }
 
       const orderId = orderResult.data._id;
-      logger.info('✅ [OrderAPI] Order created successfully', { orderId });
+
 
       // Then submit wallet transfer
       const transferResult = await this.submitWalletTransfer(orderId, walletTransferData, walletTransferImage);
@@ -800,10 +838,10 @@ class OrderApiService {
         throw new Error(transferResult.error || 'Failed to submit wallet transfer');
       }
 
-      logger.info('✅ [OrderAPI] Order with wallet transfer created successfully', { orderId });
+
       return { success: true, data: { orderId, ...transferResult.data } };
     } catch (error) {
-      logger.error('❌ [OrderAPI] Error creating order with wallet transfer:', error);
+      logger.error('Failed to create order with wallet transfer:', error);
       return {
         success: false,
         error: error instanceof Error ? error.message : 'حدث خطأ أثناء إنشاء الطلب مع بيانات التحويل'

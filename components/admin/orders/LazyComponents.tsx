@@ -13,7 +13,7 @@ import type {
 
 // Lazy load components for better bundle splitting
 const LazyOrdersTable = lazy(() => import('./OrdersTable').then(module => ({ default: module.OrdersTable })));
-const LazyVirtualizedOrdersTable = lazy(() => import('./VirtualizedOrdersTable'));
+const LazyVirtualizedOrdersTable = lazy(() => import('./VirtualizedOrdersTable').then(module => ({ default: module.VirtualizedOrdersTable })));
 const LazyOrdersFilters = lazy(() => import('./OrdersFilters').then(module => ({ default: module.OrdersFilters })));
 const LazyPagination = lazy(() => import('./Pagination'));
 const LazyOrderDetailsModal = lazy(() => import('./OrderDetailsModal'));

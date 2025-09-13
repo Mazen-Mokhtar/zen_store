@@ -21,7 +21,7 @@ import { ORDER_STATUS_CONFIG } from '@/lib/types';
 import { Logo } from '@/components/ui/logo';
 
 // Dynamic imports for better performance
-const OrderDetailsModal = dynamic(() => import('@/components/ui/order-details-modal').then(mod => mod.OrderDetailsModal), {
+const OrderDetailsModal = dynamic(() => import('@/components/ui/order-details-modal'), {
   loading: () => <LoadingSpinner size="md" />,
   ssr: false
 });

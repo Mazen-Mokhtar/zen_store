@@ -5,7 +5,9 @@ export { OrdersFilters } from './OrdersFilters';
 export { OrdersHeader } from './OrdersHeader';
 export { OrderDetailsModal } from './OrderDetailsModal';
 export { default as Pagination } from './Pagination';
-export { default as ErrorBoundary, LoadingSkeleton, ErrorMessage } from './ErrorBoundary';
+export { default as ErrorBoundary } from './ErrorBoundary';
+export { default } from './ErrorBoundary';
+export { LoadingSkeleton, ErrorMessage } from './ErrorBoundary';
 
 // Lazy-loaded components for bundle optimization
 export {

@@ -1,7 +1,5 @@
-'use client';
-
 import React from 'react';
-import Head from 'next/head';
+import Script from 'next/script';
 
 interface StructuredDataProps {
   data: Record<string, any>;
@@ -16,14 +14,13 @@ export const StructuredData: React.FC<StructuredDataProps> = ({ data, type = 'Pr
   };
 
   return (
-    <Head>
-      <script
-        type="application/ld+json"
-        dangerouslySetInnerHTML={{
-          __html: JSON.stringify(structuredData, null, 2)
-        }}
-      />
-    </Head>
+    <Script
+      id={`structured-data-${type.toLowerCase()}`}
+      type="application/ld+json"
+      dangerouslySetInnerHTML={{
+        __html: JSON.stringify(structuredData, null, 2)
+      }}
+    />
   );
 };
 

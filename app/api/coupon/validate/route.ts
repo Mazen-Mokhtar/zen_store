@@ -88,12 +88,21 @@ export async function POST(request: NextRequest) {
         coupon: data.data.coupon,
         discountAmount: data.data.discountAmount,
         finalAmount: data.data.finalAmount
-      } as CouponValidationResponse);
+      } as CouponValidationResponse, {
+        headers: {
+          'Cache-Control': 'private, s-maxage=30, stale-while-revalidate=60',
+          'CDN-Cache-Control': 'private, s-maxage=30'
+        }
+      });
     } else {
       return NextResponse.json({
         isValid: false,
         error: data.message || 'Invalid coupon'
-      } as CouponValidationResponse);
+      } as CouponValidationResponse, {
+        headers: {
+          'Cache-Control': 'no-cache, no-store, must-revalidate'
+        }
+      });
     }
   } catch (error) {
 

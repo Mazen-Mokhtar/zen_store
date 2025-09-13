@@ -73,9 +73,14 @@ export async function GET(
 
     const result = await response.json();
     
-
-    
-    return NextResponse.json(result);
+    // Add caching headers for coupon details (short TTL due to potential changes)
+    return NextResponse.json(result, {
+      headers: {
+        'Cache-Control': 'public, s-maxage=300, stale-while-revalidate=600',
+        'CDN-Cache-Control': 'public, s-maxage=300',
+        'Vercel-CDN-Cache-Control': 'public, s-maxage=300'
+      }
+    });
     
   } catch (error) {
 

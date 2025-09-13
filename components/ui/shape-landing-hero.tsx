@@ -193,12 +193,12 @@ function HeroGeometric({
                         transition={{ delay: 1.1 }}
                         className="flex flex-col sm:flex-row gap-4 justify-center items-center"
                     >
-                        <Link href="/signin">
+                        <Link href="/signin" prefetch={true}>
                             <HoverButton className="text-white font-medium text-lg">
                                 تسجيل الدخول
                             </HoverButton>
                         </Link>
-                        <Link href="/category">
+                        <Link href="/category" prefetch={true}>
                             <HoverButton className="text-white font-medium text-lg bg-gradient-to-r from-indigo-500/20 to-rose-500/20 border border-white/10">
                                 الفئات
                             </HoverButton>

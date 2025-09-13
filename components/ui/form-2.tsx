@@ -273,7 +273,7 @@ function FormLayout01() {
         </CSRFProtection>
         <div className="mt-6 text-center text-sm text-muted-foreground">
           Already have an account?{' '}
-          <Link href="/signin" className="text-violet-400 hover:underline transition-colors">
+          <Link href="/signin" prefetch={true} className="text-violet-400 hover:underline transition-colors">
             Login
           </Link>
         </div>

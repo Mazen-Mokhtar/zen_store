@@ -103,10 +103,9 @@ export default function PaymentSuccessPage() {
               onClick={() => {
                 const urlParams = new URLSearchParams(window.location.search);
                 const gameId = urlParams.get('gameId');
-                const gameName = urlParams.get('gameName');
                 
-                if (gameId && gameName) {
-                  router.push(`/packages?gameId=${gameId}&gameName=${encodeURIComponent(gameName)}`);
+                if (gameId) {
+                  router.push(`/packages?gameId=${gameId}`);
                 } else {
                   router.push('/dashboard');
                 }

@@ -1,0 +1,329 @@
+{
+  "timestamp": "2025-09-13T00:22:56.997Z",
+  "summary": {
+    "totalPages": 2,
+    "totalChunks": 32,
+    "totalSize": "0 B",
+    "averagePageSize": "0 B",
+    "recommendations": 3
+  },
+  "performance": {
+    "largestPages": [
+      {
+        "route": "/_app",
+        "files": 4,
+        "size": 0,
+        "sizeFormatted": "0 B"
+      },
+      {
+        "route": "/_error",
+        "files": 4,
+        "size": 0,
+        "sizeFormatted": "0 B"
+      }
+    ],
+    "heaviestChunks": [
+      {
+        "name": "4bd1b696-100b9d70ed4e49c1.js",
+        "size": 173025,
+        "sizeFormatted": "168.97 KB",
+        "path": "C:\\Users\\mazen\\OneDrive\\Desktop\\zen-store-Dp-blot.new\\.next\\static\\chunks\\4bd1b696-100b9d70ed4e49c1.js"
+      },
+      {
+        "name": "1255-ee71dd93444688b6.js",
+        "size": 172154,
+        "sizeFormatted": "168.12 KB",
+        "path": "C:\\Users\\mazen\\OneDrive\\Desktop\\zen-store-Dp-blot.new\\.next\\static\\chunks\\1255-ee71dd93444688b6.js"
+      },
+      {
+        "name": "framework-97862ef36bc4065f.js",
+        "size": 139889,
+        "sizeFormatted": "136.61 KB",
+        "path": "C:\\Users\\mazen\\OneDrive\\Desktop\\zen-store-Dp-blot.new\\.next\\static\\chunks\\framework-97862ef36bc4065f.js"
+      },
+      {
+        "name": "main-4bb086b4ae3191ba.js",
+        "size": 129282,
+        "sizeFormatted": "126.25 KB",
+        "path": "C:\\Users\\mazen\\OneDrive\\Desktop\\zen-store-Dp-blot.new\\.next\\static\\chunks\\main-4bb086b4ae3191ba.js"
+      },
+      {
+        "name": "polyfills-42372ed130431b0a.js",
+        "size": 112594,
+        "sizeFormatted": "109.96 KB",
+        "path": "C:\\Users\\mazen\\OneDrive\\Desktop\\zen-store-Dp-blot.new\\.next\\static\\chunks\\polyfills-42372ed130431b0a.js"
+      },
+      {
+        "name": "9785-19b8ae1a7744364b.js",
+        "size": 83021,
+        "sizeFormatted": "81.08 KB",
+        "path": "C:\\Users\\mazen\\OneDrive\\Desktop\\zen-store-Dp-blot.new\\.next\\static\\chunks\\9785-19b8ae1a7744364b.js"
+      },
+      {
+        "name": "framer-motion-9420f46b87434911.js",
+        "size": 77894,
+        "sizeFormatted": "76.07 KB",
+        "path": "C:\\Users\\mazen\\OneDrive\\Desktop\\zen-store-Dp-blot.new\\.next\\static\\chunks\\framer-motion-9420f46b87434911.js"
+      },
+      {
+        "name": "46170725-35d5bee8a292a5f3.js",
+        "size": 62537,
+        "sizeFormatted": "61.07 KB",
+        "path": "C:\\Users\\mazen\\OneDrive\\Desktop\\zen-store-Dp-blot.new\\.next\\static\\chunks\\46170725-35d5bee8a292a5f3.js"
+      },
+      {
+        "name": "9351-b0506bac3277abd4.js",
+        "size": 53745,
+        "sizeFormatted": "52.49 KB",
+        "path": "C:\\Users\\mazen\\OneDrive\\Desktop\\zen-store-Dp-blot.new\\.next\\static\\chunks\\9351-b0506bac3277abd4.js"
+      },
+      {
+        "name": "4387-d3ac586daea3b90a.js",
+        "size": 47627,
+        "sizeFormatted": "46.51 KB",
+        "path": "C:\\Users\\mazen\\OneDrive\\Desktop\\zen-store-Dp-blot.new\\.next\\static\\chunks\\4387-d3ac586daea3b90a.js"
+      }
+    ],
+    "duplicatedModules": []
+  },
+  "recommendations": [
+    {
+      "type": "info",
+      "category": "Code Splitting",
+      "title": "Heavy Chunks Found",
+      "description": "5 chunks exceed 100KB. Review for optimization opportunities.",
+      "chunks": [
+        "4bd1b696-100b9d70ed4e49c1.js (168.97 KB)",
+        "1255-ee71dd93444688b6.js (168.12 KB)",
+        "framework-97862ef36bc4065f.js (136.61 KB)",
+        "main-4bb086b4ae3191ba.js (126.25 KB)",
+        "polyfills-42372ed130431b0a.js (109.96 KB)"
+      ],
+      "priority": "medium"
+    },
+    {
+      "type": "success",
+      "category": "Performance",
+      "title": "ISR Implementation",
+      "description": "ISR is implemented for static pages with dynamic data. Monitor revalidation frequency.",
+      "priority": "low"
+    },
+    {
+      "type": "success",
+      "category": "Performance",
+      "title": "Client-side Caching",
+      "description": "Client-side caching system implemented. Monitor cache hit rates.",
+      "priority": "low"
+    }
+  ],
+  "details": {
+    "pages": [
+      {
+        "route": "/_app",
+        "files": 4,
+        "size": 0,
+        "sizeFormatted": "0 B"
+      },
+      {
+        "route": "/_error",
+        "files": 4,
+        "size": 0,
+        "sizeFormatted": "0 B"
+      }
+    ],
+    "chunks": [
+      {
+        "name": "4bd1b696-100b9d70ed4e49c1.js",
+        "size": 173025,
+        "sizeFormatted": "168.97 KB",
+        "path": "C:\\Users\\mazen\\OneDrive\\Desktop\\zen-store-Dp-blot.new\\.next\\static\\chunks\\4bd1b696-100b9d70ed4e49c1.js"
+      },
+      {
+        "name": "1255-ee71dd93444688b6.js",
+        "size": 172154,
+        "sizeFormatted": "168.12 KB",
+        "path": "C:\\Users\\mazen\\OneDrive\\Desktop\\zen-store-Dp-blot.new\\.next\\static\\chunks\\1255-ee71dd93444688b6.js"
+      },
+      {
+        "name": "framework-97862ef36bc4065f.js",
+        "size": 139889,
+        "sizeFormatted": "136.61 KB",
+        "path": "C:\\Users\\mazen\\OneDrive\\Desktop\\zen-store-Dp-blot.new\\.next\\static\\chunks\\framework-97862ef36bc4065f.js"
+      },
+      {
+        "name": "main-4bb086b4ae3191ba.js",
+        "size": 129282,
+        "sizeFormatted": "126.25 KB",
+        "path": "C:\\Users\\mazen\\OneDrive\\Desktop\\zen-store-Dp-blot.new\\.next\\static\\chunks\\main-4bb086b4ae3191ba.js"
+      },
+      {
+        "name": "polyfills-42372ed130431b0a.js",
+        "size": 112594,
+        "sizeFormatted": "109.96 KB",
+        "path": "C:\\Users\\mazen\\OneDrive\\Desktop\\zen-store-Dp-blot.new\\.next\\static\\chunks\\polyfills-42372ed130431b0a.js"
+      },
+      {
+        "name": "9785-19b8ae1a7744364b.js",
+        "size": 83021,
+        "sizeFormatted": "81.08 KB",
+        "path": "C:\\Users\\mazen\\OneDrive\\Desktop\\zen-store-Dp-blot.new\\.next\\static\\chunks\\9785-19b8ae1a7744364b.js"
+      },
+      {
+        "name": "framer-motion-9420f46b87434911.js",
+        "size": 77894,
+        "sizeFormatted": "76.07 KB",
+        "path": "C:\\Users\\mazen\\OneDrive\\Desktop\\zen-store-Dp-blot.new\\.next\\static\\chunks\\framer-motion-9420f46b87434911.js"
+      },
+      {
+        "name": "46170725-35d5bee8a292a5f3.js",
+        "size": 62537,
+        "sizeFormatted": "61.07 KB",
+        "path": "C:\\Users\\mazen\\OneDrive\\Desktop\\zen-store-Dp-blot.new\\.next\\static\\chunks\\46170725-35d5bee8a292a5f3.js"
+      },
+      {
+        "name": "9351-b0506bac3277abd4.js",
+        "size": 53745,
+        "sizeFormatted": "52.49 KB",
+        "path": "C:\\Users\\mazen\\OneDrive\\Desktop\\zen-store-Dp-blot.new\\.next\\static\\chunks\\9351-b0506bac3277abd4.js"
+      },
+      {
+        "name": "4387-d3ac586daea3b90a.js",
+        "size": 47627,
+        "sizeFormatted": "46.51 KB",
+        "path": "C:\\Users\\mazen\\OneDrive\\Desktop\\zen-store-Dp-blot.new\\.next\\static\\chunks\\4387-d3ac586daea3b90a.js"
+      },
+      {
+        "name": "2261-98b832b5fbef0b1a.js",
+        "size": 38756,
+        "sizeFormatted": "37.85 KB",
+        "path": "C:\\Users\\mazen\\OneDrive\\Desktop\\zen-store-Dp-blot.new\\.next\\static\\chunks\\2261-98b832b5fbef0b1a.js"
+      },
+      {
+        "name": "2346-f183d8b82a4a7fd5.js",
+        "size": 22591,
+        "sizeFormatted": "22.06 KB",
+        "path": "C:\\Users\\mazen\\OneDrive\\Desktop\\zen-store-Dp-blot.new\\.next\\static\\chunks\\2346-f183d8b82a4a7fd5.js"
+      },
+      {
+        "name": "1825-cad4b93b7c5f1894.js",
+        "size": 19614,
+        "sizeFormatted": "19.15 KB",
+        "path": "C:\\Users\\mazen\\OneDrive\\Desktop\\zen-store-Dp-blot.new\\.next\\static\\chunks\\1825-cad4b93b7c5f1894.js"
+      },
+      {
+        "name": "1563-0b01e7a68fad990a.js",
+        "size": 16833,
+        "sizeFormatted": "16.44 KB",
+        "path": "C:\\Users\\mazen\\OneDrive\\Desktop\\zen-store-Dp-blot.new\\.next\\static\\chunks\\1563-0b01e7a68fad990a.js"
+      },
+      {
+        "name": "4191-409493fddb3808d2.js",
+        "size": 16100,
+        "sizeFormatted": "15.72 KB",
+        "path": "C:\\Users\\mazen\\OneDrive\\Desktop\\zen-store-Dp-blot.new\\.next\\static\\chunks\\4191-409493fddb3808d2.js"
+      },
+      {
+        "name": "lucide-react-8b6228cd95b67a83.js",
+        "size": 15287,
+        "sizeFormatted": "14.93 KB",
+        "path": "C:\\Users\\mazen\\OneDrive\\Desktop\\zen-store-Dp-blot.new\\.next\\static\\chunks\\lucide-react-8b6228cd95b67a83.js"
+      },
+      {
+        "name": "5239-b5d471afce036544.js",
+        "size": 14977,
+        "sizeFormatted": "14.63 KB",
+        "path": "C:\\Users\\mazen\\OneDrive\\Desktop\\zen-store-Dp-blot.new\\.next\\static\\chunks\\5239-b5d471afce036544.js"
+      },
+      {
+        "name": "8209-0d6f8ceea74a019f.js",
+        "size": 12852,
+        "sizeFormatted": "12.55 KB",
+        "path": "C:\\Users\\mazen\\OneDrive\\Desktop\\zen-store-Dp-blot.new\\.next\\static\\chunks\\8209-0d6f8ceea74a019f.js"
+      },
+      {
+        "name": "9110-974a463ab08e803d.js",
+        "size": 11588,
+        "sizeFormatted": "11.32 KB",
+        "path": "C:\\Users\\mazen\\OneDrive\\Desktop\\zen-store-Dp-blot.new\\.next\\static\\chunks\\9110-974a463ab08e803d.js"
+      },
+      {
+        "name": "2619-04bc32f026a0d946.js",
+        "size": 8564,
+        "sizeFormatted": "8.36 KB",
+        "path": "C:\\Users\\mazen\\OneDrive\\Desktop\\zen-store-Dp-blot.new\\.next\\static\\chunks\\2619-04bc32f026a0d946.js"
+      },
+      {
+        "name": "1804.8e213cf8fbb97250.js",
+        "size": 7739,
+        "sizeFormatted": "7.56 KB",
+        "path": "C:\\Users\\mazen\\OneDrive\\Desktop\\zen-store-Dp-blot.new\\.next\\static\\chunks\\1804.8e213cf8fbb97250.js"
+      },
+      {
+        "name": "ee560e2c-cc0094287c35c8ef.js",
+        "size": 7548,
+        "sizeFormatted": "7.37 KB",
+        "path": "C:\\Users\\mazen\\OneDrive\\Desktop\\zen-store-Dp-blot.new\\.next\\static\\chunks\\ee560e2c-cc0094287c35c8ef.js"
+      },
+      {
+        "name": "5346.2e8a7ae19ce896fc.js",
+        "size": 7399,
+        "sizeFormatted": "7.23 KB",
+        "path": "C:\\Users\\mazen\\OneDrive\\Desktop\\zen-store-Dp-blot.new\\.next\\static\\chunks\\5346.2e8a7ae19ce896fc.js"
+      },
+      {
+        "name": "3150.2e802ae8b9d708ef.js",
+        "size": 7163,
+        "sizeFormatted": "7 KB",
+        "path": "C:\\Users\\mazen\\OneDrive\\Desktop\\zen-store-Dp-blot.new\\.next\\static\\chunks\\3150.2e802ae8b9d708ef.js"
+      },
+      {
+        "name": "1646.a93085a0445ba909.js",
+        "size": 5466,
+        "sizeFormatted": "5.34 KB",
+        "path": "C:\\Users\\mazen\\OneDrive\\Desktop\\zen-store-Dp-blot.new\\.next\\static\\chunks\\1646.a93085a0445ba909.js"
+      },
+      {
+        "name": "9607.8d1e80a807e49082.js",
+        "size": 5083,
+        "sizeFormatted": "4.96 KB",
+        "path": "C:\\Users\\mazen\\OneDrive\\Desktop\\zen-store-Dp-blot.new\\.next\\static\\chunks\\9607.8d1e80a807e49082.js"
+      },
+      {
+        "name": "webpack-c3d88c0b74278d1c.js",
+        "size": 3910,
+        "sizeFormatted": "3.82 KB",
+        "path": "C:\\Users\\mazen\\OneDrive\\Desktop\\zen-store-Dp-blot.new\\.next\\static\\chunks\\webpack-c3d88c0b74278d1c.js"
+      },
+      {
+        "name": "1719.84aefabd91161dfe.js",
+        "size": 3789,
+        "sizeFormatted": "3.7 KB",
+        "path": "C:\\Users\\mazen\\OneDrive\\Desktop\\zen-store-Dp-blot.new\\.next\\static\\chunks\\1719.84aefabd91161dfe.js"
+      },
+      {
+        "name": "3982.9ff3b1089da1f2e5.js",
+        "size": 2948,
+        "sizeFormatted": "2.88 KB",
+        "path": "C:\\Users\\mazen\\OneDrive\\Desktop\\zen-store-Dp-blot.new\\.next\\static\\chunks\\3982.9ff3b1089da1f2e5.js"
+      },
+      {
+        "name": "1233.f63837c671bcaacd.js",
+        "size": 1607,
+        "sizeFormatted": "1.57 KB",
+        "path": "C:\\Users\\mazen\\OneDrive\\Desktop\\zen-store-Dp-blot.new\\.next\\static\\chunks\\1233.f63837c671bcaacd.js"
+      },
+      {
+        "name": "5139.e4ff9cc3669129ed.js",
+        "size": 745,
+        "sizeFormatted": "745 B",
+        "path": "C:\\Users\\mazen\\OneDrive\\Desktop\\zen-store-Dp-blot.new\\.next\\static\\chunks\\5139.e4ff9cc3669129ed.js"
+      },
+      {
+        "name": "main-app-b352187db071b8d3.js",
+        "size": 572,
+        "sizeFormatted": "572 B",
+        "path": "C:\\Users\\mazen\\OneDrive\\Desktop\\zen-store-Dp-blot.new\\.next\\static\\chunks\\main-app-b352187db071b8d3.js"
+      }
+    ]
+  }
+}

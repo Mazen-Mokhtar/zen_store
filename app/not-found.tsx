@@ -68,7 +68,11 @@ const NotFoundPage = () => {
   };
 
   if (!mounted) {
-    return null;
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-gray-900 via-gray-800 to-black flex flex-col" suppressHydrationWarning>
+        {/* Loading state that matches the final render */}
+      </div>
+    );
   }
 
   return (

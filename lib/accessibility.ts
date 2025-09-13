@@ -43,6 +43,22 @@ export class AccessibilityManager {
   }
 
   private addSkipLinks(): void {
+    // Only run on client side to prevent SSR hydration mismatch
+    if (typeof window === 'undefined') {
+      return;
+    }
+    
+    // Skip if skip links already exist (handled by accessibility-compliance.tsx)
+    if (document.querySelector('.skip-links') || document.querySelector('a[href="#main-content"]')) {
+      return;
+    }
+    
+    // Only create after page load to prevent hydration mismatch
+    if (document.readyState !== 'complete') {
+      window.addEventListener('load', () => this.addSkipLinks(), { once: true });
+      return;
+    }
+    
     const skipLink = document.createElement('a');
     skipLink.href = '#main-content';
     skipLink.textContent = 'Skip to main content';

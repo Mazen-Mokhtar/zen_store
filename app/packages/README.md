@@ -28,12 +28,12 @@
 ### 1. من صفحة الألعاب
 1. انتقل إلى `/dashboard` أو `/dashboard?category=categoryId`
 2. انقر على أي لعبة من قائمة الألعاب
-3. سيتم توجيهك تلقائياً إلى `/packages?gameId=gameId&gameName=gameName`
+3. سيتم توجيهك تلقائياً إلى `/packages?gameId=gameId`
 
 ### 2. الوصول المباشر
 يمكن الوصول مباشرة إلى صفحة الـ packages عبر:
 ```
-/packages?gameId=gameId&gameName=gameName
+/packages?gameId=gameId
 ```
 
 ## API Endpoints المستخدمة
@@ -126,4 +126,4 @@ GET /game/{gameId}
 ### كيفية تجنب مشاكل الـ Hydration
 - استخدم `useEffect` للكود الذي يعمل فقط في المتصفح
 - تأكد من أن البيانات متسقة بين الـ server والـ client
-- استخدم `suppressHydrationWarning` بحذر فقط عند الضرورة 
+- استخدم `suppressHydrationWarning` بحذر فقط عند الضرورة

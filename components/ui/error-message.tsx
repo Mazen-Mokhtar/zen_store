@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { memo, useCallback } from 'react';
 import { AlertCircle, RefreshCw } from 'lucide-react';
 
 interface ErrorMessageProps {
@@ -8,12 +8,17 @@ interface ErrorMessageProps {
   title?: string;
 }
 
-export const ErrorMessage: React.FC<ErrorMessageProps> = ({ 
+// Memoized component to prevent unnecessary re-renders
+export const ErrorMessage = memo<ErrorMessageProps>(({ 
   message, 
   onRetry, 
   className = '',
   title = 'Error'
 }) => {
+  // Memoize the retry handler to prevent unnecessary re-renders
+  const handleRetry = useCallback(() => {
+    onRetry?.();
+  }, [onRetry]);
   return (
     <div className={`bg-[#0D0E12] min-h-screen text-white font-sans flex items-center justify-center ${className}`} role="alert" aria-live="assertive">
       <div className="text-center max-w-md mx-auto px-4">
@@ -24,7 +29,7 @@ export const ErrorMessage: React.FC<ErrorMessageProps> = ({
         <p className="text-gray-400 mb-6 text-sm md:text-base leading-relaxed">{message}</p>
         {onRetry && (
           <button 
-            onClick={onRetry}
+            onClick={handleRetry}
             className="inline-flex items-center gap-2 px-4 md:px-6 py-2 md:py-3 bg-green-500 text-black rounded-lg hover:bg-green-600 transition-colors focus:outline-none focus:ring-2 focus:ring-green-500 focus:ring-offset-2 focus:ring-offset-[#0D0E12] text-sm md:text-base font-medium"
             aria-label="Retry the failed operation"
           >
@@ -35,4 +40,6 @@ export const ErrorMessage: React.FC<ErrorMessageProps> = ({
       </div>
     </div>
   );
-};
+});
+
+ErrorMessage.displayName = 'ErrorMessage';

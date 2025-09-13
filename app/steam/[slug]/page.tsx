@@ -5,6 +5,9 @@ import { apiService } from '@/lib/api';
 import type { SteamGame } from '@/lib/types';
 import { logger } from '@/lib/utils';
 
+// Enable ISR with 1 hour revalidation for better performance
+export const revalidate = 3600;
+
 interface SteamGamePageProps {
   params: Promise<{ slug: string }>;
 }

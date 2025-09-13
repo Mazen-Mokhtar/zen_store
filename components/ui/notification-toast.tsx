@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, memo, useCallback } from 'react';
 import { X, CheckCircle, AlertCircle, AlertTriangle, Info } from 'lucide-react';
 import { notificationService, Notification } from '@/lib/notifications';
 
@@ -47,7 +47,8 @@ const getTextColor = (type: Notification['type']) => {
   }
 };
 
-export const NotificationToast: React.FC = () => {
+// Memoized component to prevent unnecessary re-renders
+export const NotificationToast = memo(() => {
   const [notifications, setNotifications] = useState<Notification[]>([]);
 
   useEffect(() => {
@@ -55,16 +56,17 @@ export const NotificationToast: React.FC = () => {
     return unsubscribe;
   }, []);
 
-  const handleRemove = (id: string) => {
+  // Memoize event handlers to prevent unnecessary re-renders
+  const handleRemove = useCallback((id: string) => {
     notificationService.remove(id);
-  };
+  }, []);
 
-  const handleAction = (notification: Notification) => {
+  const handleAction = useCallback((notification: Notification) => {
     if (notification.action) {
       notification.action.onClick();
       handleRemove(notification.id);
     }
-  };
+  }, [handleRemove]);
 
   if (notifications.length === 0) {
     return null;
@@ -108,4 +110,6 @@ export const NotificationToast: React.FC = () => {
       ))}
     </div>
   );
-}; 
+});
+
+NotificationToast.displayName = 'NotificationToast';

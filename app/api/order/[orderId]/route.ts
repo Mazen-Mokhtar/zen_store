@@ -37,7 +37,14 @@ export async function GET(_req: Request, context: { params: Promise<{ orderId: s
     }
 
     const data = await res.json();
-    return NextResponse.json(data);
+    
+    // Add caching headers for order details (short TTL due to potential status changes)
+    return NextResponse.json(data, {
+      headers: {
+        'Cache-Control': 'private, s-maxage=60, stale-while-revalidate=120',
+        'CDN-Cache-Control': 'private, s-maxage=60'
+      }
+    });
   } catch (e) {
     return NextResponse.json({ error: 'Internal server error', details: e instanceof Error ? e.message : 'Unknown' }, { status: 500 });
   }

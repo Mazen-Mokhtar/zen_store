@@ -191,9 +191,29 @@ export const memoryOptimization = {
 export const accessibilityOptimization = {
   // Add ARIA labels and roles
   enhanceAccessibility: () => {
+    // Only run on client side to prevent SSR hydration mismatch
     if (typeof window === 'undefined') return;
 
     // Add skip links
+    // Skip if skip links already exist (handled by accessibility-compliance.tsx)
+    if (document.querySelector('.skip-links') || document.querySelector('a[href="#main-content"]')) {
+      return;
+    }
+    
+    // Only create after page load to prevent hydration mismatch
+    if (document.readyState !== 'complete') {
+      window.addEventListener('load', () => {
+        if (!document.querySelector('.skip-links') && !document.querySelector('a[href="#main-content"]')) {
+          const skipLink = document.createElement('a');
+          skipLink.href = '#main-content';
+          skipLink.textContent = 'Skip to main content';
+          skipLink.className = 'sr-only focus:not-sr-only focus:absolute focus:top-4 focus:left-4 bg-blue-600 text-white px-4 py-2 rounded z-50';
+          document.body.insertBefore(skipLink, document.body.firstChild);
+        }
+      }, { once: true });
+      return;
+    }
+    
     const skipLink = document.createElement('a');
     skipLink.href = '#main-content';
     skipLink.textContent = 'Skip to main content';
@@ -289,11 +309,16 @@ export const initializeOptimizations = () => {
   logger.info('Performance optimizations initialized');
 };
 
-// Auto-initialize on page load
+// Auto-initialize on page load (only after hydration to prevent SSR mismatch)
 if (typeof window !== 'undefined') {
+  // Wait for hydration to complete before initializing
   if (document.readyState === 'loading') {
-    document.addEventListener('DOMContentLoaded', initializeOptimizations);
+    document.addEventListener('DOMContentLoaded', () => {
+      // Additional delay to ensure React hydration is complete
+      setTimeout(initializeOptimizations, 100);
+    });
   } else {
-    initializeOptimizations();
+    // Additional delay to ensure React hydration is complete
+    setTimeout(initializeOptimizations, 100);
   }
 }

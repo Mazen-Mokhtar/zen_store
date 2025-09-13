@@ -1,6 +1,9 @@
 import { Suspense } from 'react';
 import { LoadingSpinner } from '@/components/ui/loading-spinner';
 
+// Enable ISR with 1 hour revalidation for better performance
+export const revalidate = 3600;
+
 // Note: Metadata is handled by the page.tsx generateMetadata function
 
 export default function SteamGameLayout({
