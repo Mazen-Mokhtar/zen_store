@@ -67,6 +67,48 @@ export const LazyLoadingProvider = memo<LazyLoadingProviderProps>(({
     preloadCritical();
   }, [config.preloadCritical]);
 
+  const preloadComponent = useCallback(async (componentPath: string): Promise<void> => {
+    if (preloadedComponents.has(componentPath) || currentLoads.has(componentPath)) {
+      return;
+    }
+
+    // Check concurrent load limit
+    if (currentLoads.size >= config.maxConcurrentLoads) {
+      console.warn('Max concurrent loads reached, queuing component:', componentPath);
+      return;
+    }
+
+    setCurrentLoads(prev => new Set([...Array.from(prev), componentPath]));
+    
+    try {
+      const startTime = performance.now();
+      
+      // Add timeout for loading
+      const loadPromise = import(componentPath);
+      const timeoutPromise = new Promise((_, reject) => {
+        setTimeout(() => reject(new Error('Load timeout')), config.loadTimeout);
+      });
+      
+      await Promise.race([loadPromise, timeoutPromise]);
+      
+      const endTime = performance.now();
+      const loadTime = endTime - startTime;
+      
+      setLoadTimes(prev => [...prev, loadTime]);
+      setPreloadedComponents(prev => new Set([...Array.from(prev), componentPath]));
+      
+      console.log(`Component preloaded: ${componentPath} (${loadTime.toFixed(2)}ms)`);
+    } catch (error) {
+      console.warn(`Failed to preload component: ${componentPath}`, error);
+    } finally {
+      setCurrentLoads(prev => {
+        const newSet = new Set(prev);
+        newSet.delete(componentPath);
+        return newSet;
+      });
+    }
+  }, [preloadedComponents, currentLoads, config.maxConcurrentLoads, config.loadTimeout]);
+
   // Preload components on idle
   useEffect(() => {
     const preloadOnIdle = () => {
@@ -124,48 +166,6 @@ export const LazyLoadingProvider = memo<LazyLoadingProviderProps>(({
       return newSet;
     });
   }, []);
-
-  const preloadComponent = useCallback(async (componentPath: string): Promise<void> => {
-    if (preloadedComponents.has(componentPath) || currentLoads.has(componentPath)) {
-      return;
-    }
-
-    // Check concurrent load limit
-    if (currentLoads.size >= config.maxConcurrentLoads) {
-      console.warn('Max concurrent loads reached, queuing component:', componentPath);
-      return;
-    }
-
-    setCurrentLoads(prev => new Set([...Array.from(prev), componentPath]));
-    
-    try {
-      const startTime = performance.now();
-      
-      // Add timeout for loading
-      const loadPromise = import(componentPath);
-      const timeoutPromise = new Promise((_, reject) => {
-        setTimeout(() => reject(new Error('Load timeout')), config.loadTimeout);
-      });
-      
-      await Promise.race([loadPromise, timeoutPromise]);
-      
-      const endTime = performance.now();
-      const loadTime = endTime - startTime;
-      
-      setLoadTimes(prev => [...prev, loadTime]);
-      setPreloadedComponents(prev => new Set([...Array.from(prev), componentPath]));
-      
-      console.log(`Component preloaded: ${componentPath} (${loadTime.toFixed(2)}ms)`);
-    } catch (error) {
-      console.warn(`Failed to preload component: ${componentPath}`, error);
-    } finally {
-      setCurrentLoads(prev => {
-        const newSet = new Set(prev);
-        newSet.delete(componentPath);
-        return newSet;
-      });
-    }
-  }, [preloadedComponents, currentLoads, config.maxConcurrentLoads, config.loadTimeout]);
 
   const getLoadingStats = useCallback(() => {
     return {

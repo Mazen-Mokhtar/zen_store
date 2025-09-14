@@ -185,6 +185,17 @@ export function useOptimizedNotifications() {
   const [notifications, setNotifications] = useState<Notification[]>([]);
   const notificationTimeouts = useRef(new Map<string, NodeJS.Timeout>());
   
+  const removeNotification = useCallback((id: string) => {
+    setNotifications(prev => prev.filter(n => n.id !== id));
+    
+    // Clear associated timeout
+    const timeout = notificationTimeouts.current.get(id);
+    if (timeout) {
+      memoryOptimizer.clearTrackedTimeout(timeout);
+      notificationTimeouts.current.delete(id);
+    }
+  }, []);
+  
   const addNotification = useCallback((notification: Omit<Notification, 'id'>) => {
     const id = Math.random().toString(36).substr(2, 9);
     const newNotification = { ...notification, id };
@@ -203,17 +214,6 @@ export function useOptimizedNotifications() {
     
     return id;
   }, [removeNotification]);
-  
-  const removeNotification = useCallback((id: string) => {
-    setNotifications(prev => prev.filter(n => n.id !== id));
-    
-    // Clear associated timeout
-    const timeout = notificationTimeouts.current.get(id);
-    if (timeout) {
-      memoryOptimizer.clearTrackedTimeout(timeout);
-      notificationTimeouts.current.delete(id);
-    }
-  }, []);
   
   const clearAll = useCallback(() => {
     // Clear all timeouts

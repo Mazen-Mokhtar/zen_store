@@ -24,29 +24,25 @@ export const DynamicSteamGameDetails = dynamic(
     default: mod.SteamGameDetailsClient
   })),
   {
-    loading: LoadingSpinner,
+    loading: () => React.createElement(LoadingSpinner),
     ssr: false
   }
 );
 
 // Performance monitoring components - only load when needed
 export const DynamicPerformanceMonitor = dynamic(
-  () => import('@/lib/performance-monitoring').then(mod => ({
-    default: mod.PerformanceMonitor
-  })),
+  () => import('@/components/performance/performance-monitor'),
   {
-    loading: LoadingSpinner,
+    loading: () => React.createElement(LoadingSpinner),
     ssr: false
   }
 );
 
 // Analytics components - defer loading
 export const DynamicAnalytics = dynamic(
-  () => import('@/lib/monitoring-analytics').then(mod => ({
-    default: mod.MonitoringAnalytics
-  })),
+  () => import('@/components/performance/analytics-dashboard'),
   {
-    loading: LoadingSpinner,
+    loading: () => React.createElement(LoadingSpinner),
     ssr: false
   }
 );
@@ -57,7 +53,7 @@ export const DynamicOrderDetailsModal = dynamic(
     default: mod.OrderDetailsModal
   })),
   {
-    loading: LoadingSpinner,
+    loading: () => React.createElement(LoadingSpinner),
     ssr: false
   }
 );
@@ -68,7 +64,7 @@ export const DynamicAdminOrdersTable = dynamic(
     default: mod.OrdersTable
   })),
   {
-    loading: LoadingSpinner,
+    loading: () => React.createElement(LoadingSpinner),
     ssr: false
   }
 );
@@ -78,7 +74,7 @@ export const DynamicVirtualizedOrdersTable = dynamic(
     default: mod.VirtualizedOrdersTable
   })),
   {
-    loading: LoadingSpinner,
+    loading: () => React.createElement(LoadingSpinner),
     ssr: false
   }
 );
@@ -89,7 +85,7 @@ export const DynamicCategoryGamesSection = dynamic(
     default: mod.CategoryGamesSection
   })),
   {
-    loading: LoadingSpinner,
+    loading: () => React.createElement(LoadingSpinner),
     ssr: true // This can be server-rendered
   }
 );
@@ -103,7 +99,7 @@ export const createDynamicImport = <T extends ComponentType<any>>(
   } = {}
 ) => {
   return dynamic(importFn, {
-    loading: options.loading || LoadingSpinner,
+    loading: options.loading ? () => React.createElement(options.loading!) : () => React.createElement(LoadingSpinner),
     ssr: options.ssr ?? false
   });
 };

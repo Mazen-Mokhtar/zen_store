@@ -4,7 +4,7 @@ const withBundleAnalyzer = require('@next/bundle-analyzer')({
 });
 const fs = require('fs');
 const path = require('path');
-const { TreeShakingOptimizationPlugin, createResolveConfig } = require('./lib/webpack-tree-shaking');
+// const { TreeShakingOptimizationPlugin, createResolveConfig } = require('./lib/webpack-tree-shaking');
 
 // Cleanup function to remove .next folder before build
 const cleanupNextFolder = () => {
@@ -73,11 +73,11 @@ const nextConfig = {
     });
     
     // Add tree shaking optimization plugin
-    if (process.env.NODE_ENV === 'production') {
-      config.plugins.push(new TreeShakingOptimizationPlugin({
-        aggressive: true
-      }));
-    }
+    // if (process.env.NODE_ENV === 'production') {
+    //   config.plugins.push(new TreeShakingOptimizationPlugin({
+    //     aggressive: true
+    //   }));
+    // }
     
     // Enhanced resolve configuration for better tree shaking (only add alias, not override mainFields)
     config.resolve.alias = {
