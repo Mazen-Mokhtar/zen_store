@@ -87,6 +87,8 @@ const NewOrderRow = React.memo<NewOrderRowProps>(({ orders, onViewOrder, onUpdat
   );
 });
 
+NewOrderRow.displayName = 'NewOrderRow';
+
 // Keep the old OrderRow for backward compatibility
 const OrderRow = React.memo<OrderRowProps>(({ index, style, data }) => {
   const { orders, onViewOrder, onUpdateStatus, isMobile } = data;

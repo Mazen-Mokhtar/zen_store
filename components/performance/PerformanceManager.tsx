@@ -473,7 +473,7 @@ export function usePerformanceMetrics() {
 
   const performanceScore = useMemo(() => {
     return performanceMonitor.getPerformanceReport().score;
-  }, [metrics, alerts]);
+  }, []);
 
   return {
     metrics,

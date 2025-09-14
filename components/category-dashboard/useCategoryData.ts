@@ -115,7 +115,7 @@ export const useCategoryData = (categoryId: string | null) => {
         loading: false
       }));
     }
-  }, [t, gamesPerPage]);
+  }, [t]);
 
   // Main data fetching effect
   useEffect(() => {

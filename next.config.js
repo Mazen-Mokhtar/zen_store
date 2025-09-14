@@ -4,6 +4,7 @@ const withBundleAnalyzer = require('@next/bundle-analyzer')({
 });
 const fs = require('fs');
 const path = require('path');
+const { TreeShakingOptimizationPlugin, createResolveConfig } = require('./lib/webpack-tree-shaking');
 
 // Cleanup function to remove .next folder before build
 const cleanupNextFolder = () => {
@@ -71,6 +72,19 @@ const nextConfig = {
       use: ['@svgr/webpack'],
     });
     
+    // Add tree shaking optimization plugin
+    if (process.env.NODE_ENV === 'production') {
+      config.plugins.push(new TreeShakingOptimizationPlugin({
+        aggressive: true
+      }));
+    }
+    
+    // Enhanced resolve configuration for better tree shaking (only add alias, not override mainFields)
+    config.resolve.alias = {
+      ...config.resolve.alias,
+      // Keep original imports working, just optimize when possible
+    };
+    
     // Optimize bundle splitting
     if (!isServer) {
       config.optimization.splitChunks = {
@@ -96,19 +110,61 @@ const nextConfig = {
           // Separate lucide-react into its own chunk
           lucideReact: {
             name: 'lucide-react',
-            test: /[\\/]node_modules[\\/]lucide-react[\\/]/,
+            test: /[\/]node_modules[\/]lucide-react[\/]/,
             chunks: 'all',
             priority: 25,
+            reuseExistingChunk: true,
+          },
+          // Separate UI libraries
+          radixUI: {
+            name: 'radix-ui',
+            test: /[\/]node_modules[\/]@radix-ui[\/]/,
+            chunks: 'all',
+            priority: 20,
+            reuseExistingChunk: true,
+          },
+          // Separate admin components
+          adminChunk: {
+            name: 'admin',
+            test: /[\/]components[\/]admin[\/]/,
+            chunks: 'all',
+            priority: 15,
+            minSize: 30000,
+            reuseExistingChunk: true,
+          },
+          // Separate performance monitoring
+          performanceChunk: {
+            name: 'performance',
+            test: /[\/](components[\/]performance|lib[\/].*performance)[\/]/,
+            chunks: 'all',
+            priority: 10,
+            minSize: 20000,
             reuseExistingChunk: true,
           },
         },
       };
     }
     
-    // Tree shaking optimization - only in production to avoid caching conflicts
+    // Enhanced tree shaking optimization - only in production to avoid caching conflicts
     if (process.env.NODE_ENV === 'production') {
       config.optimization.usedExports = true;
       config.optimization.sideEffects = false;
+      
+      // Enhanced tree shaking for specific packages
+      config.optimization.providedExports = true;
+      config.optimization.innerGraph = true;
+      
+      // Mark specific packages as side-effect free for better tree shaking
+      config.module.rules.push({
+        test: /node_modules\/(lucide-react|react-icons|framer-motion)\/.*\.js$/,
+        sideEffects: false
+      });
+      
+      // Optimize module concatenation
+      config.optimization.concatenateModules = true;
+      
+      // Enable aggressive dead code elimination
+      config.optimization.minimize = true;
     }
     
     return config;

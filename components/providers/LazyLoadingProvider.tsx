@@ -91,7 +91,7 @@ export const LazyLoadingProvider = memo<LazyLoadingProviderProps>(({
     };
 
     preloadOnIdle();
-  }, [preloadedComponents]);
+  }, [preloadedComponents, preloadComponent]);
 
   // Memory cleanup on threshold
   useEffect(() => {

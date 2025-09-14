@@ -1,6 +1,6 @@
 import { Metadata } from 'next';
 import { notFound } from 'next/navigation';
-import { SteamGameDetailsClient } from '@/components/steam/steam-game-details-client';
+import { DynamicSteamGameDetails } from '@/lib/dynamic-imports';
 import { apiService } from '@/lib/api';
 import type { SteamGame } from '@/lib/types';
 import { logger } from '@/lib/utils';
@@ -84,5 +84,5 @@ export default async function SteamGamePage({ params }: SteamGamePageProps) {
     notFound();
   }
 
-  return <SteamGameDetailsClient game={game} />;
+  return <DynamicSteamGameDetails game={game} />;
 }

@@ -1,7 +1,7 @@
 'use client';
 
 import * as React from 'react';
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { SecurityEventType, LogLevel, ErrorSeverity } from '../../lib/securityLogger';
 import SecurityStatsOverview, { SecurityStats } from './security/SecurityStats';
 import SecurityEventsTable, { SecurityEvent } from './security/SecurityEventsTable';
@@ -39,7 +39,7 @@ const SecurityDashboard: React.FC<SecurityDashboardProps> = ({ className = '' })
   const [autoRefresh, setAutoRefresh] = useState(false);
 
   // Fetch security data
-  const fetchSecurityData = async () => {
+  const fetchSecurityData = useCallback(async () => {
     try {
       setLoading(true);
       const params = new URLSearchParams();
@@ -70,7 +70,7 @@ const SecurityDashboard: React.FC<SecurityDashboardProps> = ({ className = '' })
     } finally {
       setLoading(false);
     }
-  };
+  }, [filters]);
 
   // Export security data
   const exportData = async (format: 'json' | 'csv', includeContext: boolean = false) => {

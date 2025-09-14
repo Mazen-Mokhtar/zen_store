@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
 import { sessionMonitor } from '@/lib/sessionMonitor';
 import { authService } from '@/lib/auth';
@@ -19,6 +19,17 @@ export default function SessionManager({ children }: SessionManagerProps) {
   
   // Prevent body scrolling when warning modal is open
   useScrollLock(showWarning);
+
+  const handleSessionExpired = useCallback(() => {
+    toast.error('جلستك انتهت، يرجى تسجيل الدخول مرة أخرى');
+    
+    // Clear any local auth state
+    setIsAuthenticated(false);
+    setShowWarning(false);
+    
+    // Redirect to login
+    router.push('/auth/login');
+  }, [router]);
 
   useEffect(() => {
     // Use the imported authService instance
@@ -44,18 +55,7 @@ export default function SessionManager({ children }: SessionManagerProps) {
     return () => {
       sessionMonitor.stop();
     };
-  }, []);
-
-  const handleSessionExpired = () => {
-    toast.error('جلستك انتهت، يرجى تسجيل الدخول مرة أخرى');
-    
-    // Clear any local auth state
-    setIsAuthenticated(false);
-    setShowWarning(false);
-    
-    // Redirect to login
-    router.push('/auth/login');
-  };
+  }, [handleSessionExpired]);
 
   const handleSessionWarning = (timeLeftMs: number) => {
     const minutes = Math.round(timeLeftMs / 60000);

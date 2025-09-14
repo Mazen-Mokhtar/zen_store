@@ -55,7 +55,7 @@ export function useOptimizedAuth() {
     } catch (error) {
       logger.error('Error updating auth state:', error);
     }
-  }, []);
+  }, [setAuthState]);
   
   // Use optimized interval instead of regular setInterval
   useEffect(() => {
@@ -202,7 +202,7 @@ export function useOptimizedNotifications() {
     }
     
     return id;
-  }, []);
+  }, [removeNotification]);
   
   const removeNotification = useCallback((id: string) => {
     setNotifications(prev => prev.filter(n => n.id !== id));

@@ -83,7 +83,7 @@ export function SteamGameDetailsClient({ game }: SteamGameDetailsClientProps) {
     setPendingAccountInfo(accountInfo);
     setShowAccountModal(false);
     setShowConfirmationModal(true);
-  }, [currentOrderId]);
+  }, []);
 
   const handleConfirmOrder = useCallback(async (paymentMethod: 'card' | 'wallet-transfer' = 'card') => {
     try {
@@ -146,7 +146,7 @@ export function SteamGameDetailsClient({ game }: SteamGameDetailsClientProps) {
     } finally {
       setIsCreatingOrder(false);
     }
-  }, [game, pendingAccountInfo, currentOrderId]);
+  }, [game, pendingAccountInfo, appliedCoupon?.code]);
 
   const handleWalletTransferSubmit = useCallback(async (data: WalletTransferData, transferType: WalletTransferType): Promise<void> => {
     if (!currentOrderId) {
@@ -183,7 +183,7 @@ export function SteamGameDetailsClient({ game }: SteamGameDetailsClientProps) {
       router.push(`/payment-cancel?orderId=${currentOrderId}&reason=transfer_failed`);
       throw error;
     }
-  }, [currentOrderId, router]);
+  }, [currentOrderId, router, searchParams, game]);
 
   const handleCreateOrderWithTransfer = useCallback(async (orderData: any, transferData: WalletTransferData, transferType: WalletTransferType): Promise<void> => {
     if (!pendingAccountInfo) {
@@ -234,7 +234,7 @@ export function SteamGameDetailsClient({ game }: SteamGameDetailsClientProps) {
       router.push(`/payment-cancel?reason=order_creation_failed`);
       throw error;
     }
-  }, [game, pendingAccountInfo, router]);
+  }, [game, pendingAccountInfo, router, searchParams]);
 
   const originalPrice = game.isOffer && game.finalPrice ? game.finalPrice : game.price || 0;
   const currentPrice = appliedCoupon 

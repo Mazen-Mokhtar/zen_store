@@ -5,7 +5,25 @@ const config: Config = {
     './pages/**/*.{js,ts,jsx,tsx,mdx}',
     './components/**/*.{js,ts,jsx,tsx,mdx}',
     './app/**/*.{js,ts,jsx,tsx,mdx}',
+    './lib/**/*.{js,ts,jsx,tsx}',
+    './hooks/**/*.{js,ts,jsx,tsx}',
   ],
+  // Enable JIT mode for better performance
+  mode: 'jit',
+  // Purge unused styles in production
+  purge: {
+    enabled: process.env.NODE_ENV === 'production',
+    content: [
+      './pages/**/*.{js,ts,jsx,tsx,mdx}',
+      './components/**/*.{js,ts,jsx,tsx,mdx}',
+      './app/**/*.{js,ts,jsx,tsx,mdx}',
+      './lib/**/*.{js,ts,jsx,tsx}',
+      './hooks/**/*.{js,ts,jsx,tsx}',
+    ],
+    options: {
+      safelist: ['dark', 'light', 'html', 'body'],
+    },
+  },
   theme: {
     extend: {
       colors: {

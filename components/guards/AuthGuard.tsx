@@ -28,7 +28,7 @@ export default function AuthGuard({
   // Security monitoring callback
   const logSecurityEvent = useCallback((eventType: string, details: any) => {
     // Security event logged for monitoring
-  }, [pathname]);
+  }, []);
 
   // Enhanced token validation
   const validateToken = useCallback(async (token: string | null): Promise<boolean> => {
