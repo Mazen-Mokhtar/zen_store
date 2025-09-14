@@ -184,22 +184,16 @@ export class OptimisticUpdates {
    * Optimistically update user profile
    */
   static async updateUserProfile(updates: Partial<any>, actualUpdate: () => Promise<any>) {
-    const { mutate } = useUserProfile();
-    
     try {
-      // Optimistic update
-      await mutate((current: any) => ({ ...current, ...updates }), false);
-      
-      // Actual API call
+      // Perform actual update first
       const result = await actualUpdate();
       
-      // Update with real data
-      await mutate(result, false);
+      // Invalidate cache to refetch fresh data
+      invalidateUserData();
       
-      return result;
     } catch (error) {
-      // Revert on error
-      await mutate(undefined, true); // Revalidate to get fresh data
+      // Log error and rethrow
+      logger.error('Failed to update user profile:', error);
       throw error;
     }
   }
@@ -208,28 +202,17 @@ export class OptimisticUpdates {
    * Optimistically add new order
    */
   static async addOrder(newOrder: any, actualCreate: () => Promise<any>) {
-    const { mutate } = useUserOrders();
-    
     try {
-      // Optimistic update
-      await mutate((current: any) => {
-        const orders = Array.isArray(current?.data) ? current.data : [];
-        return {
-          ...current,
-          data: [newOrder, ...orders]
-        };
-      }, false);
-      
-      // Actual API call
+      // Perform actual create first
       const result = await actualCreate();
       
-      // Refresh orders to get accurate data
-      await mutate(undefined, true);
+      // Invalidate cache to refetch fresh data
+      invalidateUserData();
       
       return result;
     } catch (error) {
-      // Revert on error
-      await mutate(undefined, true);
+      // Log error and rethrow
+      logger.error('Failed to add order:', error);
       throw error;
     }
   }

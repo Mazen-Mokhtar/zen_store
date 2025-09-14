@@ -44,7 +44,7 @@ export default function SessionManager({ children }: SessionManagerProps) {
     return () => {
       sessionMonitor.stop();
     };
-  }, [handleSessionExpired]);
+  }, []);
 
   const handleSessionExpired = () => {
     toast.error('جلستك انتهت، يرجى تسجيل الدخول مرة أخرى');

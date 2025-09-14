@@ -152,7 +152,7 @@ export function useOptimizedRateLimit(endpoint: string = 'general') {
     } catch (error) {
       logger.error('Error checking rate limit:', error);
     }
-  }, [user, endpoint]);
+  }, []);
   
   // Use optimized interval
   useEffect(() => {
@@ -227,11 +227,12 @@ export function useOptimizedNotifications() {
   
   // Cleanup on unmount
   useEffect(() => {
+    const timeouts = notificationTimeouts.current;
     return () => {
-      notificationTimeouts.current.forEach(timeout => {
+      timeouts.forEach(timeout => {
         memoryOptimizer.clearTrackedTimeout(timeout);
       });
-      notificationTimeouts.current.clear();
+      timeouts.clear();
     };
   }, []);
   

@@ -686,7 +686,7 @@ export const withErrorBoundary = <P extends object>(
         return (
           <div className="error-boundary">
             <h2>Something went wrong</h2>
-            <p>We've been notified about this error and will fix it soon.</p>
+            <p>We&apos;ve been notified about this error and will fix it soon.</p>
           </div>
         );
       }

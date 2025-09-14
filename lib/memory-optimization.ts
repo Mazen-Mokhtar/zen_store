@@ -213,7 +213,7 @@ export function useOptimizedEffect(
         cleanupRef.current();
       }
     };
-  }, deps);
+  }, [effect, ...(deps || [])]);
 }
 
 // Optimized interval hook

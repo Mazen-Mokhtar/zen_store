@@ -414,13 +414,15 @@ if (typeof window !== 'undefined') {
 }
 
 // Export for manual initialization
-export default {
+const Phase3Manager = {
   initialize: initializePhase3,
   getStatus: getInitializationStatus,
   getHealth: getSystemHealth,
   isReady: isPhase3Ready,
   cleanup: cleanupPhase3
 };
+
+export default Phase3Manager;
 
 // Debug Phase 3 systems
 export const debugPhase3 = (): void => {
