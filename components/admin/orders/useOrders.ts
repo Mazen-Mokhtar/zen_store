@@ -435,7 +435,7 @@ export const useOrders = () => {
     if (accessChecked) {
       fetchOrders();
     }
-  }, [accessChecked]);
+  }, [accessChecked, fetchOrders]);
 
   return {
     ...state,

@@ -162,7 +162,7 @@ const SecurityPage: React.FC = () => {
             <div className="bg-gradient-to-r from-blue-500 to-purple-600 rounded-lg shadow-lg p-6 text-white">
               <h2 className="text-2xl font-bold mb-2">Security Overview</h2>
               <p className="text-blue-100 mb-4">
-                Monitor your application's security status, track threats, and manage security events in real-time.
+                Monitor your application&apos;s security status, track threats, and manage security events in real-time.
               </p>
               <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                 <div className="bg-white bg-opacity-20 rounded-lg p-4">

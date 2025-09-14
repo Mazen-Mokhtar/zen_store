@@ -54,9 +54,11 @@ LazyComponentWrapper.displayName = 'LazyComponentWrapper';
 
 // Hook for creating optimized lazy components
 export const useLazyComponent = <T extends Record<string, any> = Record<string, any>>(importFunc: () => Promise<{ default: ComponentType<T> }>) => {
-  return memo((props: T) => (
+  const LazyComponent = memo((props: T) => (
     <LazyComponentWrapper importFunc={importFunc as () => Promise<{ default: ComponentType<Record<string, any>> }>} props={props as Record<string, any>} />
   ));
+  LazyComponent.displayName = 'UseLazyComponent';
+  return LazyComponent;
 };
 
 // Utility function for creating lazy components with preloading
@@ -82,13 +84,15 @@ export const createLazyComponent = <T extends ComponentType<any>>(
     }
   }
 
-  return memo((props: React.ComponentProps<T>) => (
+  const CreateLazyComponent = memo((props: React.ComponentProps<T>) => (
     <ErrorBoundary fallback={options?.errorFallback}>
       <Suspense fallback={options?.fallback || <LoadingSpinner />}>
         <LazyComponent {...props} />
       </Suspense>
     </ErrorBoundary>
   ));
+  CreateLazyComponent.displayName = 'CreateLazyComponent';
+  return CreateLazyComponent;
 };
 
 // Intersection Observer based lazy loading

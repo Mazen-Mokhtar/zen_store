@@ -162,8 +162,7 @@ export function DashboardPageClient({ initialGames }: DashboardPageClientProps) 
   const router = useRouter();
   const categoryId = searchParams.get('category');
   
-  // All Games category ID
-  const ALL_GAMES_CATEGORY_ID = process.env.NEXT_PUBLIC_ALL_GAMES_CATEGORY_ID || '68847d21bcb9d10e1b12e76a';
+
   
   const [current, setCurrent] = useState(0);
   const [popularItems, setPopularItems] = useState<{ games: Game[], packages: any[] }>({ games: [], packages: [] });

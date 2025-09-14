@@ -27,26 +27,7 @@ export default function PreloadLinks() {
 
   return (
     <>
-      {/* Preload non-critical CSS */}
-      <link 
-        rel="preload" 
-        href="/globals.css" 
-        as="style" 
-      />
-      <noscript><link rel="stylesheet" href="/globals.css" /></noscript>
-      
-      {/* Optimize font loading */}
-      <link
-        rel="preload"
-        href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap"
-        as="style"
-      />
-      <noscript>
-        <link 
-          rel="stylesheet" 
-          href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" 
-        />
-      </noscript>
+      {/* Preload critical resources only */}
     </>
   );
 }

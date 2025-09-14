@@ -151,12 +151,12 @@ const SecurityDashboard: React.FC<SecurityDashboardProps> = ({ className = '' })
         clearInterval(refreshInterval);
       }
     };
-  }, [autoRefresh]);
+  }, [autoRefresh, fetchSecurityData, refreshInterval]);
 
   // Initial data fetch
   useEffect(() => {
     fetchSecurityData();
-  }, [filters]);
+  }, [filters, fetchSecurityData]);
 
   // Get severity color
   const getSeverityColor = (severity: string) => {
