@@ -133,3 +133,26 @@ test_signup.json
 *.pem
 *.p12
 *.pfx
+
+# Additional Next.js files
+.next/
+.swc/
+
+# Testing
+test-results/
+playwright-report/
+
+# Bundle analysis
+bundle-size-report.json
+lighthouse-*.json
+lighthouse-*.html
+
+# Sentry
+.sentryclirc
+
+# Local development
+.env.example
+
+# Package manager lock files (keep only one)
+# yarn.lock
+# pnpm-lock.yaml
