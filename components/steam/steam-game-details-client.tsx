@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect, useCallback } from 'react';
-import { useRouter } from 'next/navigation';
+import { useRouter, useSearchParams } from 'next/navigation';
 import Image from 'next/image';
 import { 
   ArrowLeft, 
@@ -29,7 +29,7 @@ import { orderApiService } from '@/lib/api';
 import { notificationService } from '@/lib/notifications';
 import type { SteamGame } from '@/lib/types';
 import { logger } from '@/lib/utils';
-import { WalletTransferData } from '@/components/payment/WalletTransferForm';
+import type { WalletTransferData } from '@/components/payment/WalletTransferForm';
 import { WalletTransferType } from '@/components/payment/WalletTransferOptions';
 import { Logo } from '@/components/ui/logo';
 import { CouponInput } from '@/components/ui/coupon-input';
@@ -41,6 +41,7 @@ interface SteamGameDetailsClientProps {
 
 export function SteamGameDetailsClient({ game }: SteamGameDetailsClientProps) {
   const router = useRouter();
+  const searchParams = useSearchParams();
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [showLoginModal, setShowLoginModal] = useState(false);
   const [showAccountModal, setShowAccountModal] = useState(false);
@@ -98,6 +99,11 @@ export function SteamGameDetailsClient({ game }: SteamGameDetailsClientProps) {
 
       if (response.success) {
         setCurrentOrderId(response.data._id);
+        
+        // Mark recent order activity in session storage
+        if (typeof window !== 'undefined') {
+          sessionStorage.setItem('recentOrderCreated', Date.now().toString());
+        }
         
         if (paymentMethod === 'card') {
           setShowConfirmationModal(false);
@@ -161,8 +167,14 @@ export function SteamGameDetailsClient({ game }: SteamGameDetailsClientProps) {
       notificationService.success('نجح', 'تم إرسال بيانات التحويل بنجاح');
       setShowConfirmationModal(false);
       
-      // Redirect to success page
-      router.push(`/payment-success?orderId=${currentOrderId}&gameId=${game._id}&gameName=${encodeURIComponent(game.name)}`);
+      // Redirect to success page with category parameters
+      const category = searchParams.get('category');
+      const categoryName = searchParams.get('name');
+      let successUrl = `/payment-success?orderId=${currentOrderId}&gameId=${game._id}&gameName=${encodeURIComponent(game.name)}`;
+      if (category && categoryName) {
+        successUrl += `&category=${category}&name=${encodeURIComponent(categoryName)}`;
+      }
+      router.push(successUrl);
     } catch (error) {
       logger.error('Error submitting wallet transfer:', error);
       notificationService.error('خطأ', 'حدث خطأ أثناء إرسال بيانات التحويل');
@@ -197,12 +209,23 @@ export function SteamGameDetailsClient({ game }: SteamGameDetailsClientProps) {
         transferData.walletTransferImage
       );
       
+      // Mark recent order activity in session storage
+      if (typeof window !== 'undefined') {
+        sessionStorage.setItem('recentOrderCreated', Date.now().toString());
+      }
+      
       notificationService.success('نجح', 'تم إنشاء الطلب وإرسال بيانات التحويل بنجاح');
       setShowConfirmationModal(false);
       
-      // Redirect to success page with the new order ID
+      // Redirect to success page with the new order ID and category parameters
       const orderId = response?.data?._id || response?.data?.id;
-      router.push(`/payment-success?orderId=${orderId}&gameId=${game._id}&gameName=${encodeURIComponent(game.name)}`);
+      const category = searchParams.get('category');
+      const categoryName = searchParams.get('name');
+      let successUrl = `/payment-success?orderId=${orderId}&gameId=${game._id}&gameName=${encodeURIComponent(game.name)}`;
+      if (category && categoryName) {
+        successUrl += `&category=${category}&name=${encodeURIComponent(categoryName)}`;
+      }
+      router.push(successUrl);
     } catch (error) {
       logger.error('Error creating order with wallet transfer:', error);
       notificationService.error('خطأ', 'حدث خطأ أثناء إنشاء الطلب مع بيانات التحويل');
@@ -229,7 +252,19 @@ export function SteamGameDetailsClient({ game }: SteamGameDetailsClientProps) {
           <div className="flex items-center justify-between h-16">
             <div className="flex items-center gap-2 md:gap-4 min-w-0 flex-1">
               <button
-                onClick={() => router.back()}
+                onClick={() => {
+                  // Get category and name from URL parameters
+                  const category = searchParams.get('category');
+                  const name = searchParams.get('name');
+                  
+                  if (category && name) {
+                    // Redirect to category-dashboard with parameters
+                    router.push(`/category-dashboard?category=${category}&name=${encodeURIComponent(name)}`);
+                  } else {
+                    // Fallback to category-dashboard without parameters
+                    router.push('/category-dashboard');
+                  }
+                }}
                 className="flex items-center gap-2 text-sm text-gray-400 hover:text-white transition-colors focus:outline-none focus:ring-2 focus:ring-green-500 rounded"
                 aria-label="Go back to previous page"
               >

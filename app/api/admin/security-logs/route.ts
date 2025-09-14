@@ -354,9 +354,5 @@ function convertToCSV(data: { logs: any[]; securityEvents: any[] }): string {
   return csvRows.join('\n');
 }
 
-// Export handlers with error handling
-export const GET_HANDLER = withEnhancedErrorHandling(GET);
-export const POST_HANDLER = withEnhancedErrorHandling(POST);
-export const DELETE_HANDLER = withEnhancedErrorHandling(DELETE);
-
-export { GET_HANDLER as GET, POST_HANDLER as POST, DELETE_HANDLER as DELETE };
+// Export handlers with error handling - Next.js route handlers
+export { GET, POST, DELETE };

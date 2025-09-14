@@ -90,6 +90,7 @@ export type WalletTransferType = 'wallet-transfer' | 'insta-transfer';
 
 // Import shared types from types module
 export type { Order, CreateOrderData } from './types';
+export type { Category, CategoryResponse, SingleCategoryResponse } from '../types/category';
 
 export class ApiError extends Error {
   constructor(
@@ -209,7 +210,7 @@ class ApiService {
           await this.delay(this.retryDelay * (retry + 1));
           return this.request<T>(endpoint, { ...options, retry: retry + 1 });
         }
-        throw new ApiError(0, `Network error: ${error.message}`);
+        throw new ApiError(0, `Network error: ${error instanceof Error ? error.message : 'Unknown error'}`);
       }
       throw new ApiError(500, 'Unknown error occurred');
     }
@@ -322,7 +323,7 @@ class ApiService {
     ];
     
     return retryableErrors.some(keyword => 
-      error.message.toLowerCase().includes(keyword)
+      (error instanceof Error ? error.message.toLowerCase() : '').includes(keyword)
     );
   }
 
@@ -577,6 +578,36 @@ class ApiService {
     return result;
   }
 
+  async getCategories(): Promise<{ success: boolean; data: any[] }> {
+    try {
+      const cacheKey = CACHE_KEYS.CATEGORIES;
+      const cached = getCachedApiData(cacheKey) as { success: boolean; data: any[] } | null;
+      if (cached) return cached;
+
+      const result = await this.getPublic<{ success: boolean; data: any[] }>('/category/AllCategory');
+      setCachedApiData(cacheKey, result, CACHE_TTL.LONG);
+      return result;
+    } catch (error) {
+      logger.error('Failed to get categories:', error);
+      return { success: false, data: [] };
+    }
+  }
+
+  async getSteamGames(): Promise<{ success: boolean; data: any[] }> {
+    try {
+      const cacheKey = CACHE_KEYS.STEAM_GAMES;
+      const cached = getCachedApiData(cacheKey) as { success: boolean; data: any[] } | null;
+      if (cached) return cached;
+
+      const result = await this.getPublic<{ success: boolean; data: any[] }>('/steam-games');
+      setCachedApiData(cacheKey, result, CACHE_TTL.MEDIUM);
+      return result;
+    } catch (error) {
+      logger.error('Failed to get steam games:', error);
+      return { success: false, data: [] };
+    }
+  }
+
   // Steam game specific methods
   async getSteamGameBySlug(slug: string): Promise<{ success: boolean; data: any }> {
     try {
@@ -674,7 +705,7 @@ class OrderApiService {
       // Handle validation errors (400 Bad Request)
       if (error instanceof ApiError && error.status === 400) {
         // Check if the error data contains validation error info
-        const errorMessage = error.data?.error || error.message;
+        const errorMessage = error.data?.error || (error instanceof Error ? error.message : 'Unknown error');
         return {
           success: false,
           error: errorMessage
@@ -798,7 +829,7 @@ class OrderApiService {
       // Handle validation errors (400 Bad Request)
       if (error instanceof ApiError && error.status === 400) {
         // Check if the error data contains validation error info
-        const errorMessage = error.data?.error || error.message;
+        const errorMessage = error.data?.error || (error instanceof Error ? error.message : 'Unknown error');
         return {
           success: false,
           error: errorMessage
@@ -911,7 +942,7 @@ class OrderApiService {
       
       // Handle validation errors (400 Bad Request)
       if (error instanceof ApiError && error.status === 400) {
-        const errorMessage = error.data?.error || error.message;
+        const errorMessage = error.data?.error || (error instanceof Error ? error.message : 'Unknown error');
         return {
           success: false,
           error: errorMessage

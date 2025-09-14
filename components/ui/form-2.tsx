@@ -10,6 +10,7 @@ import * as SeparatorPrimitive from "@radix-ui/react-separator";
 import Link from "next/link";
 import InputSanitizer, { useInputValidation } from '../security/InputSanitizer';
 import CSRFProtection from '../security/CSRFProtection';
+import EmailConfirmationPopup from './email-confirmation-popup';
 
 function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs));
@@ -128,9 +129,19 @@ function FormLayout01() {
   });
   const [error, setError] = React.useState("");
   const [success, setSuccess] = React.useState("");
+  const [showEmailConfirmation, setShowEmailConfirmation] = React.useState(false);
   const { errors, validateInput, clearErrors, hasErrors } = useInputValidation();
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    setForm({ ...form, [e.target.name]: e.target.value });
+    const { name, value } = e.target;
+    
+    // Handle phone field to allow only numbers
+    if (name === 'phone') {
+      // Remove all non-digit characters and limit to 15 digits
+      const phoneValue = value.replace(/\D/g, '').slice(0, 15);
+      setForm({ ...form, [name]: phoneValue });
+    } else {
+      setForm({ ...form, [name]: value });
+    }
   };
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -194,10 +205,47 @@ function FormLayout01() {
         body: JSON.stringify(form),
       });
       if (!res.ok) throw new Error("Signup failed");
-      setSuccess("Signup successful!");
-      setForm({ userName: "", email: "", phone: "", password: "", cPassword: "" });
+      setSuccess("تم التسجيل بنجاح! يرجى تأكيد بريدك الإلكتروني");
+      setShowEmailConfirmation(true);
     } catch (err: any) {
       setError(err.message || "Signup failed");
+    }
+  };
+
+  const handleEmailConfirmation = async (code: string) => {
+    try {
+      const res = await fetch("/api/auth/confirm-email", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email: form.email, code }),
+      });
+      if (!res.ok) {
+        const errorData = await res.json();
+        throw new Error(errorData.message || "فشل في تأكيد البريد الإلكتروني");
+      }
+      // Reset form after successful confirmation
+      setForm({ userName: "", email: "", phone: "", password: "", cPassword: "" });
+      
+      // Redirect to login page after successful email confirmation
+      window.location.href = '/signin';
+    } catch (error) {
+      throw error;
+    }
+  };
+
+  const handleResendCode = async () => {
+    try {
+      const res = await fetch("/api/auth/resend-code", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email: form.email }),
+      });
+      if (!res.ok) {
+        const errorData = await res.json();
+        throw new Error(errorData.message || "فشل في إرسال الرمز");
+      }
+    } catch (error) {
+      throw error;
     }
   };
   return (
@@ -232,9 +280,7 @@ function FormLayout01() {
             </div>
             <div>
               <Label htmlFor="phone">Phone <span className="text-red-500">*</span></Label>
-              <InputSanitizer context="phone">
-                <Input type="text" id="phone" name="phone" autoComplete="tel" placeholder="Phone" className="mt-2" required value={form.phone} onChange={handleChange} />
-              </InputSanitizer>
+              <Input type="tel" id="phone" name="phone" autoComplete="tel" placeholder="Phone" className="mt-2" required value={form.phone} onChange={handleChange} />
               {errors.phone && (
                 <div className="text-red-500 text-sm mt-1">{errors.phone}</div>
               )}
@@ -278,6 +324,14 @@ function FormLayout01() {
           </Link>
         </div>
       </div>
+      
+      <EmailConfirmationPopup
+        isOpen={showEmailConfirmation}
+        onClose={() => setShowEmailConfirmation(false)}
+        userEmail={form.email}
+        onConfirm={handleEmailConfirmation}
+        onResendCode={handleResendCode}
+      />
     </div>
   );
 }

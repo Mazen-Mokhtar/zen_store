@@ -103,10 +103,27 @@ export default function PaymentSuccessPage() {
               onClick={() => {
                 const urlParams = new URLSearchParams(window.location.search);
                 const gameId = urlParams.get('gameId');
+                const gameName = urlParams.get('gameName');
+                const packageId = urlParams.get('packageId');
+                const category = urlParams.get('category');
+                const categoryName = urlParams.get('name');
                 
-                if (gameId) {
+                // If it's a Steam game (has gameId but no packageId), redirect to Steam page
+                if (gameId && !packageId) {
+                  const steamUrl = `/steam/${gameId}`;
+                  // Add category and name parameters if available
+                  if (category && categoryName) {
+                    router.push(`${steamUrl}?category=${category}&name=${encodeURIComponent(categoryName)}`);
+                  } else {
+                    router.push(steamUrl);
+                  }
+                }
+                // If it's a package order (has both gameId and packageId), redirect to packages page
+                else if (gameId && packageId) {
                   router.push(`/packages?gameId=${gameId}`);
-                } else {
+                }
+                // Default fallback
+                else {
                   router.push('/dashboard');
                 }
               }}

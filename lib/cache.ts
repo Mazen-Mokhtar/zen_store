@@ -220,10 +220,11 @@ export const imageCache = new EnhancedCache({
 
 // Cache keys with namespacing
 export const CACHE_KEYS = {
-  // API Data
+  // API cache keys
   GAMES: 'api:games',
   PACKAGES: 'api:packages',
   CATEGORIES: 'api:categories',
+  STEAM_GAMES: 'api:steam_games',
   POPULAR_ITEMS: 'api:popular_items',
   USER_PROFILE: 'api:user_profile',
   

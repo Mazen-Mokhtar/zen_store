@@ -136,7 +136,7 @@ export class SecurityErrorHandler {
 
   // Check if error contains sensitive information
   private containsSensitiveInfo(error: Error): boolean {
-    const errorString = `${error.message} ${error.stack || ''}`;
+    const errorString = `${error instanceof Error ? error.message : 'Unknown error'} ${error instanceof Error ? error.stack || '' : ''}`;
     return this.sensitivePatterns.some(pattern => pattern.test(errorString));
   }
 
@@ -157,12 +157,12 @@ export class SecurityErrorHandler {
           return 'A security error occurred.';
         default:
           // For other errors, sanitize the message
-          return this.sanitizeErrorMessage(error.message);
+          return this.sanitizeErrorMessage(error instanceof Error ? error.message : 'Unknown error');
       }
     }
     
     // In development, show more details but still sanitize
-    return this.sanitizeErrorMessage(error.message);
+    return this.sanitizeErrorMessage(error instanceof Error ? error.message : 'Unknown error');
   }
 
   // Log error securely
@@ -185,14 +185,14 @@ export class SecurityErrorHandler {
 
     // Log to security logger
     const logLevel = this.getLogLevelFromSeverity(error.severity);
-    securityLogger.log(logLevel, error.message, context);
+    securityLogger.log(logLevel, error instanceof Error ? error.message : 'Unknown error', context);
 
     // Log security events for security-related errors
     if (error.type === ErrorType.SECURITY) {
       const securityEventType = this.getSecurityEventType(error);
       securityLogger.logSecurityEvent(
         securityEventType,
-        `Security error: ${error.message}`,
+        `Security error: ${error instanceof Error ? error.message : 'Unknown error'}`,
         {
           ...context,
           blocked: true,
@@ -234,7 +234,7 @@ export class SecurityErrorHandler {
 
   // Map error to security event type
   private getSecurityEventType(error: AppError): SecurityEventType {
-    const message = error.message.toLowerCase();
+    const message = (error instanceof Error ? error.message : '').toLowerCase();
     const metadata = error.metadata || {};
 
     if (message.includes('sql') || message.includes('injection')) {
@@ -276,19 +276,20 @@ export class SecurityErrorHandler {
       let statusCode = 500;
       let severity = ErrorSeverity.MEDIUM;
       
-      if (error.message.includes('validation') || error.message.includes('invalid')) {
+      const errorMessage = error instanceof Error ? error.message : '';
+    if (errorMessage.includes('validation') || errorMessage.includes('invalid')) {
         errorType = ErrorType.VALIDATION;
         statusCode = 400;
         severity = ErrorSeverity.LOW;
-      } else if (error.message.includes('unauthorized') || error.message.includes('authentication')) {
+      } else if (errorMessage.includes('unauthorized') || errorMessage.includes('authentication')) {
         errorType = ErrorType.AUTHENTICATION;
         statusCode = 401;
         severity = ErrorSeverity.MEDIUM;
-      } else if (error.message.includes('forbidden') || error.message.includes('permission')) {
+      } else if (errorMessage.includes('forbidden') || errorMessage.includes('permission')) {
         errorType = ErrorType.AUTHORIZATION;
         statusCode = 403;
         severity = ErrorSeverity.MEDIUM;
-      } else if (error.message.includes('not found')) {
+      } else if (errorMessage.includes('not found')) {
         errorType = ErrorType.NOT_FOUND;
         statusCode = 404;
         severity = ErrorSeverity.LOW;
@@ -299,7 +300,7 @@ export class SecurityErrorHandler {
       }
       
       appError = new AppError(
-        error.message,
+        error instanceof Error ? error.message : 'Unknown error',
         errorType,
         statusCode,
         severity,

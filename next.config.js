@@ -123,7 +123,7 @@ const nextConfig = {
     styledComponents: true,
   },
   
-  // Image optimization
+  // Image optimization with priority and WebP/AVIF support
   images: {
     formats: ['image/webp', 'image/avif'],
     deviceSizes: [640, 750, 828, 1080, 1200, 1920, 2048, 3840],
@@ -144,7 +144,13 @@ const nextConfig = {
       },
     ],
     unoptimized: false,
+    // Enable image optimization for better Core Web Vitals
+    dangerouslyAllowSVG: true,
+    contentSecurityPolicy: "default-src 'self'; script-src 'none'; sandbox;",
   },
+  
+  // Font optimization is enabled by default in Next.js 13+
+  // optimizeFonts: true, // Removed as it's deprecated
   
   // Environment variables
   env: {
@@ -203,7 +209,7 @@ const nextConfig = {
         headers: [
           {
             key: 'Cache-Control',
-            value: 'public, max-age=86400',
+            value: 'public, max-age=604800, stale-while-revalidate=86400',
           },
         ],
       },
@@ -217,13 +223,57 @@ const nextConfig = {
           },
         ],
       },
-      // Preload critical resources
+      // Font files caching
+      {
+        source: '/_next/static/media/(.*)',
+        headers: [
+          {
+            key: 'Cache-Control',
+            value: 'public, max-age=31536000, immutable',
+          },
+        ],
+      },
+      // Service Worker caching
+      {
+        source: '/sw.js',
+        headers: [
+          {
+            key: 'Cache-Control',
+            value: 'public, max-age=0, must-revalidate',
+          },
+        ],
+      },
+      // Manifest caching
+      {
+        source: '/manifest.json',
+        headers: [
+          {
+            key: 'Cache-Control',
+            value: 'public, max-age=86400',
+          },
+        ],
+      },
+      // Preload critical resources with font-display swap
       {
         source: '/',
         headers: [
           {
             key: 'Link',
             value: '</globals.css>; rel=preload; as=style, <https://fonts.googleapis.com>; rel=preconnect, <https://fonts.gstatic.com>; rel=preconnect; crossorigin',
+          },
+        ],
+      },
+      // Font optimization headers
+      {
+        source: '/_next/static/css/(.*)',
+        headers: [
+          {
+            key: 'Cache-Control',
+            value: 'public, max-age=31536000, immutable',
+          },
+          {
+            key: 'Link',
+            value: '<https://fonts.googleapis.com>; rel=preconnect, <https://fonts.gstatic.com>; rel=preconnect; crossorigin',
           },
         ],
       },

@@ -1,7 +1,7 @@
 // API-specific caching layer with React Query-like functionality
 
 import { useClientCache, preloadData, clearCache } from './client-data-cache';
-import { apiService } from './api';
+import { apiService, orderApiService } from './api';
 import type { Game, Package, Category } from './api';
 import { logger } from './utils';
 
@@ -105,11 +105,12 @@ export function useSteamGame(slug: string | null) {
 
 /**
  * Hook for fetching user profile with caching
+ * Note: User profile functionality not implemented yet
  */
 export function useUserProfile() {
   return useClientCache(
     API_KEYS.USER_PROFILE,
-    () => apiService.getUserProfile(),
+    () => Promise.resolve({ success: true, data: {} }),
     DEFAULT_OPTIONS.USER
   );
 }
@@ -120,7 +121,7 @@ export function useUserProfile() {
 export function useUserOrders() {
   return useClientCache(
     API_KEYS.USER_ORDERS,
-    () => apiService.getUserOrders(),
+    () => orderApiService.getUserOrders(),
     {
       ...DEFAULT_OPTIONS.USER,
       refreshInterval: 30 * 1000, // 30 seconds for orders (more dynamic)
@@ -187,7 +188,7 @@ export class OptimisticUpdates {
     
     try {
       // Optimistic update
-      await mutate((current) => ({ ...current, ...updates }), false);
+      await mutate((current: any) => ({ ...current, ...updates }), false);
       
       // Actual API call
       const result = await actualUpdate();
@@ -211,7 +212,7 @@ export class OptimisticUpdates {
     
     try {
       // Optimistic update
-      await mutate((current) => {
+      await mutate((current: any) => {
         const orders = Array.isArray(current?.data) ? current.data : [];
         return {
           ...current,

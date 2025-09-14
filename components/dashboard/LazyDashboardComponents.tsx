@@ -5,7 +5,7 @@ import { LoadingSpinner } from '@/components/ui/loading-spinner';
 
 // Lazy load dashboard page component
 export const LazyDashboardPageClient = createLazyComponent(
-  () => import('./dashboard-page-client'),
+  () => import('./dashboard-page-client').then(module => ({ default: module.DashboardPageClient })),
   {
     preload: true,
     fallback: (

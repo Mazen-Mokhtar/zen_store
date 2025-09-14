@@ -3,17 +3,22 @@
 import React, { Suspense } from 'react';
 import { LoadingSpinner } from '@/components/ui/loading-spinner';
 
-// Simplified lazy UI components
-const LazyNotificationToastComponent = React.lazy(() => import('./notification-toast'));
+// Type definitions for lazy component props
+interface LazyComponentProps {
+  [key: string]: any;
+}
 
-export const LazyNotificationToast = (props: any) => (
+// Simplified lazy UI components
+const LazyNotificationToastComponent = React.lazy(() => import('./notification-toast').then(module => ({ default: module.NotificationToast })));
+
+export const LazyNotificationToast = (props: LazyComponentProps) => (
   <Suspense fallback={<div className="h-16 bg-gray-800 animate-pulse rounded-lg" />}>
     <LazyNotificationToastComponent {...props} />
   </Suspense>
 );
 
-// Modal component - using existing order confirmation modals
-const LazyModalComponent = React.lazy(() => import('./order-confirmation-modal'));
+// Modal component - using order confirmation modal
+const LazyModalComponent = React.lazy(() => import('./order-confirmation-modal').then(module => ({ default: module.OrderConfirmationModal })));
 
 export const LazyModal = (props: any) => (
   <Suspense fallback={
@@ -29,7 +34,7 @@ export const LazyModal = (props: any) => (
 );
 
 // Image gallery - using responsive image component
-const LazyImageGalleryComponent = React.lazy(() => import('./responsive-image'));
+const LazyImageGalleryComponent = React.lazy(() => import('./responsive-image').then(module => ({ default: module.ResponsiveImage })));
 
 export const LazyImageGallery = (props: any) => (
   <Suspense fallback={
@@ -44,7 +49,7 @@ export const LazyImageGallery = (props: any) => (
 );
 
 // Video player - placeholder using card component
-const LazyVideoPlayerComponent = React.lazy(() => import('./card'));
+const LazyVideoPlayerComponent = React.lazy(() => import('./card').then(module => ({ default: module.Card })));
 
 export const LazyVideoPlayer = (props: any) => (
   <Suspense fallback={
@@ -57,7 +62,7 @@ export const LazyVideoPlayer = (props: any) => (
 );
 
 // Chart component - placeholder using card component
-const LazyChartComponent = React.lazy(() => import('./card'));
+const LazyChartComponent = React.lazy(() => import('./card').then(module => ({ default: module.Card })));
 
 export const LazyChart = (props: any) => (
   <Suspense fallback={
@@ -70,7 +75,7 @@ export const LazyChart = (props: any) => (
 );
 
 // Heavy component - using glare card demo as placeholder
-const LazyHeavyComponentInner = React.lazy(() => import('./glare-card-demo'));
+const LazyHeavyComponentInner = React.lazy(() => import('./glare-card-demo').then(module => ({ default: module.GlareCardDemo })));
 
 export const LazyHeavyComponent = (props: any) => (
   <Suspense fallback={

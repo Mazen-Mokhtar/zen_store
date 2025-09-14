@@ -116,7 +116,8 @@ export class NetworkFirstStrategy implements CacheStrategy {
       
       return networkResponse;
     } catch (error) {
-      console.log('[SW Strategy] Network failed, trying cache:', error.message);
+      const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+      console.log('[SW Strategy] Network failed, trying cache:', errorMessage);
       
       // Fallback to cache
       const cache = await caches.open(config.cacheName);

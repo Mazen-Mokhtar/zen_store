@@ -94,11 +94,13 @@ describe('OrdersPage', () => {
   });
 
   it('renders loading state initially', () => {
+    const mockSearchParams = Promise.resolve({});
     render(<OrdersPage />);
     expect(screen.getByText('جاري تحميل الطلبات...')).toBeInTheDocument();
   });
 
   it('renders user information', async () => {
+    const mockSearchParams = Promise.resolve({});
     render(<OrdersPage />);
     
     await waitFor(() => {
@@ -109,6 +111,7 @@ describe('OrdersPage', () => {
   });
 
   it('renders orders list', async () => {
+    const mockSearchParams = Promise.resolve({});
     render(<OrdersPage />);
     
     await waitFor(() => {
@@ -121,6 +124,7 @@ describe('OrdersPage', () => {
   });
 
   it('displays order status correctly', async () => {
+    const mockSearchParams = Promise.resolve({});
     render(<OrdersPage />);
     
     await waitFor(() => {
@@ -131,6 +135,7 @@ describe('OrdersPage', () => {
   });
 
   it('opens order details modal on click', async () => {
+    const mockSearchParams = Promise.resolve({});
     render(<OrdersPage />);
     
     await waitFor(() => {
@@ -151,6 +156,7 @@ describe('OrdersPage', () => {
       data: [],
     });
 
+    const mockSearchParams = Promise.resolve({});
     render(<OrdersPage />);
     
     await waitFor(() => {
@@ -163,6 +169,7 @@ describe('OrdersPage', () => {
   it('handles API errors gracefully', async () => {
     (orderApiService.getUserOrders as jest.Mock).mockRejectedValue(new Error('API Error'));
 
+    const mockSearchParams = Promise.resolve({});
     render(<OrdersPage />);
     
     await waitFor(() => {
@@ -171,6 +178,7 @@ describe('OrdersPage', () => {
   });
 
   it('supports keyboard navigation for orders', async () => {
+    const mockSearchParams = Promise.resolve({});
     render(<OrdersPage />);
     
     await waitFor(() => {
@@ -195,6 +203,7 @@ describe('OrdersPage', () => {
       value: 375,
     });
 
+    const mockSearchParams = Promise.resolve({});
     render(<OrdersPage />);
     
     await waitFor(() => {
@@ -209,6 +218,7 @@ describe('OrdersPage', () => {
   });
 
   it('formats dates correctly', async () => {
+    const mockSearchParams = Promise.resolve({});
     render(<OrdersPage />);
     
     await waitFor(() => {
@@ -221,6 +231,7 @@ describe('OrdersPage', () => {
   });
 
   it('displays payment method icons correctly', async () => {
+    const mockSearchParams = Promise.resolve({});
     render(<OrdersPage />);
     
     await waitFor(() => {

@@ -7,7 +7,8 @@ import type { Package as PackageType, Game } from '@/lib/api';
 import type { AppliedCoupon } from '@/lib/types';
 import PaymentMethodSelector from '@/components/payment/PaymentMethodSelector';
 import WalletTransferOptions, { WalletTransferType } from '@/components/payment/WalletTransferOptions';
-import WalletTransferForm, { WalletTransferData } from '@/components/payment/WalletTransferForm';
+import WalletTransferForm from '@/components/payment/WalletTransferForm';
+import type { WalletTransferData } from '@/components/payment/WalletTransferForm';
 import { useScrollLock } from '@/hooks/useScrollLock';
 
 // Security utility for sanitizing display text
@@ -155,6 +156,7 @@ export function OrderConfirmationModal({
       <WalletTransferForm
         transferType={selectedTransferType}
         totalAmount={totalAmount}
+        currency={selectedPackage?.currency || 'EGP'}
         gameId={game?._id}
         packageId={selectedPackage?._id}
         accountInfo={accountInfo}

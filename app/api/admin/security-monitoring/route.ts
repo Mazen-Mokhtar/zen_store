@@ -476,6 +476,4 @@ export const DELETE = withEnhancedErrorHandling(async (req: NextRequest) => {
   }
 });
 
-// Export activity types for frontend use
-export const ACTIVITY_TYPES = Object.values(SuspiciousActivityType);
-export const SEVERITY_LEVELS = Object.values(ErrorSeverity);
+// Activity types and severity levels are available through the API responses

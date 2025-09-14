@@ -2,11 +2,23 @@
 
 import React, { Suspense } from 'react';
 import { LoadingSpinner } from '@/components/ui/loading-spinner';
+import type { 
+  CategoryHeroProps, 
+  CategoryHeaderProps, 
+  SearchFiltersProps, 
+  PopularSectionProps, 
+  CategoryGamesSectionProps 
+} from './types';
+
+// Generic props interface for lazy components
+interface LazyComponentProps {
+  [key: string]: any;
+}
 
 // Simplified lazy loaded category dashboard components
-const LazyCategoryHeaderComponent = React.lazy(() => import('./CategoryHeader'));
+const LazyCategoryHeaderComponent = React.lazy(() => import('./CategoryHeader').then(module => ({ default: module.CategoryHeader })));
 
-export const LazyCategoryHeader = (props: any) => (
+export const LazyCategoryHeader = (props: CategoryHeaderProps) => (
   <Suspense fallback={<div className="h-16 bg-[#1A1B20]/80 animate-pulse rounded-lg" />}>
     <LazyCategoryHeaderComponent {...props} />
   </Suspense>
@@ -15,21 +27,21 @@ export const LazyCategoryHeader = (props: any) => (
 const LazyCategoryHeroComponent = React.lazy(() => import('./CategoryHero'));
 const LazySearchFiltersComponent = React.lazy(() => import('./SearchFilters'));
 const LazyPopularSectionComponent = React.lazy(() => import('./PopularSection'));
-const LazyCategoryGamesSectionComponent = React.lazy(() => import('./CategoryGamesSection'));
+const LazyCategoryGamesSectionComponent = React.lazy(() => import('./CategoryGamesSection').then(module => ({ default: module.CategoryGamesSection })));
 
-export const LazyCategoryHero = (props: any) => (
+export const LazyCategoryHero = (props: CategoryHeroProps) => (
   <Suspense fallback={<div className="h-64 bg-gradient-to-r from-gray-800 to-gray-900 animate-pulse rounded-lg" />}>
     <LazyCategoryHeroComponent {...props} />
   </Suspense>
 );
 
-export const LazySearchFilters = (props: any) => (
+export const LazySearchFilters = (props: SearchFiltersProps) => (
   <Suspense fallback={<div className="h-12 bg-gray-800 animate-pulse rounded-lg" />}>
     <LazySearchFiltersComponent {...props} />
   </Suspense>
 );
 
-export const LazyPopularSection = (props: any) => (
+export const LazyPopularSection = (props: PopularSectionProps) => (
   <Suspense fallback={
     <div className="space-y-4">
       <div className="h-8 bg-gray-800 animate-pulse rounded w-48" />
@@ -44,7 +56,7 @@ export const LazyPopularSection = (props: any) => (
   </Suspense>
 );
 
-export const LazyCategoryGamesSection = (props: any) => (
+export const LazyCategoryGamesSection = (props: CategoryGamesSectionProps) => (
   <Suspense fallback={
     <div className="space-y-4">
       <div className="h-8 bg-gray-800 animate-pulse rounded w-64" />
@@ -63,7 +75,7 @@ export const LazyCategoryGamesSection = (props: any) => (
 );
 
 // Intersection observer based lazy loading for games section
-export const LazyGamesWithIntersection = (props: any) => (
+export const LazyGamesWithIntersection = (props: CategoryGamesSectionProps) => (
   <Suspense fallback={
     <div className="min-h-[400px] flex items-center justify-center">
       <LoadingSpinner size="lg" text="Loading games..." />

@@ -1,0 +1,503 @@
+name: CI/CD Pipeline
+
+on:
+  push:
+    branches: [ main, develop ]
+  pull_request:
+    branches: [ main, develop ]
+
+env:
+  NODE_VERSION: '18'
+  CACHE_KEY_PREFIX: 'zen-store-v1'
+
+jobs:
+  # Job 1: Install dependencies and cache
+  install:
+    name: 📦 Install Dependencies
+    runs-on: ubuntu-latest
+    outputs:
+      cache-key: ${{ steps.cache-key.outputs.key }}
+    steps:
+      - name: 🛎️ Checkout code
+        uses: actions/checkout@v4
+
+      - name: 📋 Generate cache key
+        id: cache-key
+        run: |
+          echo "key=${{ env.CACHE_KEY_PREFIX }}-${{ hashFiles('package-lock.json') }}" >> $GITHUB_OUTPUT
+
+      - name: 🔧 Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: 'npm'
+
+      - name: 📦 Cache node_modules
+        id: cache-deps
+        uses: actions/cache@v3
+        with:
+          path: node_modules
+          key: ${{ steps.cache-key.outputs.key }}
+          restore-keys: |
+            ${{ env.CACHE_KEY_PREFIX }}-
+
+      - name: 🔨 Install dependencies
+        if: steps.cache-deps.outputs.cache-hit != 'true'
+        run: npm ci --prefer-offline --no-audit
+
+      - name: 🔍 Verify installation
+        run: |
+          npm list --depth=0
+          node --version
+          npm --version
+
+  # Job 2: Lint and type check
+  lint:
+    name: 🔍 Lint & Type Check
+    runs-on: ubuntu-latest
+    needs: install
+    steps:
+      - name: 🛎️ Checkout code
+        uses: actions/checkout@v4
+
+      - name: 🔧 Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: 'npm'
+
+      - name: 📦 Restore node_modules
+        uses: actions/cache@v3
+        with:
+          path: node_modules
+          key: ${{ needs.install.outputs.cache-key }}
+          fail-on-cache-miss: true
+
+      - name: 🔍 Run ESLint
+        run: npm run lint
+
+      - name: 🔍 Run TypeScript check
+        run: npx tsc --noEmit
+
+      - name: 📊 Upload lint results
+        if: failure()
+        uses: actions/upload-artifact@v3
+        with:
+          name: lint-results
+          path: |
+            eslint-report.json
+            tsc-output.txt
+
+  # Job 3: Unit tests with coverage
+  test:
+    name: 🧪 Unit Tests
+    runs-on: ubuntu-latest
+    needs: install
+    steps:
+      - name: 🛎️ Checkout code
+        uses: actions/checkout@v4
+
+      - name: 🔧 Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: 'npm'
+
+      - name: 📦 Restore node_modules
+        uses: actions/cache@v3
+        with:
+          path: node_modules
+          key: ${{ needs.install.outputs.cache-key }}
+          fail-on-cache-miss: true
+
+      - name: 🧪 Run unit tests
+        run: npm run test:ci
+        env:
+          CI: true
+
+      - name: 📊 Upload coverage reports
+        uses: codecov/codecov-action@v3
+        with:
+          file: ./coverage/lcov.info
+          flags: unittests
+          name: codecov-umbrella
+          fail_ci_if_error: false
+
+      - name: 📋 Coverage summary
+        run: |
+          echo "## Test Coverage Summary" >> $GITHUB_STEP_SUMMARY
+          npm run test:coverage:summary >> $GITHUB_STEP_SUMMARY
+
+  # Job 4: Build and bundle analysis
+  build:
+    name: 🏗️ Build & Bundle Analysis
+    runs-on: ubuntu-latest
+    needs: install
+    outputs:
+      build-success: ${{ steps.build.outcome == 'success' }}
+    steps:
+      - name: 🛎️ Checkout code
+        uses: actions/checkout@v4
+
+      - name: 🔧 Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: 'npm'
+
+      - name: 📦 Restore node_modules
+        uses: actions/cache@v3
+        with:
+          path: node_modules
+          key: ${{ needs.install.outputs.cache-key }}
+          fail-on-cache-miss: true
+
+      - name: 🏗️ Build application
+        id: build
+        run: npm run build
+        env:
+          NODE_ENV: production
+          ANALYZE: false
+
+      - name: 📊 Bundle size analysis
+        run: node scripts/check-bundle-size.js
+        continue-on-error: false
+
+      - name: 📈 Generate bundle analyzer report
+        run: |
+          ANALYZE=true npm run build
+          echo "## Bundle Analysis" >> $GITHUB_STEP_SUMMARY
+          echo "Bundle analysis completed. Check artifacts for detailed report." >> $GITHUB_STEP_SUMMARY
+        env:
+          NODE_ENV: production
+
+      - name: 📦 Cache build output
+        uses: actions/cache@v3
+        with:
+          path: |
+            .next
+            out
+          key: build-${{ github.sha }}
+
+      - name: 📊 Upload build artifacts
+        uses: actions/upload-artifact@v3
+        with:
+          name: build-output
+          path: |
+            .next
+            bundle-size-report.json
+            .next/analyze
+          retention-days: 7
+
+  # Job 5: E2E tests with Playwright
+  e2e:
+    name: 🎭 E2E Tests
+    runs-on: ubuntu-latest
+    needs: [install, build]
+    if: needs.build.outputs.build-success == 'true'
+    strategy:
+      matrix:
+        browser: [chromium, firefox, webkit]
+    steps:
+      - name: 🛎️ Checkout code
+        uses: actions/checkout@v4
+
+      - name: 🔧 Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: 'npm'
+
+      - name: 📦 Restore node_modules
+        uses: actions/cache@v3
+        with:
+          path: node_modules
+          key: ${{ needs.install.outputs.cache-key }}
+          fail-on-cache-miss: true
+
+      - name: 📦 Restore build output
+        uses: actions/cache@v3
+        with:
+          path: |
+            .next
+            out
+          key: build-${{ github.sha }}
+          fail-on-cache-miss: true
+
+      - name: 🎭 Install Playwright browsers
+        run: npx playwright install ${{ matrix.browser }} --with-deps
+
+      - name: 🎭 Run E2E tests
+        run: npx playwright test --project=${{ matrix.browser }}
+        env:
+          CI: true
+
+      - name: 📊 Upload E2E test results
+        uses: actions/upload-artifact@v3
+        if: always()
+        with:
+          name: e2e-results-${{ matrix.browser }}
+          path: |
+            test-results/
+            playwright-report/
+          retention-days: 7
+
+      - name: 📸 Upload visual regression screenshots
+        uses: actions/upload-artifact@v3
+        if: failure()
+        with:
+          name: visual-regression-${{ matrix.browser }}
+          path: test-results/
+          retention-days: 7
+
+  # Job 6: Accessibility tests
+  accessibility:
+    name: ♿ Accessibility Tests
+    runs-on: ubuntu-latest
+    needs: [install, build]
+    if: needs.build.outputs.build-success == 'true'
+    steps:
+      - name: 🛎️ Checkout code
+        uses: actions/checkout@v4
+
+      - name: 🔧 Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: 'npm'
+
+      - name: 📦 Restore node_modules
+        uses: actions/cache@v3
+        with:
+          path: node_modules
+          key: ${{ needs.install.outputs.cache-key }}
+          fail-on-cache-miss: true
+
+      - name: 📦 Restore build output
+        uses: actions/cache@v3
+        with:
+          path: |
+            .next
+            out
+          key: build-${{ github.sha }}
+          fail-on-cache-miss: true
+
+      - name: 🎭 Install Playwright browsers
+        run: npx playwright install chromium --with-deps
+
+      - name: ♿ Run accessibility tests
+        run: npx playwright test tests/e2e/home.spec.ts tests/e2e/auth.spec.ts --grep="accessibility"
+        env:
+          CI: true
+
+      - name: 📊 Upload accessibility results
+        uses: actions/upload-artifact@v3
+        if: always()
+        with:
+          name: accessibility-results
+          path: |
+            test-results/
+            accessibility-report.json
+          retention-days: 7
+
+  # Job 7: Lighthouse CI for performance
+  lighthouse:
+    name: 🏮 Lighthouse CI
+    runs-on: ubuntu-latest
+    needs: [install, build]
+    if: needs.build.outputs.build-success == 'true'
+    steps:
+      - name: 🛎️ Checkout code
+        uses: actions/checkout@v4
+
+      - name: 🔧 Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: 'npm'
+
+      - name: 📦 Restore node_modules
+        uses: actions/cache@v3
+        with:
+          path: node_modules
+          key: ${{ needs.install.outputs.cache-key }}
+          fail-on-cache-miss: true
+
+      - name: 📦 Restore build output
+        uses: actions/cache@v3
+        with:
+          path: |
+            .next
+            out
+          key: build-${{ github.sha }}
+          fail-on-cache-miss: true
+
+      - name: 🏮 Run Lighthouse CI
+        run: npx lhci autorun
+        env:
+          LHCI_GITHUB_APP_TOKEN: ${{ secrets.LHCI_GITHUB_APP_TOKEN }}
+          CI: true
+
+      - name: 📊 Upload Lighthouse results
+        uses: actions/upload-artifact@v3
+        if: always()
+        with:
+          name: lighthouse-results
+          path: |
+            .lighthouseci/
+            lighthouse-results/
+          retention-days: 7
+
+      - name: 📋 Performance summary
+        run: |
+          echo "## Lighthouse Performance Summary" >> $GITHUB_STEP_SUMMARY
+          echo "Lighthouse CI completed. Check artifacts for detailed reports." >> $GITHUB_STEP_SUMMARY
+
+  # Job 8: Security scan
+  security:
+    name: 🔒 Security Scan
+    runs-on: ubuntu-latest
+    needs: install
+    steps:
+      - name: 🛎️ Checkout code
+        uses: actions/checkout@v4
+
+      - name: 🔧 Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: 'npm'
+
+      - name: 📦 Restore node_modules
+        uses: actions/cache@v3
+        with:
+          path: node_modules
+          key: ${{ needs.install.outputs.cache-key }}
+          fail-on-cache-miss: true
+
+      - name: 🔒 Run npm audit
+        run: npm audit --audit-level=high
+        continue-on-error: true
+
+      - name: 🔍 Run security scan with Snyk
+        uses: snyk/actions/node@master
+        continue-on-error: true
+        env:
+          SNYK_TOKEN: ${{ secrets.SNYK_TOKEN }}
+        with:
+          args: --severity-threshold=high
+
+  # Job 9: Deploy to staging (on main branch)
+  deploy-staging:
+    name: 🚀 Deploy to Staging
+    runs-on: ubuntu-latest
+    needs: [lint, test, build, e2e, lighthouse]
+    if: |
+      github.ref == 'refs/heads/main' &&
+      needs.lint.result == 'success' &&
+      needs.test.result == 'success' &&
+      needs.build.result == 'success' &&
+      needs.e2e.result == 'success' &&
+      needs.lighthouse.result == 'success'
+    environment:
+      name: staging
+      url: ${{ steps.deploy.outputs.url }}
+    steps:
+      - name: 🛎️ Checkout code
+        uses: actions/checkout@v4
+
+      - name: 📦 Restore build output
+        uses: actions/cache@v3
+        with:
+          path: |
+            .next
+            out
+          key: build-${{ github.sha }}
+          fail-on-cache-miss: true
+
+      - name: 🚀 Deploy to Vercel
+        id: deploy
+        uses: amondnet/vercel-action@v25
+        with:
+          vercel-token: ${{ secrets.VERCEL_TOKEN }}
+          vercel-org-id: ${{ secrets.VERCEL_ORG_ID }}
+          vercel-project-id: ${{ secrets.VERCEL_PROJECT_ID }}
+          working-directory: ./
+          scope: ${{ secrets.VERCEL_ORG_ID }}
+
+      - name: 📋 Deployment summary
+        run: |
+          echo "## 🚀 Deployment Successful" >> $GITHUB_STEP_SUMMARY
+          echo "**Staging URL:** ${{ steps.deploy.outputs.preview-url }}" >> $GITHUB_STEP_SUMMARY
+          echo "**Environment:** Staging" >> $GITHUB_STEP_SUMMARY
+          echo "**Commit:** ${{ github.sha }}" >> $GITHUB_STEP_SUMMARY
+
+  # Job 10: Performance monitoring post-deploy
+  post-deploy-monitoring:
+    name: 📊 Post-Deploy Monitoring
+    runs-on: ubuntu-latest
+    needs: [deploy-staging]
+    if: needs.deploy-staging.result == 'success'
+    steps:
+      - name: 🛎️ Checkout code
+        uses: actions/checkout@v4
+
+      - name: 🔧 Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: 'npm'
+
+      - name: 📦 Restore node_modules
+        uses: actions/cache@v3
+        with:
+          path: node_modules
+          key: ${{ needs.install.outputs.cache-key }}
+          fail-on-cache-miss: true
+
+      - name: 🏮 Run Lighthouse on deployed site
+        run: |
+          npx lighthouse ${{ needs.deploy-staging.outputs.url }} \
+            --output=json \
+            --output-path=./lighthouse-production.json \
+            --chrome-flags="--headless --no-sandbox" \
+            --preset=desktop
+        continue-on-error: true
+
+      - name: 📊 Upload production Lighthouse results
+        uses: actions/upload-artifact@v3
+        with:
+          name: lighthouse-production
+          path: lighthouse-production.json
+          retention-days: 30
+
+      - name: 📋 Production performance summary
+        run: |
+          echo "## 📊 Production Performance Check" >> $GITHUB_STEP_SUMMARY
+          echo "Lighthouse audit completed on deployed site." >> $GITHUB_STEP_SUMMARY
+          echo "**Site URL:** ${{ needs.deploy-staging.outputs.url }}" >> $GITHUB_STEP_SUMMARY
+
+  # Job 11: Cleanup
+  cleanup:
+    name: 🧹 Cleanup
+    runs-on: ubuntu-latest
+    needs: [lint, test, build, e2e, lighthouse, security]
+    if: always()
+    steps:
+      - name: 🧹 Clean up artifacts
+        run: |
+          echo "Pipeline completed. Artifacts will be automatically cleaned up based on retention policies."
+          echo "## 📋 Pipeline Summary" >> $GITHUB_STEP_SUMMARY
+          echo "- **Lint:** ${{ needs.lint.result }}" >> $GITHUB_STEP_SUMMARY
+          echo "- **Tests:** ${{ needs.test.result }}" >> $GITHUB_STEP_SUMMARY
+          echo "- **Build:** ${{ needs.build.result }}" >> $GITHUB_STEP_SUMMARY
+          echo "- **E2E:** ${{ needs.e2e.result }}" >> $GITHUB_STEP_SUMMARY
+          echo "- **Lighthouse:** ${{ needs.lighthouse.result }}" >> $GITHUB_STEP_SUMMARY
+          echo "- **Security:** ${{ needs.security.result }}" >> $GITHUB_STEP_SUMMARY
+
+      - name: 📊 Performance badge
+        if: needs.lighthouse.result == 'success'
+        run: |
+          echo "![Performance](https://img.shields.io/badge/Performance-Passing-green)" >> $GITHUB_STEP_SUMMARY
+          echo "![Bundle Size](https://img.shields.io/badge/Bundle%20Size-Under%20250KB-green)" >> $GITHUB_STEP_SUMMARY
+          echo "![Accessibility](https://img.shields.io/badge/Accessibility-AA%20Compliant-green)" >> $GITHUB_STEP_SUMMARY

@@ -97,12 +97,14 @@ describe('PackagesPage', () => {
   });
 
   it('renders loading state initially', () => {
-    render(<PackagesPage />);
+    const mockSearchParams = Promise.resolve({ gameId: 'game123' });
+    render(<PackagesPage searchParams={mockSearchParams} />);
     expect(screen.getByText('جاري تحميل الباقات...')).toBeInTheDocument();
   });
 
   it('renders game information and packages after loading', async () => {
-    render(<PackagesPage />);
+    const mockSearchParams = Promise.resolve({ gameId: 'game123' });
+    render(<PackagesPage searchParams={mockSearchParams} />);
     
     await waitFor(() => {
       expect(screen.getByText('Test Game')).toBeInTheDocument();
@@ -113,7 +115,8 @@ describe('PackagesPage', () => {
   });
 
   it('handles package selection', async () => {
-    render(<PackagesPage />);
+    const mockSearchParams = Promise.resolve({ gameId: 'game123' });
+    render(<PackagesPage searchParams={mockSearchParams} />);
     
     await waitFor(() => {
       expect(screen.getByText('100 Diamonds')).toBeInTheDocument();
@@ -126,7 +129,8 @@ describe('PackagesPage', () => {
   });
 
   it('validates required account info fields', async () => {
-    render(<PackagesPage />);
+    const mockSearchParams = Promise.resolve({ gameId: 'game123' });
+    render(<PackagesPage searchParams={mockSearchParams} />);
     
     await waitFor(() => {
       expect(screen.getByText('Test Game')).toBeInTheDocument();
@@ -146,7 +150,8 @@ describe('PackagesPage', () => {
   });
 
   it('validates email format in account info', async () => {
-    render(<PackagesPage />);
+    const mockSearchParams = Promise.resolve({ gameId: 'game123' });
+    render(<PackagesPage searchParams={mockSearchParams} />);
     
     await waitFor(() => {
       expect(screen.getByText('Test Game')).toBeInTheDocument();
@@ -179,7 +184,8 @@ describe('PackagesPage', () => {
       user: null,
     });
 
-    render(<PackagesPage />);
+    const mockSearchParams = Promise.resolve({ gameId: 'game123' });
+    render(<PackagesPage searchParams={mockSearchParams} />);
     
     await waitFor(() => {
       expect(screen.getByText('Test Game')).toBeInTheDocument();
@@ -201,7 +207,8 @@ describe('PackagesPage', () => {
   it('handles API errors gracefully', async () => {
     (apiService.getGameById as jest.Mock).mockRejectedValue(new Error('API Error'));
 
-    render(<PackagesPage />);
+    const mockSearchParams = Promise.resolve({ gameId: 'game123' });
+    render(<PackagesPage searchParams={mockSearchParams} />);
     
     await waitFor(() => {
       expect(screen.getByText('Failed to load game data')).toBeInTheDocument();
@@ -211,7 +218,8 @@ describe('PackagesPage', () => {
   it('redirects when gameId is missing', async () => {
     mockSearchParams.get.mockReturnValue(null);
 
-    render(<PackagesPage />);
+    const mockSearchParamsPromise = Promise.resolve({});
+    render(<PackagesPage searchParams={mockSearchParamsPromise} />);
     
     await waitFor(() => {
       expect(screen.getByText('لم يتم تحديد اللعبة')).toBeInTheDocument();
@@ -219,7 +227,8 @@ describe('PackagesPage', () => {
   });
 
   it('is accessible with keyboard navigation', async () => {
-    render(<PackagesPage />);
+    const mockSearchParams = Promise.resolve({ gameId: 'game123' });
+    render(<PackagesPage searchParams={mockSearchParams} />);
     
     await waitFor(() => {
       expect(screen.getByText('Test Game')).toBeInTheDocument();
@@ -235,7 +244,8 @@ describe('PackagesPage', () => {
   });
 
   it('displays proper ARIA labels and roles', async () => {
-    render(<PackagesPage />);
+    const mockSearchParams = Promise.resolve({ gameId: 'game123' });
+    render(<PackagesPage searchParams={mockSearchParams} />);
     
     await waitFor(() => {
       expect(screen.getByText('Test Game')).toBeInTheDocument();

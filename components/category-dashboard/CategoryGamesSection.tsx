@@ -22,7 +22,7 @@ interface CategoryGamesSectionProps {
   showLoadMoreButton?: boolean;
   isLoadingMore?: boolean;
   gamesPerPage?: number;
-
+  categoryId?: string;
   totalGamesCount?: number;
   hasUsedLoadMore?: boolean;
   isPaginationMode?: boolean;
@@ -44,7 +44,7 @@ export function CategoryGamesSection({
   showLoadMoreButton = false,
   isLoadingMore = false,
   gamesPerPage = 12,
-
+  categoryId,
   totalGamesCount = 0,
   hasUsedLoadMore = false,
   isPaginationMode = false,
@@ -248,7 +248,12 @@ export function CategoryGamesSection({
                       <button 
                         onClick={(e) => {
                           e.stopPropagation();
-                          router.push(`/steam/${game.slug || game._id}`);
+                          const steamUrl = `/steam/${game.slug || game._id}`;
+                          if (categoryId && categoryName) {
+                            router.push(`${steamUrl}?category=${categoryId}&name=${encodeURIComponent(categoryName)}`);
+                          } else {
+                            router.push(steamUrl);
+                          }
                         }}
                         className="bg-blue-500 hover:bg-blue-600 text-white font-bold py-2 px-6 rounded-full transition-colors transform hover:scale-105"
                       >

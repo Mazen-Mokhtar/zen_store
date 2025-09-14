@@ -6,7 +6,8 @@ import Image from 'next/image';
 import type { SteamGame, AppliedCoupon } from '@/lib/types';
 import PaymentMethodSelector from '@/components/payment/PaymentMethodSelector';
 import WalletTransferOptions, { WalletTransferType } from '@/components/payment/WalletTransferOptions';
-import WalletTransferForm, { WalletTransferData } from '@/components/payment/WalletTransferForm';
+import WalletTransferForm from '@/components/payment/WalletTransferForm';
+import type { WalletTransferData } from '@/components/payment/WalletTransferForm';
 import { useScrollLock } from '@/hooks/useScrollLock';
 
 // Security utility for sanitizing display text
@@ -153,6 +154,7 @@ export function SteamOrderConfirmationModal({
       <WalletTransferForm
         transferType={selectedTransferType}
         totalAmount={currentPrice}
+        currency={game.currency || 'EGP'}
         gameId={game?._id}
         accountInfo={accountInfo.reduce((acc, item) => ({ ...acc, [item.fieldName]: item.value }), {})}
         onSubmit={handleWalletTransferSubmit}
@@ -210,11 +212,11 @@ export function SteamOrderConfirmationModal({
                 </p>
                 <div className="flex items-center gap-2">
                   <span className="text-2xl font-bold text-[#00e6c0]">
-                    {currentPrice.toLocaleString()} EGP
+                    {currentPrice.toLocaleString()} {game.currency || 'EGP'}
                   </span>
                   {hasDiscount && (
                     <span className="text-sm text-gray-500 line-through">
-                      {game.originalPrice?.toLocaleString()} EGP
+                      {game.originalPrice?.toLocaleString()} {game.currency || 'EGP'}
                     </span>
                   )}
                 </div>
@@ -285,12 +287,12 @@ export function SteamOrderConfirmationModal({
                   <span className="text-white">
                     {appliedCoupon.type === 'percentage' 
                        ? `${appliedCoupon.value}%` 
-                       : `${appliedCoupon.value} EGP`}
+                       : `${appliedCoupon.value} ${game.currency || 'EGP'}`}
                   </span>
                 </div>
                 <div className="flex items-center justify-between">
                   <span className="text-gray-300">قيمة الخصم:</span>
-                  <span className="text-green-400 font-bold">-{appliedCoupon.discountAmount.toLocaleString()} EGP</span>
+                  <span className="text-green-400 font-bold">-{appliedCoupon.discountAmount.toLocaleString()} {game.currency || 'EGP'}</span>
                 </div>
               </div>
             </div>
@@ -301,19 +303,19 @@ export function SteamOrderConfirmationModal({
             <div className="space-y-3">
               <div className="flex items-center justify-between">
                 <span className="text-gray-300">السعر الأصلي:</span>
-                <span className="text-white font-medium">{originalPrice.toLocaleString()} EGP</span>
+                <span className="text-white font-medium">{originalPrice.toLocaleString()} {game.currency || 'EGP'}</span>
               </div>
               {appliedCoupon && (
                 <div className="flex items-center justify-between">
                   <span className="text-gray-300">خصم الكوبون:</span>
-                  <span className="text-green-400 font-medium">-{appliedCoupon.discountAmount.toLocaleString()} EGP</span>
+                  <span className="text-green-400 font-medium">-{appliedCoupon.discountAmount.toLocaleString()} {game.currency || 'EGP'}</span>
                 </div>
               )}
               <hr className="border-gray-600" />
               <div className="flex items-center justify-between">
                 <span className="text-lg font-bold text-white">المجموع الكلي:</span>
                 <span className="text-2xl font-bold text-[#00e6c0]">
-                  {currentPrice.toLocaleString()} EGP
+                  {currentPrice.toLocaleString()} {game.currency || 'EGP'}
                 </span>
               </div>
             </div>

@@ -3,12 +3,18 @@
 import React, { useState, useRef } from 'react';
 import { Upload, X, ArrowRight, AlertCircle, Check } from 'lucide-react';
 import { WalletTransferType } from './WalletTransferOptions';
+import { WalletTransferData as BaseWalletTransferData } from '@/lib/api';
 import Image from 'next/image';
+
+export interface WalletTransferData extends BaseWalletTransferData {
+  walletTransferImage: File;
+}
 
 interface WalletTransferFormProps {
   transferType: WalletTransferType;
   orderId?: string;
   totalAmount: number;
+  currency?: string;
   gameId?: string;
   packageId?: string;
   accountInfo?: any;
@@ -19,16 +25,11 @@ interface WalletTransferFormProps {
   isSubmitting?: boolean;
 }
 
-export interface WalletTransferData {
-  walletTransferImage: File;
-  walletTransferNumber: string;
-  nameOfInsta?: string;
-}
-
 const WalletTransferForm: React.FC<WalletTransferFormProps> = ({
   transferType,
   orderId,
   totalAmount,
+  currency = 'EGP',
   gameId,
   packageId,
   accountInfo,
@@ -174,7 +175,7 @@ const WalletTransferForm: React.FC<WalletTransferFormProps> = ({
                 {transferTypeLabels[transferType]}
               </h2>
               <p className="text-sm text-gray-400 mt-1">
-                المبلغ: {totalAmount.toLocaleString()} جنيه
+                المبلغ: {totalAmount.toLocaleString()} {currency}
               </p>
             </div>
           </div>

@@ -84,12 +84,14 @@ describe('DashboardPage', () => {
   });
 
   it('renders loading state initially', () => {
-    render(<DashboardPage />);
+    const mockSearchParams = Promise.resolve({});
+    render(<DashboardPage searchParams={mockSearchParams} />);
     expect(screen.getByText('common.loading')).toBeInTheDocument();
   });
 
   it('renders hero section with carousel', async () => {
-    render(<DashboardPage />);
+    const mockSearchParams = Promise.resolve({});
+    render(<DashboardPage searchParams={mockSearchParams} />);
     
     await waitFor(() => {
       expect(screen.getByText('dashboard.bloodStrike')).toBeInTheDocument();
@@ -100,7 +102,8 @@ describe('DashboardPage', () => {
   });
 
   it('renders popular games section', async () => {
-    render(<DashboardPage />);
+    const mockSearchParams = Promise.resolve({});
+    render(<DashboardPage searchParams={mockSearchParams} />);
     
     await waitFor(() => {
       expect(screen.getByText('dashboard.popular')).toBeInTheDocument();
@@ -111,7 +114,8 @@ describe('DashboardPage', () => {
   });
 
   it('renders mobile games section', async () => {
-    render(<DashboardPage />);
+    const mockSearchParams = Promise.resolve({});
+    render(<DashboardPage searchParams={mockSearchParams} />);
     
     await waitFor(() => {
       expect(screen.getByText('dashboard.mobileGames')).toBeInTheDocument();
@@ -121,7 +125,8 @@ describe('DashboardPage', () => {
   });
 
   it('handles game click navigation correctly', async () => {
-    render(<DashboardPage />);
+    const mockSearchParams = Promise.resolve({});
+    render(<DashboardPage searchParams={mockSearchParams} />);
     
     await waitFor(() => {
       expect(screen.getByText('Popular Game 1')).toBeInTheDocument();
@@ -141,7 +146,8 @@ describe('DashboardPage', () => {
   });
 
   it('toggles show all games functionality', async () => {
-    render(<DashboardPage />);
+    const mockSearchParams = Promise.resolve({});
+    render(<DashboardPage searchParams={mockSearchParams} />);
     
     await waitFor(() => {
       expect(screen.getByText('dashboard.mobileGames')).toBeInTheDocument();
@@ -156,7 +162,8 @@ describe('DashboardPage', () => {
   it('handles API errors gracefully', async () => {
     (apiService.getCategoryWithPackages as jest.Mock).mockRejectedValue(new Error('API Error'));
 
-    render(<DashboardPage />);
+    const mockSearchParams = Promise.resolve({});
+    render(<DashboardPage searchParams={mockSearchParams} />);
     
     await waitFor(() => {
       expect(screen.getByText('errors.dataLoadFailed')).toBeInTheDocument();
@@ -170,7 +177,8 @@ describe('DashboardPage', () => {
       packages: [],
     });
 
-    render(<DashboardPage />);
+    const mockSearchParams = Promise.resolve({});
+    render(<DashboardPage searchParams={mockSearchParams} />);
     
     await waitFor(() => {
       expect(screen.getByText('No games available at the moment')).toBeInTheDocument();
@@ -178,7 +186,8 @@ describe('DashboardPage', () => {
   });
 
   it('is accessible with proper ARIA attributes', async () => {
-    render(<DashboardPage />);
+    const mockSearchParams = Promise.resolve({});
+    render(<DashboardPage searchParams={mockSearchParams} />);
     
     await waitFor(() => {
       expect(screen.getByText('dashboard.popular')).toBeInTheDocument();
@@ -199,7 +208,8 @@ describe('DashboardPage', () => {
   });
 
   it('supports keyboard navigation', async () => {
-    render(<DashboardPage />);
+    const mockSearchParams = Promise.resolve({});
+    render(<DashboardPage searchParams={mockSearchParams} />);
     
     await waitFor(() => {
       expect(screen.getByText('Popular Game 1')).toBeInTheDocument();
@@ -216,7 +226,8 @@ describe('DashboardPage', () => {
   });
 
   it('handles responsive image loading', async () => {
-    render(<DashboardPage />);
+    const mockSearchParams = Promise.resolve({});
+    render(<DashboardPage searchParams={mockSearchParams} />);
     
     await waitFor(() => {
       expect(screen.getByText('Popular Game 1')).toBeInTheDocument();

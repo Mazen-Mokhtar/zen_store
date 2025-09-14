@@ -7,7 +7,9 @@ import Head from 'next/head';
 import { orderApiService } from '@/lib/api';
 import { authService } from '@/lib/auth';
 import { notificationService } from '@/lib/notifications';
-import type { Package, Game, CreateOrderData, WalletTransferData, WalletTransferType } from '@/lib/api';
+import type { Package, Game, CreateOrderData } from '@/lib/api';
+import type { WalletTransferData } from '@/components/payment/WalletTransferForm';
+import type { WalletTransferType } from '@/components/payment/WalletTransferOptions';
 import type { AppliedCoupon } from '@/lib/types';
 import { LoadingSpinner } from '@/components/ui/loading-spinner';
 import { ErrorMessage } from '@/components/ui/error-message';
@@ -242,6 +244,11 @@ export function PackagesPageClient({ initialPackages, initialGames }: PackagesPa
       if (response.success) {
         notificationService.showSuccess('تم إنشاء الطلب بنجاح!');
         
+        // Mark recent order activity in session storage
+        if (typeof window !== 'undefined') {
+          sessionStorage.setItem('recentOrderCreated', Date.now().toString());
+        }
+        
         setCurrentOrderId(response.data._id);
         
         if (response.data.couponApplied) {
@@ -259,24 +266,45 @@ export function PackagesPageClient({ initialPackages, initialGames }: PackagesPa
         
         if (paymentMethod === 'card') {
           setShowConfirmationModal(false);
+          notificationService.showSuccess('تم إنشاء الطلب', 'جاري توجيهك إلى صفحة الدفع...');
           
           try {
             const checkoutResponse = await orderApiService.checkout(response.data._id);
             
             if (checkoutResponse.success && checkoutResponse.data?.url) {
+              // Track purchase attempt
+              import('@/lib/lazy-unified-monitoring').then(({ lazyUnifiedMonitoring }) => {
+                lazyUnifiedMonitoring.trackPurchase(
+                  game._id, 
+                  selected, 
+                  packages.find(p => p._id === selected)?.price || 0, 
+                  'EGP'
+                );
+              }).catch(err => logger.warn('Failed to load monitoring:', err));
+              
               window.location.href = checkoutResponse.data.url;
             } else {
               const errorMsg = checkoutResponse.error || 'فشل في إنشاء جلسة الدفع';
               notificationService.showError(errorMsg);
+              
+              // Redirect to cancel page with error reason
+              router.push(`/payment-cancel?orderId=${response.data._id}&reason=checkout_failed`);
             }
           } catch (checkoutError) {
+            logger.error('Checkout error:', checkoutError);
             notificationService.showError('حدث خطأ أثناء توجيهك إلى صفحة الدفع');
+            
+            // Redirect to cancel page with error reason
+            router.push(`/payment-cancel?orderId=${response.data._id}&reason=checkout_error`);
           }
         }
       } else {
         const errorMsg = response.error || 'فشل في إنشاء الطلب';
         logger.error('❌ Order creation failed:', errorMsg);
         notificationService.showError(errorMsg);
+        
+        // Redirect to cancel page with error reason
+        router.push(`/payment-cancel?reason=order_creation_failed`);
       }
     } catch (error) {
       logger.error('❌ Error in handleConfirmOrder:', error);
@@ -286,6 +314,9 @@ export function PackagesPageClient({ initialPackages, initialGames }: PackagesPa
         errorMessage += `: ${error.message}`;
       }
       notificationService.showError(errorMessage);
+      
+      // Redirect to cancel page with error reason
+      router.push(`/payment-cancel?reason=order_creation_failed`);
     } finally {
       setIsCreatingOrder(false);
     }
@@ -306,13 +337,21 @@ export function PackagesPageClient({ initialPackages, initialGames }: PackagesPa
       if (response.success) {
         notificationService.showSuccess('تم إرسال إثبات التحويل بنجاح!');
         setShowConfirmationModal(false);
-        router.push(`/order-status/${currentOrderId}`);
+        
+        // Redirect to success page
+        router.push(`/payment-success?orderId=${currentOrderId}&gameId=${game._id}&gameName=${encodeURIComponent(game.name)}&packageId=${selected}&packageName=${encodeURIComponent(packages.find(p => p._id === selected)?.title || '')}`);
       } else {
         notificationService.showError(response.error || 'فشل في إرسال إثبات التحويل');
+        
+        // Redirect to cancel page with error reason
+        router.push(`/payment-cancel?orderId=${currentOrderId}&reason=transfer_failed`);
       }
     } catch (error) {
       logger.error('❌ Error submitting wallet transfer:', error);
       notificationService.showError('حدث خطأ أثناء إرسال إثبات التحويل');
+      
+      // Redirect to cancel page with error reason
+      router.push(`/payment-cancel?orderId=${currentOrderId}&reason=transfer_failed`);
     } finally {
       setIsCreatingOrder(false);
     }
@@ -347,15 +386,29 @@ export function PackagesPageClient({ initialPackages, initialGames }: PackagesPa
       );
       
       if (response.success) {
+        // Mark recent order activity in session storage
+        if (typeof window !== 'undefined') {
+          sessionStorage.setItem('recentOrderCreated', Date.now().toString());
+        }
+        
         notificationService.showSuccess('تم إنشاء الطلب وإرسال إثبات التحويل بنجاح!');
         setShowConfirmationModal(false);
-        router.push(`/order-status/${response.data.orderId || response.data._id}`);
+        
+        // Redirect to success page with the new order ID
+        const orderId = response.data.orderId || response.data._id;
+        router.push(`/payment-success?orderId=${orderId}&gameId=${game!._id}&gameName=${encodeURIComponent(game!.name)}&packageId=${selected}&packageName=${encodeURIComponent(packages.find(p => p._id === selected)?.title || '')}`);
       } else {
         notificationService.showError(response.error || 'فشل في إنشاء الطلب');
+        
+        // Redirect to cancel page with error reason
+        router.push(`/payment-cancel?reason=order_creation_failed`);
       }
     } catch (error) {
       logger.error('❌ Error creating order with transfer:', error);
       notificationService.showError('حدث خطأ أثناء إنشاء الطلب');
+      
+      // Redirect to cancel page with error reason
+      router.push(`/payment-cancel?reason=order_creation_failed`);
     } finally {
       setIsCreatingOrder(false);
     }

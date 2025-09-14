@@ -40,7 +40,7 @@ class PerformanceMonitor {
   };
   private bundleLoadTimes: Record<string, number> = {};
   private interactionDelays: number[] = [];
-  private memoryUsage: MemoryInfo | null = null;
+  private memoryUsage: any | null = null;
   private navigationTiming: PerformanceNavigationTiming | null = null;
 
   constructor() {

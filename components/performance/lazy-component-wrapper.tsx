@@ -5,12 +5,13 @@ import { LoadingSpinner } from '@/components/ui/loading-spinner';
 import { ErrorMessage } from '@/components/ui/error-message';
 import { ErrorBoundary } from '@/components/security/ErrorBoundary';
 
-interface LazyComponentWrapperProps {
-  importFunc: () => Promise<{ default: ComponentType<any> }>;
+interface LazyComponentWrapperProps<T = Record<string, any>> {
+  importFunc?: () => Promise<{ default: ComponentType<T> }>;
   fallback?: React.ReactNode;
   errorFallback?: React.ReactNode;
-  props?: Record<string, any>;
+  props?: T;
   className?: string;
+  children?: React.ReactNode;
 }
 
 // Enhanced lazy loading wrapper with error boundaries and performance optimizations
@@ -18,11 +19,12 @@ export const LazyComponentWrapper = memo<LazyComponentWrapperProps>(({
   importFunc, 
   fallback, 
   errorFallback,
-  props = {},
-  className = ''
+  props = {} as Record<string, any>,
+  className = '',
+  children
 }) => {
   // Create lazy component with error handling
-  const LazyComponent = lazy(importFunc);
+  const LazyComponent = importFunc ? lazy(importFunc) : null;
 
   const defaultFallback = (
     <div className={`flex items-center justify-center min-h-[200px] ${className}`}>
@@ -42,7 +44,7 @@ export const LazyComponentWrapper = memo<LazyComponentWrapperProps>(({
   return (
     <ErrorBoundary fallback={errorFallback || defaultErrorFallback}>
       <Suspense fallback={fallback || defaultFallback}>
-        <LazyComponent {...props} />
+        {children || (LazyComponent && <LazyComponent {...props} />)}
       </Suspense>
     </ErrorBoundary>
   );
@@ -51,9 +53,9 @@ export const LazyComponentWrapper = memo<LazyComponentWrapperProps>(({
 LazyComponentWrapper.displayName = 'LazyComponentWrapper';
 
 // Hook for creating optimized lazy components
-export const useLazyComponent = (importFunc: () => Promise<{ default: ComponentType<any> }>) => {
-  return memo((props: any) => (
-    <LazyComponentWrapper importFunc={importFunc} props={props} />
+export const useLazyComponent = <T extends Record<string, any> = Record<string, any>>(importFunc: () => Promise<{ default: ComponentType<T> }>) => {
+  return memo((props: T) => (
+    <LazyComponentWrapper importFunc={importFunc as () => Promise<{ default: ComponentType<Record<string, any>> }>} props={props as Record<string, any>} />
   ));
 };
 
@@ -90,8 +92,8 @@ export const createLazyComponent = <T extends ComponentType<any>>(
 };
 
 // Intersection Observer based lazy loading
-export const useIntersectionLazyLoad = (
-  importFunc: () => Promise<{ default: ComponentType<any> }>,
+export const useIntersectionLazyLoad = <T = Record<string, any>>(
+  importFunc: () => Promise<{ default: ComponentType<T> }>,
   options?: IntersectionObserverInit
 ) => {
   const [shouldLoad, setShouldLoad] = React.useState(false);

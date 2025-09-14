@@ -1,0 +1,45 @@
+{
+  "timestamp": "2025-09-13T08:06:13.995Z",
+  "limits": {
+    "maxJsSizeKB": 250,
+    "maxCssSizeKB": 50,
+    "maxTotalSizeKB": 300
+  },
+  "analysis": {
+    "js": {
+      "files": [
+        {
+          "path": "chunks\\polyfills.js",
+          "size": 112594,
+          "sizeKB": 109.955078125
+        },
+        {
+          "path": "development\\_buildManifest.js",
+          "size": 301,
+          "sizeKB": 0.2939453125
+        },
+        {
+          "path": "development\\_ssgManifest.js",
+          "size": 76,
+          "sizeKB": 0.07421875
+        }
+      ],
+      "totalSize": 112971,
+      "totalSizeKB": 110.3232421875
+    },
+    "css": {
+      "files": [],
+      "totalSize": 0,
+      "totalSizeKB": 0
+    },
+    "total": {
+      "size": 112971,
+      "sizeKB": 110.3232421875
+    }
+  },
+  "status": {
+    "jsWithinLimit": true,
+    "cssWithinLimit": true,
+    "totalWithinLimit": true
+  }
+}
