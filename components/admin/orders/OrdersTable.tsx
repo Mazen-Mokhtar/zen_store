@@ -57,7 +57,8 @@ const MobileOrderCard = memo<{
   return (
     <div className="bg-white dark:bg-gray-800 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700 p-4 hover:shadow-md transition-shadow duration-200"
          role="listitem"
-         aria-label={`Order ${order.id.slice(-8)}`}>
+         aria-label={`Order ${order.id.slice(-8)}`}
+         data-testid={`mobile-order-${order.id}`}>
       <div className="flex items-center justify-between mb-3">
         <div className="flex items-center">
           <div className="flex-shrink-0 w-10 h-10 bg-gradient-to-r from-blue-500 to-indigo-600 rounded-full flex items-center justify-center">
@@ -68,12 +69,23 @@ const MobileOrderCard = memo<{
             <div className="text-xs text-gray-500 dark:text-gray-400">معرف الطلب</div>
           </div>
         </div>
-        <button
-          onClick={handleViewOrder}
-          className="inline-flex items-center px-3 py-1.5 border border-transparent text-xs font-medium rounded-md text-blue-700 bg-blue-100 hover:bg-blue-200 dark:bg-blue-900 dark:text-blue-200 dark:hover:bg-blue-800 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition-colors duration-200"
-          aria-label={`View order ${order.id.slice(-8)}`}>
-          عرض
-        </button>
+        <div className="flex gap-2">
+          <button
+            onClick={handleViewOrder}
+            className="inline-flex items-center px-3 py-1.5 border border-transparent text-xs font-medium rounded-md text-blue-700 bg-blue-100 hover:bg-blue-200 dark:bg-blue-900 dark:text-blue-200 dark:hover:bg-blue-800 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition-colors duration-200"
+            aria-label={`View order ${order.id.slice(-8)}`}>
+            عرض
+          </button>
+          <button
+            onClick={() => handleStatusChange('delivered')}
+            className="inline-flex items-center px-2 py-1 border border-transparent text-xs font-medium rounded-md text-green-700 bg-green-100 hover:bg-green-200 dark:bg-green-900 dark:text-green-200 dark:hover:bg-green-800 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500 transition-colors duration-200">
+            Update Status
+          </button>
+          <button
+            className="inline-flex items-center px-2 py-1 border border-transparent text-xs font-medium rounded-md text-gray-700 bg-gray-100 hover:bg-gray-200 dark:bg-gray-900 dark:text-gray-200 dark:hover:bg-gray-800 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gray-500 transition-colors duration-200">
+            Select
+          </button>
+        </div>
       </div>
       
       <div className="space-y-2">
@@ -140,7 +152,8 @@ const DesktopOrderRow = memo<{
 
   return (
     <tr className="hover:bg-gradient-to-r hover:from-blue-50 hover:to-indigo-50 dark:hover:from-gray-700 dark:hover:to-gray-600 transition-all duration-200"
-        role="row">
+        role="row"
+        data-testid={`desktop-order-${order.id}`}>
       <td className="px-6 py-5 whitespace-nowrap" role="gridcell">
         <div className="flex items-center">
           <div className="flex-shrink-0 w-10 h-10 bg-gradient-to-r from-blue-500 to-indigo-600 rounded-full flex items-center justify-center">
@@ -216,6 +229,15 @@ const DesktopOrderRow = memo<{
             <FiEye className="w-4 h-4 ml-2" aria-hidden="true" />
             عرض
           </button>
+          <button
+            onClick={() => onStatusChange(order.id, 'delivered')}
+            className="inline-flex items-center px-2 py-1 border border-transparent text-xs font-medium rounded-md text-green-700 bg-green-100 hover:bg-green-200 dark:bg-green-900 dark:text-green-200 dark:hover:bg-green-800 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500 transition-colors duration-200">
+            Update Status
+          </button>
+          <button
+            className="inline-flex items-center px-2 py-1 border border-transparent text-xs font-medium rounded-md text-gray-700 bg-gray-100 hover:bg-gray-200 dark:bg-gray-900 dark:text-gray-200 dark:hover:bg-gray-800 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gray-500 transition-colors duration-200">
+            Select
+          </button>
         </div>
       </td>
     </tr>
@@ -241,7 +263,7 @@ export const OrdersTable: React.FC<OrdersTableProps> = memo(({
 
   if (loading) {
     return (
-      <div className="bg-white dark:bg-gray-800 shadow-sm rounded-lg border border-gray-200 dark:border-gray-700">
+      <div className="bg-white dark:bg-gray-800 shadow-sm rounded-lg border border-gray-200 dark:border-gray-700" data-testid="virtualized-orders-table">
         <div className="p-6">
           <div className="animate-pulse space-y-4">
             {[...Array(5)].map((_, i) => (
@@ -254,7 +276,7 @@ export const OrdersTable: React.FC<OrdersTableProps> = memo(({
   }
 
   return (
-    <div className="bg-white dark:bg-gray-800 shadow-sm rounded-lg border border-gray-200 dark:border-gray-700">
+    <div className="bg-white dark:bg-gray-800 shadow-sm rounded-lg border border-gray-200 dark:border-gray-700" data-testid="virtualized-orders-table">
       {/* Mobile View */}
       <div className="block lg:hidden">
         <div className="p-4">

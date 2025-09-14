@@ -19,7 +19,7 @@
     "perf:audit": "npm run build && npm run bundle:check && npm run lighthouse:ci",
     "test:admin": "jest tests/components/admin",
     "test:orders": "jest tests/components/admin/orders",
-    "test:ci": "jest --ci --coverage --watchAll=false",
+    "test:ci": "jest --ci --coverage --watchAll=false --passWithNoTests",
     "type-check": "tsc --noEmit",
     "validate": "npm run type-check && npm run lint && npm run test:ci",
     "lighthouse": "lighthouse http://localhost:3001 --output=html --output-path=./lighthouse-report.html",

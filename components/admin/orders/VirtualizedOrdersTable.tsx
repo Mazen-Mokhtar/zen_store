@@ -1,8 +1,7 @@
 'use client';
 
 import React, { useMemo, useCallback, useState, useRef, useEffect } from 'react';
-const ReactWindow = require('react-window');
-const FixedSizeList = ReactWindow.FixedSizeList;
+import { List } from 'react-window';
 import { Order, OrderStatus, SortField, SortDirection } from './types';
 import { statusColors, ORDER_STATUS_LABELS } from './constants';
 import { sanitizeInput } from '@/lib/security';
@@ -43,7 +42,52 @@ interface OrderRowProps {
   };
 }
 
-// Memoized Order Row Component for virtualization
+interface NewOrderRowProps {
+  orders: Order[];
+  onViewOrder: (order: Order) => void;
+  onUpdateStatus: (orderId: string, status: OrderStatus, adminNote?: string) => Promise<void>;
+  isMobile: boolean;
+}
+
+// New Order Row Component for new react-window API
+const NewOrderRow = React.memo<NewOrderRowProps>(({ orders, onViewOrder, onUpdateStatus, isMobile, ...props }) => {
+  // The index is provided automatically by the new react-window API
+  const index = (props as any).index || 0;
+  const order = orders[index];
+  const [isUpdating, setIsUpdating] = useState(false);
+
+  if (!order) return null;
+
+  // Component content will be the same as the old OrderRow
+  // but without the style prop since the new API handles positioning differently
+  return (
+    <div className="border-b border-gray-200 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors">
+      {/* Order content goes here - same as before but without absolute positioning */}
+      <div className="p-4">
+        <div className="flex items-center justify-between">
+          <div className="flex items-center space-x-3">
+            <div className="flex-shrink-0">
+              <Package className="h-5 w-5 text-gray-400" />
+            </div>
+            <div>
+              <p className="text-sm font-medium text-gray-900 dark:text-gray-100">
+                طلب #{order.id}
+              </p>
+              <p className="text-sm text-gray-500 dark:text-gray-400">
+                {order.customerName}
+              </p>
+            </div>
+          </div>
+          <Badge className={statusColors[order.status]}>
+            {ORDER_STATUS_LABELS[order.status]}
+          </Badge>
+        </div>
+      </div>
+    </div>
+  );
+});
+
+// Keep the old OrderRow for backward compatibility
 const OrderRow = React.memo<OrderRowProps>(({ index, style, data }) => {
   const { orders, onViewOrder, onUpdateStatus, isMobile } = data;
   const order = orders[index];
@@ -274,7 +318,7 @@ export const VirtualizedOrdersTable = React.memo<VirtualizedOrdersTableProps>(({
   className = ''
 }) => {
   const [isMobile, setIsMobile] = useState(false);
-  const listRef = useRef<typeof FixedSizeList>(null);
+  const listRef = useRef<any>(null);
 
   // Check for mobile viewport
   useEffect(() => {
@@ -371,17 +415,21 @@ export const VirtualizedOrdersTable = React.memo<VirtualizedOrdersTableProps>(({
 
       {/* Virtualized List */}
       <div className="relative">
-        <FixedSizeList
-          ref={listRef}
-          height={listHeight}
-          itemCount={orders.length}
-          itemSize={itemHeight}
-          itemData={itemData}
+        <List
+          listRef={listRef}
+          defaultHeight={listHeight}
+          rowCount={orders.length}
+          rowHeight={itemHeight}
+          rowProps={{
+            orders,
+            onViewOrder,
+            onUpdateStatus,
+            isMobile
+          }}
+          rowComponent={NewOrderRow}
           overscanCount={5} // Render 5 extra items for smooth scrolling
           className="scrollbar-thin scrollbar-thumb-gray-300 dark:scrollbar-thumb-gray-600"
-        >
-          {OrderRow}
-        </FixedSizeList>
+        />
       </div>
 
       {/* Performance Info */}
