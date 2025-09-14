@@ -266,7 +266,7 @@ export function PackagesPageClient({ initialPackages, initialGames }: PackagesPa
         
         if (paymentMethod === 'card') {
           setShowConfirmationModal(false);
-          notificationService.showSuccess('تم إنشاء الطلب', 'جاري توجيهك إلى صفحة الدفع...');
+          notificationService.showSuccess('تم إنشاء الطلب - جاري توجيهك إلى صفحة الدفع...');
           
           try {
             const checkoutResponse = await orderApiService.checkout(response.data._id);
@@ -339,7 +339,11 @@ export function PackagesPageClient({ initialPackages, initialGames }: PackagesPa
         setShowConfirmationModal(false);
         
         // Redirect to success page
-        router.push(`/payment-success?orderId=${currentOrderId}&gameId=${game._id}&gameName=${encodeURIComponent(game.name)}&packageId=${selected}&packageName=${encodeURIComponent(packages.find(p => p._id === selected)?.title || '')}`);
+        if (game) {
+          router.push(`/payment-success?orderId=${currentOrderId}&gameId=${game._id}&gameName=${encodeURIComponent(game.name)}&packageId=${selected}&packageName=${encodeURIComponent(packages.find(p => p._id === selected)?.title || '')}`);
+        } else {
+          router.push(`/payment-success?orderId=${currentOrderId}&packageId=${selected}&packageName=${encodeURIComponent(packages.find(p => p._id === selected)?.title || '')}`);
+        }
       } else {
         notificationService.showError(response.error || 'فشل في إرسال إثبات التحويل');
         

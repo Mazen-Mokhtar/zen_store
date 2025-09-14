@@ -129,8 +129,9 @@ function FormLayout01() {
   });
   const [error, setError] = React.useState("");
   const [success, setSuccess] = React.useState("");
+  const [loading, setLoading] = React.useState(false);
   const [showEmailConfirmation, setShowEmailConfirmation] = React.useState(false);
-  const { errors, validateInput, clearErrors, hasErrors } = useInputValidation();
+  const { errors, validateInput, clearErrors, clearError, hasErrors } = useInputValidation();
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
     
@@ -280,7 +281,9 @@ function FormLayout01() {
             </div>
             <div>
               <Label htmlFor="phone">Phone <span className="text-red-500">*</span></Label>
-              <Input type="tel" id="phone" name="phone" autoComplete="tel" placeholder="Phone" className="mt-2" required value={form.phone} onChange={handleChange} />
+              <InputSanitizer context="html" maxLength={20}>
+                <Input type="tel" id="phone" name="phone" autoComplete="tel" placeholder="Phone" className="mt-2" required value={form.phone} onChange={handleChange} />
+              </InputSanitizer>
               {errors.phone && (
                 <div className="text-red-500 text-sm mt-1">{errors.phone}</div>
               )}
@@ -307,12 +310,28 @@ function FormLayout01() {
           <Separator className="my-6" />
           {error && <div className="text-red-500 mb-2">{error}</div>}
           {success && <div className="text-green-600 mb-2">{success}</div>}
-          <div className="flex items-center justify-end space-x-4">
-            <Button type="button" variant="outline" className="whitespace-nowrap" onClick={() => setForm({ userName: "", email: "", phone: "", password: "", cPassword: "" })}>
+          <div className="flex items-center justify-end gap-4">
+            <Button 
+              type="button" 
+              variant="outline" 
+              className="px-6 py-2 border-gray-300 hover:bg-gray-50 transition-colors" 
+              onClick={() => {
+                // Clear form securely
+                setForm({ userName: "", email: "", phone: "", password: "", cPassword: "" });
+                clearErrors();
+                setError("");
+                setSuccess("");
+              }}
+              disabled={loading}
+            >
               Cancel
             </Button>
-            <Button type="submit" className="whitespace-nowrap">
-              Submit
+            <Button 
+              type="submit" 
+              className="px-6 py-2 transition-colors" 
+              disabled={loading}
+            >
+              {loading ? 'Submitting...' : 'Submit'}
             </Button>
           </div>
         </form>

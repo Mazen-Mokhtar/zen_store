@@ -127,7 +127,8 @@ export default function SignInPageDemo() {
       const result = await authService.login(email, password);
       if (result.success) {
         // نجح تسجيل الدخول
-        showError("تم تسجيل الدخول بنجاح!");
+        setSuccess("تم تسجيل الدخول بنجاح!");
+        setTimeout(() => setSuccess(''), 3000);
         
         // تحقق من دور المستخدم لتحديد الصفحة المناسبة
         const user = result.data?.user;

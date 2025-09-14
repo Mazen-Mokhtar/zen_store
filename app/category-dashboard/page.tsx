@@ -253,7 +253,7 @@ const CategoryDashboardContent = memo(() => {
             <CategoryGamesSection 
               games={filteredAndSortedGames} 
               categoryName={categoryName}
-              categoryId={categoryId}
+              categoryId={categoryId || undefined}
               selectedGame={selectedGame}
               onGameClick={handleGameClick}
               gamePackages={gamePackages}

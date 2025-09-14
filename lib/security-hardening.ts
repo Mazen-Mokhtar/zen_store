@@ -2,6 +2,7 @@
 
 import { headers } from 'next/headers';
 import crypto from 'crypto';
+import { PasswordSecurity } from './password-security';
 
 interface SecurityConfig {
   rateLimit: {
@@ -496,6 +497,15 @@ export class EncryptionUtils {
   static hash(text: string, salt?: string): string {
     const actualSalt = salt || crypto.randomBytes(16).toString('hex');
     return crypto.pbkdf2Sync(text, actualSalt, 10000, 64, 'sha512').toString('hex');
+  }
+  
+  // Use bcrypt for password hashing (recommended)
+  static async hashPassword(password: string): Promise<string> {
+    return PasswordSecurity.hashPassword(password);
+  }
+  
+  static async verifyPassword(password: string, hashedPassword: string): Promise<boolean> {
+    return PasswordSecurity.verifyPassword(password, hashedPassword);
   }
   
   static generateSecureToken(length: number = 32): string {
