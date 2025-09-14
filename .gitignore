@@ -141,6 +141,13 @@ test_signup.json
 # Testing
 test-results/
 playwright-report/
+tests/
+*.test.js
+*.spec.js
+*.test.ts
+*.spec.ts
+*.test.tsx
+*.spec.tsx
 
 # Bundle analysis
 bundle-size-report.json
