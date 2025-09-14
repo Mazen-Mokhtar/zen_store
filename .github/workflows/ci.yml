@@ -81,7 +81,7 @@ jobs:
 
       - name: 📊 Upload lint results
         if: failure()
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         with:
           name: lint-results
           path: |
@@ -180,7 +180,7 @@ jobs:
           key: build-${{ github.sha }}
 
       - name: 📊 Upload build artifacts
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         with:
           name: build-output
           path: |
@@ -233,7 +233,7 @@ jobs:
           CI: true
 
       - name: 📊 Upload E2E test results
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         if: always()
         with:
           name: e2e-results-${{ matrix.browser }}
@@ -243,7 +243,7 @@ jobs:
           retention-days: 7
 
       - name: 📸 Upload visual regression screenshots
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         if: failure()
         with:
           name: visual-regression-${{ matrix.browser }}
@@ -291,7 +291,7 @@ jobs:
           CI: true
 
       - name: 📊 Upload accessibility results
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         if: always()
         with:
           name: accessibility-results
@@ -339,7 +339,7 @@ jobs:
           CI: true
 
       - name: 📊 Upload Lighthouse results
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         if: always()
         with:
           name: lighthouse-results
@@ -465,7 +465,7 @@ jobs:
         continue-on-error: true
 
       - name: 📊 Upload production Lighthouse results
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         with:
           name: lighthouse-production
           path: lighthouse-production.json
