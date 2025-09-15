@@ -5,7 +5,7 @@ import { useSearchParams, useRouter } from "next/navigation";
 import dynamic from 'next/dynamic';
 import { useTranslation } from '@/lib/i18n';
 import { Footer } from '@/components/ui/footer-section';
-import { LoadingSpinner } from '@/components/ui/loading-spinner';
+import { SkeletonSpinner } from '@/components/ui/skeleton';
 import { ErrorMessage } from '@/components/ui/error-message';
 import { NotificationToast } from '@/components/ui/notification-toast';
 import { LanguageSelector } from '@/components/ui/language-selector';
@@ -56,7 +56,7 @@ const LoadingSkeleton = memo(() => {
       <main className="pt-16">
         <div className="relative w-full h-[60vh] bg-gray-800 animate-pulse">
           <div className="absolute inset-0 flex items-center justify-center">
-            <LoadingSpinner size="lg" text={t('common.loading')} />
+            <SkeletonSpinner size="lg" text={t('common.loading')} />
           </div>
         </div>
         

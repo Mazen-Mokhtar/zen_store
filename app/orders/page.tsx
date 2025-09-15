@@ -7,7 +7,7 @@ import dynamic from 'next/dynamic';
 import Head from 'next/head';
 import { ArrowLeft, Package, Clock, CheckCircle, XCircle, Eye, Calendar, CreditCard, Banknote, Info } from 'lucide-react';
 import { Footer } from '@/components/ui/footer-section';
-import { LoadingSpinner } from '@/components/ui/loading-spinner';
+import { SkeletonSpinner } from '@/components/ui/skeleton';
 import { ErrorMessage } from '@/components/ui/error-message';
 import { NotificationToast } from '@/components/ui/notification-toast';
 
@@ -22,7 +22,7 @@ import { Logo } from '@/components/ui/logo';
 
 // Dynamic imports for better performance
 const OrderDetailsModal = dynamic(() => import('@/components/ui/order-details-modal').then(module => ({ default: module.OrderDetailsModal })), {
-  loading: () => <LoadingSpinner size="md" />,
+  loading: () => <SkeletonSpinner size="md" />,
   ssr: false
 });
 
@@ -320,7 +320,7 @@ function OrdersPageContent() {
             />
             
             <div className="max-w-7xl mx-auto mt-6 md:mt-10 px-4 md:px-6 flex justify-center">
-              <LoadingSpinner size="lg" text="جاري تحميل الطلبات..." />
+              <SkeletonSpinner size="lg" text="جاري تحميل الطلبات..." />
             </div>
           </main>
         </div>
@@ -439,7 +439,7 @@ function OrdersPageContent() {
 
             {loading ? (
               <div className="flex justify-center items-center py-20">
-                <LoadingSpinner size="lg" />
+                <SkeletonSpinner size="lg" />
               </div>
             ) : orders.length === 0 ? (
               <div className="bg-[#232329] rounded-2xl md:rounded-3xl p-8 md:p-12 text-center">
@@ -488,7 +488,7 @@ function OrdersPageContent() {
 
         {/* Order Details Modal */}
         {showModal && selectedOrder && (
-          <Suspense fallback={<LoadingSpinner size="md" />}>
+          <Suspense fallback={<SkeletonSpinner size="md" />}>
             <OrderDetailsModal
               order={selectedOrder}
               onClose={handleModalClose}
@@ -506,7 +506,7 @@ export default function OrdersPage() {
   return (
     <Suspense fallback={
       <div className="min-h-screen bg-[#121218] text-white flex items-center justify-center">
-        <LoadingSpinner size="lg" text="Loading orders..." />
+        <SkeletonSpinner size="lg" text="Loading orders..." />
       </div>
     }>
       <OrdersPageContent />

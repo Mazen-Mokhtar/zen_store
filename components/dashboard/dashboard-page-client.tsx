@@ -7,7 +7,7 @@ import Head from 'next/head';
 import Image from 'next/image';
 import type { Game } from '@/lib/api';
 import { Footer } from '@/components/ui/footer-section';
-import { LoadingSpinner } from '@/components/ui/loading-spinner';
+import { SkeletonSpinner } from '@/components/ui/skeleton';
 import { ErrorMessage } from '@/components/ui/error-message';
 import { NotificationToast } from '@/components/ui/notification-toast';
 import { CategoryHeader } from '@/components/category-dashboard';

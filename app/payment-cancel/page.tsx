@@ -2,9 +2,9 @@
 
 import { useEffect, useState } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
-import { XCircle, Home, ShoppingCart } from 'lucide-react';
-import { AuthStatus } from '@/components/ui/auth-status';
-import { Logo } from '@/components/ui/logo';
+import { Home, AlertCircle, ArrowLeft, HelpCircle, RefreshCw, XCircle, ShoppingCart } from 'lucide-react';
+import { Footer } from '@/components/ui/footer-section';
+import { SharedNavbar } from '@/components/ui/shared-navbar';
 
 export default function PaymentCancelPage() {
   const router = useRouter();
@@ -54,11 +54,7 @@ export default function PaymentCancelPage() {
 
   return (
     <div className="bg-[#0D0E12] min-h-screen text-white">
-      {/* Header */}
-      <header className="flex items-center justify-between px-4 py-2 bg-[#1b2631]">
-        <Logo size="lg" textSize="lg" />
-        <AuthStatus />
-      </header>
+      <SharedNavbar title="إلغاء الدفع" />
 
       {/* Main Content */}
       <main className="flex items-center justify-center min-h-[calc(100vh-80px)]">

@@ -1,7 +1,7 @@
 'use client';
 
 import React, { Suspense } from 'react';
-import { LoadingSpinner } from '@/components/ui/loading-spinner';
+import { SkeletonSpinner } from '@/components/ui/skeleton';
 
 // Type definitions for lazy component props
 interface LazyComponentProps {
@@ -54,7 +54,7 @@ const LazyVideoPlayerComponent = React.lazy(() => import('./card').then(module =
 export const LazyVideoPlayer = (props: any) => (
   <Suspense fallback={
     <div className="aspect-video bg-gray-900 rounded-lg flex items-center justify-center">
-      <LoadingSpinner size="lg" text="Loading video..." />
+      <SkeletonSpinner size="lg" text="Loading video..." />
     </div>
   }>
     <LazyVideoPlayerComponent {...props} />
@@ -67,7 +67,7 @@ const LazyChartComponent = React.lazy(() => import('./card').then(module => ({ d
 export const LazyChart = (props: any) => (
   <Suspense fallback={
     <div className="h-64 bg-gray-800 animate-pulse rounded-lg flex items-center justify-center">
-      <LoadingSpinner size="md" text="Loading chart..." />
+      <SkeletonSpinner size="md" text="Loading chart..." />
     </div>
   }>
     <LazyChartComponent {...props} />
@@ -80,7 +80,7 @@ const LazyHeavyComponentInner = React.lazy(() => import('./glare-card-demo').the
 export const LazyHeavyComponent = (props: any) => (
   <Suspense fallback={
     <div className="min-h-[400px] flex items-center justify-center">
-      <LoadingSpinner size="lg" text="Loading content..." />
+      <SkeletonSpinner size="lg" text="Loading content..." />
     </div>
   }>
     <LazyHeavyComponentInner {...props} />

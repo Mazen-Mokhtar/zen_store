@@ -1,6 +1,6 @@
 import type { Metadata } from 'next';
 import { Suspense } from 'react';
-import { LoadingSpinner } from '@/components/ui/loading-spinner';
+import { SkeletonSpinner } from '@/components/ui/skeleton';
 
 export const metadata: Metadata = {
   title: 'Gaming Dashboard - Zen Store',
@@ -55,7 +55,7 @@ export default function DashboardLayout({
       <Suspense
         fallback={
           <div className="bg-[#0D0E12] min-h-screen text-white flex items-center justify-center">
-            <LoadingSpinner size="lg" text="Loading dashboard..." />
+            <SkeletonSpinner size="lg" text="Loading dashboard..." />
           </div>
         }
       >

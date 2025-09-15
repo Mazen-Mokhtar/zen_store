@@ -3,7 +3,7 @@ import { Metadata } from 'next';
 import { Category, CategoryResponse } from '@/types/category';
 import { logger } from '@/lib/utils';
 import { CategoryPageClient } from '@/components/category/category-page-client';
-import { LoadingSpinner } from '@/components/ui/loading-spinner';
+import { SkeletonSpinner } from '@/components/ui/skeleton';
 
 export const revalidate = 3600; // ISR: revalidate every hour
 
@@ -48,7 +48,7 @@ export default async function CategoryPage() {
   const categories = await getCategoriesData();
 
   return (
-    <Suspense fallback={<LoadingSpinner />}>
+    <Suspense fallback={<SkeletonSpinner />}>
       <CategoryPageClient initialCategories={categories} />
     </Suspense>
   );

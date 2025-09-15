@@ -2,7 +2,7 @@ import React, { Suspense } from 'react';
 import { Metadata } from 'next';
 import { apiService } from '@/lib/api';
 import type { Game } from '@/lib/api';
-import { LoadingSpinner } from '@/components/ui/loading-spinner';
+import { SkeletonSpinner } from '@/components/ui/skeleton';
 import { ErrorMessage } from '@/components/ui/error-message';
 import { DashboardPageClient } from '@/components/dashboard/dashboard-page-client';
 import { logger } from '@/lib/utils';
@@ -60,7 +60,7 @@ export default async function DashboardPage({ searchParams }: DashboardPageProps
   }
 
   return (
-    <Suspense fallback={<LoadingSpinner />}>
+    <Suspense fallback={<SkeletonSpinner />}>
       <DashboardPageClient 
         initialGames={data.games}
       />

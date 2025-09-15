@@ -5,7 +5,7 @@ import { useRouter } from 'next/navigation';
 import { Sidebar, Menu, MenuItem, SubMenu } from 'react-pro-sidebar';
 import { FiHome, FiShoppingCart, FiUsers, FiSettings, FiLogOut } from 'react-icons/fi';
 import { useAuth } from '@/lib/auth';
-import { LoadingSpinner } from '@/components/ui/loading-spinner';
+import { SkeletonSpinner } from '@/components/ui/skeleton';
 import { Logo } from '@/components/ui/logo';
 
 interface AdminLayoutProps {
@@ -25,7 +25,7 @@ export default function AdminLayout({ children }: AdminLayoutProps) {
   if (!mounted) {
     return (
       <div className="flex items-center justify-center min-h-screen" suppressHydrationWarning>
-        <LoadingSpinner />
+        <SkeletonSpinner />
       </div>
     );
   }

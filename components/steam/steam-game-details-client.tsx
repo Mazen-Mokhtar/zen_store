@@ -19,7 +19,7 @@ import {
 } from 'lucide-react';
 import { AuthStatus } from '@/components/ui/auth-status';
 import { LanguageSelector } from '@/components/ui/language-selector';
-import { LoadingSpinner } from '@/components/ui/loading-spinner';
+import { SkeletonSpinner } from '@/components/ui/skeleton';
 import { NotificationToast } from '@/components/ui/notification-toast';
 import { LoginRequiredModal } from '@/components/ui/login-required-modal';
 import { SteamAccountInfoModal } from '@/components/steam/steam-account-info-modal';
@@ -32,7 +32,7 @@ import { logger } from '@/lib/utils';
 import type { WalletTransferData } from '@/components/payment/WalletTransferForm';
 import { WalletTransferType } from '@/components/payment/WalletTransferOptions';
 import { Logo } from '@/components/ui/logo';
-import { CouponInput } from '@/components/ui/coupon-input';
+import { CouponInput } from '@/components/ui/unified-coupon-input';
 import type { AppliedCoupon } from '@/lib/types';
 
 interface SteamGameDetailsClientProps {

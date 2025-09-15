@@ -24,12 +24,14 @@ const skeletonTokens = {
 };
 
 export interface SkeletonProps extends React.HTMLAttributes<HTMLDivElement> {
-  variant?: 'text' | 'circular' | 'rectangular' | 'card';
+  variant?: 'text' | 'circular' | 'rectangular' | 'card' | 'spinner';
   size?: 'xs' | 'sm' | 'md' | 'lg' | 'xl';
   width?: string | number;
   height?: string | number;
   lines?: number;
   rounded?: 'sm' | 'md' | 'lg' | 'full';
+  color?: string;
+  text?: string;
   'aria-label'?: string;
 }
 
@@ -43,6 +45,8 @@ const Skeleton = React.forwardRef<HTMLDivElement, SkeletonProps>(
       height,
       lines = 1,
       rounded = 'md',
+      color = 'border-green-500',
+      text,
       'aria-label': ariaLabel,
       ...props
     },
@@ -63,6 +67,15 @@ const Skeleton = React.forwardRef<HTMLDivElement, SkeletonProps>(
           return cn(baseClasses, 'rounded-full aspect-square');
         case 'card':
           return cn(baseClasses, 'w-full h-48');
+        case 'spinner':
+          const spinnerSizes = {
+            xs: 'h-4 w-4',
+            sm: 'h-6 w-6', 
+            md: 'h-12 w-12',
+            lg: 'h-16 w-16',
+            xl: 'h-20 w-20'
+          };
+          return cn(spinnerSizes[size], 'animate-spin rounded-full border-b-2', color);
         default:
           return cn(baseClasses, skeletonTokens.spacing[size]);
       }
@@ -94,6 +107,23 @@ const Skeleton = React.forwardRef<HTMLDivElement, SkeletonProps>(
             />
           ))}
           <span className="sr-only">Loading content...</span>
+        </div>
+      );
+    }
+
+    if (variant === 'spinner') {
+      return (
+        <div className={cn('flex flex-col items-center justify-center', className)} role="status" aria-live="polite" {...props}>
+          <div 
+            className={getVariantClasses()}
+            aria-hidden="true"
+          ></div>
+          {text && (
+            <p className="text-gray-400 text-sm text-center max-w-xs mt-4">
+              <span className="sr-only">Loading: </span>
+              {text}
+            </p>
+          )}
         </div>
       );
     }
@@ -153,6 +183,10 @@ export const SkeletonImage = ({ ...props }: Omit<SkeletonProps, 'variant'>) => (
     aria-label="Loading image"
     {...props}
   />
+);
+
+export const SkeletonSpinner = ({ size = 'md', text = 'Loading...', ...props }: Omit<SkeletonProps, 'variant'>) => (
+  <Skeleton variant="spinner" size={size} text={text} {...props} />
 );
 
 export { Skeleton };

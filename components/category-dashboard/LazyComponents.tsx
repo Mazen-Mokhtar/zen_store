@@ -1,7 +1,7 @@
 'use client';
 
 import React, { Suspense } from 'react';
-import { LoadingSpinner } from '@/components/ui/loading-spinner';
+import { SkeletonSpinner } from '@/components/ui/skeleton';
 import type { 
   CategoryHeroProps, 
   CategoryHeaderProps, 
@@ -78,7 +78,7 @@ export const LazyCategoryGamesSection = (props: CategoryGamesSectionProps) => (
 export const LazyGamesWithIntersection = (props: CategoryGamesSectionProps) => (
   <Suspense fallback={
     <div className="min-h-[400px] flex items-center justify-center">
-      <LoadingSpinner size="lg" text="Loading games..." />
+      <SkeletonSpinner size="lg" text="Loading games..." />
     </div>
   }>
     <LazyCategoryGamesSectionComponent {...props} />

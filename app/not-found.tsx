@@ -4,7 +4,7 @@ import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { Home, Search, ArrowLeft, Shield } from 'lucide-react';
 import { Footer } from '@/components/ui/footer-section';
-import { Logo } from '@/components/ui/logo';
+import { SharedNavbar } from '@/components/ui/shared-navbar';
 
 const NotFoundPage = () => {
   const router = useRouter();
@@ -12,34 +12,20 @@ const NotFoundPage = () => {
 
   useEffect(() => {
     setMounted(true);
-    // Security: Clear any sensitive data from browser history
+    
+    // Clear any sensitive data from localStorage/sessionStorage
     if (typeof window !== 'undefined') {
-      // Replace current history entry to prevent back navigation to admin pages
-      window.history.replaceState(null, '', '/not-found');
+      // Clear any cached user data
+      localStorage.removeItem('user');
+      localStorage.removeItem('token');
+      sessionStorage.removeItem('user');
+      sessionStorage.removeItem('token');
       
-      // Clear any admin-related data from sessionStorage/localStorage
-      try {
-        const keysToRemove = [];
-        for (let i = 0; i < localStorage.length; i++) {
-          const key = localStorage.key(i);
-          if (key && (key.includes('admin') || key.includes('auth') || key.includes('token'))) {
-            keysToRemove.push(key);
-          }
-        }
-        keysToRemove.forEach(key => localStorage.removeItem(key));
-        
-        // Clear sessionStorage as well
-        const sessionKeysToRemove = [];
-        for (let i = 0; i < sessionStorage.length; i++) {
-          const key = sessionStorage.key(i);
-          if (key && (key.includes('admin') || key.includes('auth') || key.includes('token'))) {
-            sessionKeysToRemove.push(key);
-          }
-        }
-        sessionKeysToRemove.forEach(key => sessionStorage.removeItem(key));
-      } catch (e) {
-        // Ignore storage errors
-      }
+      // Clear any admin-related data
+      localStorage.removeItem('adminToken');
+      localStorage.removeItem('adminUser');
+      sessionStorage.removeItem('adminToken');
+      sessionStorage.removeItem('adminUser');
     }
   }, []);
 
@@ -77,18 +63,7 @@ const NotFoundPage = () => {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-gray-900 via-gray-800 to-black flex flex-col">
-      {/* Header */}
-      <header className="bg-black/20 backdrop-blur-sm border-b border-gray-700/50">
-        <div className="max-w-6xl mx-auto px-6 py-4">
-          <div className="flex items-center justify-between">
-            <Logo size="md" textSize="md" className="space-x-4" />
-            <div className="flex items-center space-x-2 text-gray-400">
-              <Shield size={16} />
-              <span className="text-xs">Secure</span>
-            </div>
-          </div>
-        </div>
-      </header>
+      <SharedNavbar title="خطأ 404" />
 
       {/* Main Content */}
       <main className="flex-1 flex items-center justify-center px-6 py-12">

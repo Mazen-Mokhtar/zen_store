@@ -5,22 +5,32 @@ export const dynamic = "force-dynamic";
 import { useEffect, useState } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { CheckCircle, Package, ArrowRight } from 'lucide-react';
-import { AuthStatus } from '@/components/ui/auth-status';
-import { Logo } from '@/components/ui/logo';
+import { SharedNavbar } from '@/components/ui/shared-navbar';
 
 export default function PaymentSuccessPage() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const [orderId, setOrderId] = useState<string | null>(null);
+  const [gameId, setGameId] = useState<string | null>(null);
+  const [gameName, setGameName] = useState<string>('');
+  const [packageId, setPackageId] = useState<string | null>(null);
+  const [packageName, setPackageName] = useState<string>('');
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    // استخراج معرف الطلب من URL
-    const sessionId = searchParams.get('session_id');
-    if (sessionId) {
-      // يمكن هنا جلب تفاصيل الطلب من Stripe
-      setOrderId(sessionId);
-    }
+    // استخراج البيانات من URL
+    const orderIdParam = searchParams.get('orderId');
+    const gameIdParam = searchParams.get('gameId');
+    const gameNameParam = searchParams.get('gameName');
+    const packageIdParam = searchParams.get('packageId');
+    const packageNameParam = searchParams.get('packageName');
+    
+    if (orderIdParam) setOrderId(orderIdParam);
+    if (gameIdParam) setGameId(gameIdParam);
+    if (gameNameParam) setGameName(decodeURIComponent(gameNameParam));
+    if (packageIdParam) setPackageId(packageIdParam);
+    if (packageNameParam) setPackageName(decodeURIComponent(packageNameParam));
+    
     setLoading(false);
   }, [searchParams]);
 
@@ -45,11 +55,7 @@ export default function PaymentSuccessPage() {
 
   return (
     <div className="bg-[#0D0E12] min-h-screen text-white">
-      {/* Header */}
-      <header className="flex items-center justify-between px-4 py-2 bg-[#1b2631]">
-        <Logo size="lg" textSize="lg" showText={false} />
-        <AuthStatus />
-      </header>
+      <SharedNavbar title="نجح الدفع" />
 
       {/* Main Content */}
       <main className="flex items-center justify-center min-h-[calc(100vh-80px)]">

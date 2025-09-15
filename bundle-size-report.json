@@ -1,5 +1,5 @@
 {
-  "timestamp": "2025-09-13T08:06:13.995Z",
+  "timestamp": "2025-09-14T07:01:02.048Z",
   "limits": {
     "maxJsSizeKB": 250,
     "maxCssSizeKB": 50,
@@ -9,37 +9,603 @@
     "js": {
       "files": [
         {
-          "path": "chunks\\polyfills.js",
+          "path": "chunks\\4bd1b696-100b9d70ed4e49c1.js",
+          "size": 173025,
+          "sizeKB": 168.9697265625
+        },
+        {
+          "path": "chunks\\1255-ee71dd93444688b6.js",
+          "size": 172154,
+          "sizeKB": 168.119140625
+        },
+        {
+          "path": "chunks\\framework-97862ef36bc4065f.js",
+          "size": 139889,
+          "sizeKB": 136.6103515625
+        },
+        {
+          "path": "chunks\\main.5b11a40d57b97dc5.js",
+          "size": 129282,
+          "sizeKB": 126.251953125
+        },
+        {
+          "path": "chunks\\polyfills-42372ed130431b0a.js",
           "size": 112594,
           "sizeKB": 109.955078125
         },
         {
-          "path": "development\\_buildManifest.js",
-          "size": 301,
-          "sizeKB": 0.2939453125
+          "path": "chunks\\framer-motion.441e6ac6e21c02fb.js",
+          "size": 110873,
+          "sizeKB": 108.2744140625
         },
         {
-          "path": "development\\_ssgManifest.js",
-          "size": 76,
-          "sizeKB": 0.07421875
+          "path": "chunks\\9785.c6516b59d374ba70.js",
+          "size": 81818,
+          "sizeKB": 79.900390625
+        },
+        {
+          "path": "chunks\\46170725-35d5bee8a292a5f3.js",
+          "size": 62537,
+          "sizeKB": 61.0712890625
+        },
+        {
+          "path": "chunks\\app\\admin\\orders\\page.201f9db512a9ddba.js",
+          "size": 61907,
+          "sizeKB": 60.4560546875
+        },
+        {
+          "path": "chunks\\7371-44f0cc3831b27bd2.js",
+          "size": 58503,
+          "sizeKB": 57.1318359375
+        },
+        {
+          "path": "chunks\\app\\layout.26ee3f7b4091e097.js",
+          "size": 56914,
+          "sizeKB": 55.580078125
+        },
+        {
+          "path": "chunks\\2261.aaaec7d10d8951bf.js",
+          "size": 53446,
+          "sizeKB": 52.193359375
+        },
+        {
+          "path": "chunks\\8377-48c0740e6d36b9cc.js",
+          "size": 47390,
+          "sizeKB": 46.279296875
+        },
+        {
+          "path": "chunks\\8307.d654d96595ca5d86.js",
+          "size": 37200,
+          "sizeKB": 36.328125
+        },
+        {
+          "path": "chunks\\app\\packages\\page.3b8707fb27ae7922.js",
+          "size": 36791,
+          "sizeKB": 35.9287109375
+        },
+        {
+          "path": "chunks\\app\\category-dashboard\\page.4ac308cb24e5c89d.js",
+          "size": 30656,
+          "sizeKB": 29.9375
+        },
+        {
+          "path": "chunks\\1863.049afba95e07046b.js",
+          "size": 28883,
+          "sizeKB": 28.2060546875
+        },
+        {
+          "path": "chunks\\app\\signin\\page.bd8df4cf875cc3b5.js",
+          "size": 23379,
+          "sizeKB": 22.8310546875
+        },
+        {
+          "path": "chunks\\2346-3cba3739287811dd.js",
+          "size": 23256,
+          "sizeKB": 22.7109375
+        },
+        {
+          "path": "chunks\\1876.79bf0cca46f001be.js",
+          "size": 22750,
+          "sizeKB": 22.216796875
+        },
+        {
+          "path": "chunks\\app\\orders\\page.cde5c082e6db4d25.js",
+          "size": 21414,
+          "sizeKB": 20.912109375
+        },
+        {
+          "path": "chunks\\1825-afa719d0cb188732.js",
+          "size": 19625,
+          "sizeKB": 19.1650390625
+        },
+        {
+          "path": "chunks\\app\\signup\\page.a798c7c59dcf94c7.js",
+          "size": 18768,
+          "sizeKB": 18.328125
+        },
+        {
+          "path": "chunks\\1563-0b01e7a68fad990a.js",
+          "size": 16833,
+          "sizeKB": 16.4384765625
+        },
+        {
+          "path": "chunks\\app\\privacy\\page.ff34512e964b0c9e.js",
+          "size": 16687,
+          "sizeKB": 16.2958984375
+        },
+        {
+          "path": "chunks\\3398-4dd1d08ee6bdf821.js",
+          "size": 16359,
+          "sizeKB": 15.9755859375
+        },
+        {
+          "path": "chunks\\app\\terms\\page.4720e4c3706d2b49.js",
+          "size": 16147,
+          "sizeKB": 15.7685546875
+        },
+        {
+          "path": "chunks\\app\\dashboard\\page.72bb5ec8141f5f46.js",
+          "size": 15319,
+          "sizeKB": 14.9599609375
+        },
+        {
+          "path": "chunks\\5239-4920c0987487bb12.js",
+          "size": 14977,
+          "sizeKB": 14.6259765625
+        },
+        {
+          "path": "chunks\\app\\404\\page.b54d4e2891eaf4d8.js",
+          "size": 14120,
+          "sizeKB": 13.7890625
+        },
+        {
+          "path": "chunks\\app\\orders\\layout.48b47f86c1c27fcc.js",
+          "size": 13977,
+          "sizeKB": 13.6494140625
+        },
+        {
+          "path": "chunks\\app\\admin\\security\\page.c6baee209b3031fc.js",
+          "size": 13833,
+          "sizeKB": 13.5087890625
+        },
+        {
+          "path": "chunks\\6685.274a45024b335bd8.js",
+          "size": 13532,
+          "sizeKB": 13.21484375
+        },
+        {
+          "path": "chunks\\9758-cecaa8d72f17cc4a.js",
+          "size": 13367,
+          "sizeKB": 13.0537109375
+        },
+        {
+          "path": "chunks\\9962-042fa59ebd2055dc.js",
+          "size": 12981,
+          "sizeKB": 12.6767578125
+        },
+        {
+          "path": "chunks\\8209-efab702147a44c8c.js",
+          "size": 12848,
+          "sizeKB": 12.546875
+        },
+        {
+          "path": "chunks\\app\\admin\\page.ad977af25d0fc14a.js",
+          "size": 12597,
+          "sizeKB": 12.3017578125
+        },
+        {
+          "path": "chunks\\7296-c240ecc41bf19f89.js",
+          "size": 11994,
+          "sizeKB": 11.712890625
+        },
+        {
+          "path": "chunks\\app\\payment-cancel\\page.7fad16568693b042.js",
+          "size": 11553,
+          "sizeKB": 11.2822265625
+        },
+        {
+          "path": "chunks\\app\\payment-success\\page.f19c7337b2352133.js",
+          "size": 11297,
+          "sizeKB": 11.0322265625
+        },
+        {
+          "path": "chunks\\3150.a8df63cd74cb6ff0.js",
+          "size": 11125,
+          "sizeKB": 10.8642578125
+        },
+        {
+          "path": "chunks\\1478.d6d17ee59b8c4df9.js",
+          "size": 10975,
+          "sizeKB": 10.7177734375
+        },
+        {
+          "path": "chunks\\app\\not-found.48e87c09d5731e77.js",
+          "size": 10811,
+          "sizeKB": 10.5576171875
+        },
+        {
+          "path": "chunks\\8991.2dbccedd5b85b97f.js",
+          "size": 10691,
+          "sizeKB": 10.4404296875
+        },
+        {
+          "path": "chunks\\4141.34c4e7bf5a7b3cd1.js",
+          "size": 10534,
+          "sizeKB": 10.287109375
+        },
+        {
+          "path": "chunks\\297-82933dba0a8b3452.js",
+          "size": 9841,
+          "sizeKB": 9.6103515625
+        },
+        {
+          "path": "chunks\\6158.a546996729fec1a5.js",
+          "size": 9145,
+          "sizeKB": 8.9306640625
+        },
+        {
+          "path": "chunks\\7249.00c6c25067348e44.js",
+          "size": 9066,
+          "sizeKB": 8.853515625
+        },
+        {
+          "path": "chunks\\8388-8f04eb5479fcf4a8.js",
+          "size": 8895,
+          "sizeKB": 8.6865234375
+        },
+        {
+          "path": "chunks\\7516.1e4ca9ffece380c9.js",
+          "size": 7794,
+          "sizeKB": 7.611328125
+        },
+        {
+          "path": "chunks\\1804.8e213cf8fbb97250.js",
+          "size": 7739,
+          "sizeKB": 7.5576171875
+        },
+        {
+          "path": "chunks\\5346.e91bd3420fbf22e7.js",
+          "size": 7661,
+          "sizeKB": 7.4814453125
+        },
+        {
+          "path": "chunks\\app\\admin\\layout.134f89f66ed0d71c.js",
+          "size": 7614,
+          "sizeKB": 7.435546875
+        },
+        {
+          "path": "chunks\\ee560e2c-cc0094287c35c8ef.js",
+          "size": 7548,
+          "sizeKB": 7.37109375
+        },
+        {
+          "path": "chunks\\5182-06c389bd46cfaae8.js",
+          "size": 7302,
+          "sizeKB": 7.130859375
+        },
+        {
+          "path": "chunks\\769.4e1c9ed750772e02.js",
+          "size": 7162,
+          "sizeKB": 6.994140625
+        },
+        {
+          "path": "chunks\\2584.6590012ede524472.js",
+          "size": 7134,
+          "sizeKB": 6.966796875
+        },
+        {
+          "path": "chunks\\1945-6e913591ef25c7a3.js",
+          "size": 6806,
+          "sizeKB": 6.646484375
+        },
+        {
+          "path": "chunks\\2016-4e4e00bbff2deb90.js",
+          "size": 6770,
+          "sizeKB": 6.611328125
+        },
+        {
+          "path": "chunks\\9786-00110d0901cbd131.js",
+          "size": 6363,
+          "sizeKB": 6.2138671875
+        },
+        {
+          "path": "chunks\\pages\\_error.c8f84f7bd11d43d4.js",
+          "size": 5680,
+          "sizeKB": 5.546875
+        },
+        {
+          "path": "chunks\\1646.a93085a0445ba909.js",
+          "size": 5466,
+          "sizeKB": 5.337890625
+        },
+        {
+          "path": "chunks\\9607.0a08c7adc838aee7.js",
+          "size": 5425,
+          "sizeKB": 5.2978515625
+        },
+        {
+          "path": "chunks\\app\\category\\page.d92bacdada4aeef6.js",
+          "size": 5273,
+          "sizeKB": 5.1494140625
+        },
+        {
+          "path": "chunks\\7995-731aa3db773419fe.js",
+          "size": 5064,
+          "sizeKB": 4.9453125
+        },
+        {
+          "path": "chunks\\app\\steam\\[slug]\\page.0546f5ce363e39dc.js",
+          "size": 4915,
+          "sizeKB": 4.7998046875
+        },
+        {
+          "path": "chunks\\app\\page.5b6eae6f75c109ba.js",
+          "size": 4642,
+          "sizeKB": 4.533203125
+        },
+        {
+          "path": "chunks\\webpack.6b1a3a23a1b10832.js",
+          "size": 4604,
+          "sizeKB": 4.49609375
+        },
+        {
+          "path": "chunks\\3982.9f74412166eb5081.js",
+          "size": 4400,
+          "sizeKB": 4.296875
+        },
+        {
+          "path": "chunks\\app\\steam\\[slug]\\not-found.9cebda6fafee2179.js",
+          "size": 3879,
+          "sizeKB": 3.7880859375
+        },
+        {
+          "path": "chunks\\1719.84aefabd91161dfe.js",
+          "size": 3789,
+          "sizeKB": 3.7001953125
+        },
+        {
+          "path": "DroYgj0snMANrubeh9IdK\\_buildManifest.js",
+          "size": 2216,
+          "sizeKB": 2.1640625
+        },
+        {
+          "path": "chunks\\6646.7f579c6b3c76477c.js",
+          "size": 2175,
+          "sizeKB": 2.1240234375
+        },
+        {
+          "path": "chunks\\1233.f63837c671bcaacd.js",
+          "size": 1607,
+          "sizeKB": 1.5693359375
+        },
+        {
+          "path": "chunks\\6698.ec2689313564260f.js",
+          "size": 1589,
+          "sizeKB": 1.5517578125
+        },
+        {
+          "path": "chunks\\pages\\_app.e8b861c87f6f033c.js",
+          "size": 924,
+          "sizeKB": 0.90234375
+        },
+        {
+          "path": "chunks\\1154.1cd50ec2493f1cb5.js",
+          "size": 771,
+          "sizeKB": 0.7529296875
+        },
+        {
+          "path": "chunks\\5139.e4ff9cc3669129ed.js",
+          "size": 745,
+          "sizeKB": 0.7275390625
+        },
+        {
+          "path": "chunks\\main-app.b352187db071b8d3.js",
+          "size": 572,
+          "sizeKB": 0.55859375
+        },
+        {
+          "path": "chunks\\app\\api\\admin\\security-logs\\route.542ad5ca7a37e7f1.js",
+          "size": 290,
+          "sizeKB": 0.283203125
+        },
+        {
+          "path": "chunks\\app\\api\\admin\\security-monitoring\\route.542ad5ca7a37e7f1.js",
+          "size": 290,
+          "sizeKB": 0.283203125
+        },
+        {
+          "path": "chunks\\app\\api\\analytics\\route.542ad5ca7a37e7f1.js",
+          "size": 290,
+          "sizeKB": 0.283203125
+        },
+        {
+          "path": "chunks\\app\\api\\auth\\confirm-email\\route.542ad5ca7a37e7f1.js",
+          "size": 290,
+          "sizeKB": 0.283203125
+        },
+        {
+          "path": "chunks\\app\\api\\auth\\extend-session\\route.542ad5ca7a37e7f1.js",
+          "size": 290,
+          "sizeKB": 0.283203125
+        },
+        {
+          "path": "chunks\\app\\api\\auth\\google\\callback\\route.542ad5ca7a37e7f1.js",
+          "size": 290,
+          "sizeKB": 0.283203125
+        },
+        {
+          "path": "chunks\\app\\api\\auth\\google\\route.542ad5ca7a37e7f1.js",
+          "size": 290,
+          "sizeKB": 0.283203125
+        },
+        {
+          "path": "chunks\\app\\api\\auth\\login\\route.542ad5ca7a37e7f1.js",
+          "size": 290,
+          "sizeKB": 0.283203125
+        },
+        {
+          "path": "chunks\\app\\api\\auth\\logout\\route.542ad5ca7a37e7f1.js",
+          "size": 290,
+          "sizeKB": 0.283203125
+        },
+        {
+          "path": "chunks\\app\\api\\auth\\logout-all-other-sessions\\route.542ad5ca7a37e7f1.js",
+          "size": 290,
+          "sizeKB": 0.283203125
+        },
+        {
+          "path": "chunks\\app\\api\\auth\\logout-session\\route.542ad5ca7a37e7f1.js",
+          "size": 290,
+          "sizeKB": 0.283203125
+        },
+        {
+          "path": "chunks\\app\\api\\auth\\me\\route.542ad5ca7a37e7f1.js",
+          "size": 290,
+          "sizeKB": 0.283203125
+        },
+        {
+          "path": "chunks\\app\\api\\auth\\session\\route.542ad5ca7a37e7f1.js",
+          "size": 290,
+          "sizeKB": 0.283203125
+        },
+        {
+          "path": "chunks\\app\\api\\auth\\sessions\\route.542ad5ca7a37e7f1.js",
+          "size": 290,
+          "sizeKB": 0.283203125
+        },
+        {
+          "path": "chunks\\app\\api\\auth\\signup\\route.542ad5ca7a37e7f1.js",
+          "size": 290,
+          "sizeKB": 0.283203125
+        },
+        {
+          "path": "chunks\\app\\api\\coupon\\details\\[couponCode]\\route.542ad5ca7a37e7f1.js",
+          "size": 290,
+          "sizeKB": 0.283203125
+        },
+        {
+          "path": "chunks\\app\\api\\coupon\\validate\\route.542ad5ca7a37e7f1.js",
+          "size": 290,
+          "sizeKB": 0.283203125
+        },
+        {
+          "path": "chunks\\app\\api\\errors\\route.542ad5ca7a37e7f1.js",
+          "size": 290,
+          "sizeKB": 0.283203125
+        },
+        {
+          "path": "chunks\\app\\api\\order\\admin\\all\\route.542ad5ca7a37e7f1.js",
+          "size": 290,
+          "sizeKB": 0.283203125
+        },
+        {
+          "path": "chunks\\app\\api\\order\\admin\\[orderId]\\status\\route.542ad5ca7a37e7f1.js",
+          "size": 290,
+          "sizeKB": 0.283203125
+        },
+        {
+          "path": "chunks\\app\\api\\order\\route.542ad5ca7a37e7f1.js",
+          "size": 290,
+          "sizeKB": 0.283203125
+        },
+        {
+          "path": "chunks\\app\\api\\order\\[orderId]\\checkout\\route.542ad5ca7a37e7f1.js",
+          "size": 290,
+          "sizeKB": 0.283203125
+        },
+        {
+          "path": "chunks\\app\\api\\order\\[orderId]\\route.542ad5ca7a37e7f1.js",
+          "size": 290,
+          "sizeKB": 0.283203125
+        },
+        {
+          "path": "chunks\\app\\api\\order\\[orderId]\\wallet-transfer\\route.542ad5ca7a37e7f1.js",
+          "size": 290,
+          "sizeKB": 0.283203125
+        },
+        {
+          "path": "chunks\\app\\api\\performance\\route.542ad5ca7a37e7f1.js",
+          "size": 290,
+          "sizeKB": 0.283203125
+        },
+        {
+          "path": "chunks\\app\\api\\user\\profile\\admin\\route.542ad5ca7a37e7f1.js",
+          "size": 290,
+          "sizeKB": 0.283203125
+        },
+        {
+          "path": "chunks\\app\\category-dashboard\\layout.542ad5ca7a37e7f1.js",
+          "size": 290,
+          "sizeKB": 0.283203125
+        },
+        {
+          "path": "chunks\\app\\dashboard\\layout.542ad5ca7a37e7f1.js",
+          "size": 290,
+          "sizeKB": 0.283203125
+        },
+        {
+          "path": "chunks\\app\\robots.txt\\route.542ad5ca7a37e7f1.js",
+          "size": 290,
+          "sizeKB": 0.283203125
+        },
+        {
+          "path": "chunks\\app\\sitemap.xml\\route.542ad5ca7a37e7f1.js",
+          "size": 290,
+          "sizeKB": 0.283203125
+        },
+        {
+          "path": "chunks\\app\\steam\\[slug]\\layout.542ad5ca7a37e7f1.js",
+          "size": 290,
+          "sizeKB": 0.283203125
+        },
+        {
+          "path": "chunks\\app\\_not-found\\page.542ad5ca7a37e7f1.js",
+          "size": 290,
+          "sizeKB": 0.283203125
+        },
+        {
+          "path": "chunks\\app\\packages\\layout.930dda6d0b9ec29a.js",
+          "size": 266,
+          "sizeKB": 0.259765625
+        },
+        {
+          "path": "DroYgj0snMANrubeh9IdK\\_ssgManifest.js",
+          "size": 77,
+          "sizeKB": 0.0751953125
         }
       ],
-      "totalSize": 112971,
-      "totalSizeKB": 110.3232421875
+      "totalSize": 2005810,
+      "totalSizeKB": 1958.798828125
     },
     "css": {
-      "files": [],
-      "totalSize": 0,
-      "totalSizeKB": 0
+      "files": [
+        {
+          "path": "css\\448614cf810c6f4e.css",
+          "size": 107975,
+          "sizeKB": 105.4443359375
+        },
+        {
+          "path": "css\\081a0afca5a9bd20.css",
+          "size": 2120,
+          "sizeKB": 2.0703125
+        },
+        {
+          "path": "css\\876b503688f7f368.css",
+          "size": 213,
+          "sizeKB": 0.2080078125
+        }
+      ],
+      "totalSize": 110308,
+      "totalSizeKB": 107.72265625
     },
     "total": {
-      "size": 112971,
-      "sizeKB": 110.3232421875
+      "size": 2116118,
+      "sizeKB": 2066.521484375
     }
   },
   "status": {
-    "jsWithinLimit": true,
-    "cssWithinLimit": true,
-    "totalWithinLimit": true
+    "jsWithinLimit": false,
+    "cssWithinLimit": false,
+    "totalWithinLimit": false
   }
 }

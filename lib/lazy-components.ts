@@ -6,11 +6,11 @@ import dynamic from 'next/dynamic';
 import { ComponentType } from 'react';
 import { logger } from './utils';
 
+// Import unified loading component
+import { SkeletonSpinner } from '@/components/ui/skeleton';
+
 // Loading component for lazy-loaded components
-const LoadingSpinner = () => React.createElement('div', 
-  { className: 'flex items-center justify-center p-8' },
-  React.createElement('div', { className: 'animate-spin rounded-full h-8 w-8 border-b-2 border-primary' })
-);
+const LoadingSpinner = () => React.createElement(SkeletonSpinner, { size: 'md', text: 'Loading component...' });
 
 // Error boundary for lazy-loaded components
 const LazyErrorBoundary = ({ children }: { children: React.ReactNode }) => {
@@ -203,9 +203,73 @@ export const createIntersectionLazyLoader = (
 // Route-based code splitting helpers
 export const createRouteComponent = (importFn: () => Promise<any>) => {
   return dynamic(importFn, {
-    loading: LoadingSpinner,
+    loading: () => React.createElement(LoadingSpinner),
     ssr: false
   });
+};
+
+// Enhanced lazy component with preloading and intersection observer
+export const createEnhancedLazyComponent = <T extends React.ComponentType<any>>(
+  importFunc: () => Promise<{ default: T }>,
+  options?: {
+    preload?: boolean;
+    fallback?: React.ReactNode;
+    errorFallback?: React.ReactNode;
+    ssr?: boolean;
+  }
+) => {
+  const LazyComponent = dynamic(importFunc, {
+    loading: () => options?.fallback || React.createElement(LoadingSpinner),
+    ssr: options?.ssr || false,
+  });
+  
+  // Preload component if requested
+  if (options?.preload && typeof window !== 'undefined') {
+    if ('requestIdleCallback' in window) {
+      requestIdleCallback(() => importFunc());
+    } else {
+      setTimeout(() => importFunc(), 100);
+    }
+  }
+
+  return LazyComponent;
+};
+
+// Intersection Observer based lazy loading hook
+export const useIntersectionLazyLoad = <T = Record<string, any>>(
+  importFunc: () => Promise<{ default: React.ComponentType<T> }>,
+  options?: IntersectionObserverInit
+) => {
+  const [shouldLoad, setShouldLoad] = React.useState(false);
+  const ref = React.useRef<HTMLDivElement>(null);
+
+  React.useEffect(() => {
+    if (typeof window === 'undefined' || !('IntersectionObserver' in window)) return;
+    
+    const observer = new IntersectionObserver(
+      ([entry]) => {
+        if (entry.isIntersecting) {
+          setShouldLoad(true);
+          observer.disconnect();
+        }
+      },
+      { threshold: 0.1, ...options }
+    );
+
+    if (ref.current) {
+      observer.observe(ref.current);
+    }
+
+    return () => observer.disconnect();
+  }, [options]);
+
+  return { 
+    ref, 
+    shouldLoad, 
+    LazyComponent: shouldLoad ? dynamic(importFunc, {
+      loading: () => React.createElement(LoadingSpinner)
+    }) : null 
+  };
 };
 
 // Bundle size monitoring

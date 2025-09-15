@@ -2,8 +2,9 @@
 
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { Home, Search, ArrowLeft } from 'lucide-react';
+import { Home, Search, ArrowLeft, Shield } from 'lucide-react';
 import { Footer } from '@/components/ui/footer-section';
+import { SharedNavbar } from '@/components/ui/shared-navbar';
 
 const NotFoundPage = () => {
   const router = useRouter();
@@ -11,10 +12,20 @@ const NotFoundPage = () => {
 
   useEffect(() => {
     setMounted(true);
-    // Clear any sensitive data from browser history
+    
+    // Clear any sensitive data from localStorage/sessionStorage
     if (typeof window !== 'undefined') {
-      // Replace current history entry to prevent back navigation to admin pages
-      window.history.replaceState(null, '', '/404');
+      // Clear any cached user data
+      localStorage.removeItem('user');
+      localStorage.removeItem('token');
+      sessionStorage.removeItem('user');
+      sessionStorage.removeItem('token');
+      
+      // Clear any admin-related data
+      localStorage.removeItem('adminToken');
+      localStorage.removeItem('adminUser');
+      sessionStorage.removeItem('adminToken');
+      sessionStorage.removeItem('adminUser');
     }
   }, []);
 
@@ -47,19 +58,7 @@ const NotFoundPage = () => {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-gray-900 via-gray-800 to-black flex flex-col">
-      {/* Header */}
-      <header className="bg-black/20 backdrop-blur-sm border-b border-gray-700/50">
-        <div className="max-w-6xl mx-auto px-6 py-4">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center space-x-4">
-              <div className="w-8 h-8 bg-gradient-to-r from-blue-500 to-purple-600 rounded-lg flex items-center justify-center">
-                <span className="text-white font-bold text-sm">ZS</span>
-              </div>
-              <span className="text-white font-semibold text-lg">Zen Store</span>
-            </div>
-          </div>
-        </div>
-      </header>
+      <SharedNavbar title="خطأ 404" />
 
       {/* Main Content */}
       <main className="flex-1 flex items-center justify-center px-6 py-12">

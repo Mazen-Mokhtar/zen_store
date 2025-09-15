@@ -2,7 +2,7 @@ import React, { Suspense } from "react";
 import { Metadata } from 'next';
 import { apiService } from '@/lib/api';
 import type { Package, Game } from '@/lib/api';
-import { LoadingSpinner } from '@/components/ui/loading-spinner';
+import { SkeletonSpinner } from '@/components/ui/skeleton';
 import { ErrorMessage } from '@/components/ui/error-message';
 import { PackagesPageClient } from '@/components/packages/packages-page-client';
 import { logger } from '@/lib/utils';
@@ -58,7 +58,7 @@ export default async function PackagesPage({ searchParams }: { searchParams: Pro
   }
 
   return (
-    <Suspense fallback={<LoadingSpinner />}>
+    <Suspense fallback={<SkeletonSpinner />}>
       <PackagesPageClient 
         initialPackages={data.packages}
         initialGames={data.games}

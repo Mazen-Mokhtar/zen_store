@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useState, useCallback, useMemo, Suspense } from 'react';
-import { LoadingSpinner } from '@/components/ui/loading-spinner';
+import { SkeletonSpinner } from '@/components/ui/skeleton';
 import { NotificationToast } from '@/components/ui/notification-toast';
 import ErrorBoundary from '../../../components/admin/orders/ErrorBoundary';
 import { 
@@ -160,7 +160,7 @@ export default function AdminOrdersPage() {
   if (!accessChecked) {
     return (
       <div className="flex items-center justify-center min-h-screen" role="status" aria-label="Checking access permissions">
-        <LoadingSpinner />
+        <SkeletonSpinner />
         <span className="sr-only">جاري التحقق من صلاحيات الوصول...</span>
       </div>
     );
@@ -264,7 +264,7 @@ export default function AdminOrdersPage() {
             aria-label="Processing request"
           >
             <div className="bg-white dark:bg-gray-800 rounded-lg p-6 shadow-xl">
-              <LoadingSpinner />
+              <SkeletonSpinner />
               <p className="mt-2 text-sm text-gray-600 dark:text-gray-400 text-center">
                 جاري المعالجة...
               </p>

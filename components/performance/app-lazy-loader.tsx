@@ -2,7 +2,7 @@
 
 import { memo, useEffect, useState, useCallback } from 'react';
 import { useIntersectionLazyLoad } from './lazy-component-wrapper';
-import { LoadingSpinner } from '@/components/ui/loading-spinner';
+import { SkeletonSpinner } from '@/components/ui/skeleton';
 
 interface AppLazyLoaderProps {
   children: React.ReactNode;
@@ -17,7 +17,7 @@ export const AppLazyLoader = memo<AppLazyLoaderProps>(({
   children, 
   threshold = 0.1, 
   rootMargin = '50px',
-  fallback = <LoadingSpinner size="lg" text="Loading..." />,
+  fallback = <SkeletonSpinner size="lg" text="Loading..." />,
   preloadDelay = 100
 }) => {
   const [isVisible, setIsVisible] = useState(false);

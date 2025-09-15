@@ -1,7 +1,7 @@
 'use client';
 
 import { createLazyComponent } from '@/components/performance/lazy-component-wrapper';
-import { LoadingSpinner } from '@/components/ui/loading-spinner';
+import { SkeletonSpinner } from '@/components/ui/skeleton';
 
 // Lazy load dashboard page component
 export const LazyDashboardPageClient = createLazyComponent(

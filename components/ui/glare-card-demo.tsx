@@ -4,7 +4,7 @@ import { memo, useCallback } from 'react';
 import { useRouter } from "next/navigation";
 import Image from "next/image";
 import { GlareCard } from '@/components/ui/glare-card';
-import { LoadingSpinner } from '@/components/ui/loading-spinner';
+import { SkeletonSpinner } from '@/components/ui/skeleton';
 
 
 export type Category = {

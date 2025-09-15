@@ -3,14 +3,9 @@
 // Dynamic import utilities for tree shaking and performance optimization
 import dynamic from 'next/dynamic';
 import { ComponentType } from 'react';
+import { SkeletonSpinner } from '@/components/ui/skeleton';
 
 import React from 'react';
-
-// Loading component for dynamic imports
-const LoadingSpinner = () => React.createElement('div', 
-  { className: 'flex items-center justify-center p-8' },
-  React.createElement('div', { className: 'animate-spin rounded-full h-8 w-8 border-b-2 border-primary' })
-);
 
 // Error fallback component
 const ErrorFallback = ({ error }: { error?: string }) => React.createElement('div',
@@ -24,7 +19,7 @@ export const DynamicSteamGameDetails = dynamic(
     default: mod.SteamGameDetailsClient
   })),
   {
-    loading: () => React.createElement(LoadingSpinner),
+    loading: () => React.createElement(SkeletonSpinner),
     ssr: false
   }
 );
@@ -33,7 +28,7 @@ export const DynamicSteamGameDetails = dynamic(
 export const DynamicPerformanceMonitor = dynamic(
   () => import('@/components/performance/performance-monitor'),
   {
-    loading: () => React.createElement(LoadingSpinner),
+    loading: () => React.createElement(SkeletonSpinner),
     ssr: false
   }
 );
@@ -42,7 +37,7 @@ export const DynamicPerformanceMonitor = dynamic(
 export const DynamicAnalytics = dynamic(
   () => import('@/components/performance/analytics-dashboard'),
   {
-    loading: () => React.createElement(LoadingSpinner),
+    loading: () => React.createElement(SkeletonSpinner),
     ssr: false
   }
 );
@@ -53,7 +48,7 @@ export const DynamicOrderDetailsModal = dynamic(
     default: mod.OrderDetailsModal
   })),
   {
-    loading: () => React.createElement(LoadingSpinner),
+    loading: () => React.createElement(SkeletonSpinner),
     ssr: false
   }
 );
@@ -64,7 +59,7 @@ export const DynamicAdminOrdersTable = dynamic(
     default: mod.OrdersTable
   })),
   {
-    loading: () => React.createElement(LoadingSpinner),
+    loading: () => React.createElement(SkeletonSpinner),
     ssr: false
   }
 );
@@ -74,7 +69,7 @@ export const DynamicVirtualizedOrdersTable = dynamic(
     default: mod.VirtualizedOrdersTable
   })),
   {
-    loading: () => React.createElement(LoadingSpinner),
+    loading: () => React.createElement(SkeletonSpinner),
     ssr: false
   }
 );
@@ -85,7 +80,7 @@ export const DynamicCategoryGamesSection = dynamic(
     default: mod.CategoryGamesSection
   })),
   {
-    loading: () => React.createElement(LoadingSpinner),
+    loading: () => React.createElement(SkeletonSpinner),
     ssr: true // This can be server-rendered
   }
 );
@@ -99,7 +94,7 @@ export const createDynamicImport = <T extends ComponentType<any>>(
   } = {}
 ) => {
   return dynamic(importFn, {
-    loading: options.loading ? () => React.createElement(options.loading!) : () => React.createElement(LoadingSpinner),
+    loading: options.loading ? () => React.createElement(options.loading!) : () => React.createElement(SkeletonSpinner),
     ssr: options.ssr ?? false
   });
 };

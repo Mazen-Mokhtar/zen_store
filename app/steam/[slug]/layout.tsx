@@ -1,5 +1,5 @@
 import { Suspense } from 'react';
-import { LoadingSpinner } from '@/components/ui/loading-spinner';
+import { SkeletonSpinner } from '@/components/ui/skeleton';
 
 // Enable ISR with 1 hour revalidation for better performance
 export const revalidate = 3600;
@@ -15,7 +15,7 @@ export default function SteamGameLayout({
     <Suspense
       fallback={
         <div className="min-h-screen bg-[#0D0E12] text-white flex items-center justify-center">
-          <LoadingSpinner size="lg" text="Loading Steam game..." />
+          <SkeletonSpinner size="lg" text="Loading Steam game..." />
         </div>
       }
     >

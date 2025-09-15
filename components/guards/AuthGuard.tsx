@@ -5,7 +5,7 @@ import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { authService } from "@/lib/auth";
 import { notificationService } from "@/lib/notifications";
 import { securityManager } from "@/lib/security";
-import { LoadingSpinner } from "@/components/ui/loading-spinner";
+import { SkeletonSpinner } from "@/components/ui/skeleton";
 
 interface AuthGuardProps {
   children: React.ReactNode;
@@ -258,7 +258,7 @@ export default function AuthGuard({
   if (!checked) {
     return (
       <div className="flex flex-col items-center justify-center min-h-screen bg-gray-950">
-        <LoadingSpinner size="lg" />
+        <SkeletonSpinner size="lg" />
         <p className="mt-4 text-gray-400 text-sm">جاري التحقق من الهوية...</p>
         {authError && (
           <p className="mt-2 text-red-400 text-sm">{authError}</p>
