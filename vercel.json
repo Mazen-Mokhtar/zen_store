@@ -139,11 +139,7 @@
     "enabled": true,
     "autoAlias": false
   },
-  "env": {
-    "NEXT_PUBLIC_VERCEL_ENV": "@vercel-env",
-    "NEXT_PUBLIC_VERCEL_URL": "@vercel-url",
-    "NEXT_PUBLIC_VERCEL_GIT_COMMIT_SHA": "@vercel-git-commit-sha"
-  },
+
   "crons": [
     {
       "path": "/api/cron/cleanup",
