@@ -5,6 +5,45 @@ module.exports = {
     "./components/**/*.{js,ts,jsx,tsx,mdx}",
     "./lib/**/*.{js,ts,jsx,tsx,mdx}",
   ],
+ safelist: [
+  // Specific background colors actually used in the codebase
+  {
+    pattern: /^bg-(red|green|blue|yellow|orange|gray|slate|purple|violet)-(50|100|200|300|400|500|600|700|800|900)$/,
+    variants: ['hover', 'focus', 'active', 'dark'],
+  },
+  // Specific text colors actually used
+  {
+    pattern: /^text-(red|green|blue|yellow|orange|gray|slate|white|purple|violet)-(50|100|200|300|400|500|600|700|800|900)$/,
+    variants: ['hover', 'focus', 'active', 'dark'],
+  },
+  // Specific border colors actually used
+  {
+    pattern: /^border-(red|green|blue|yellow|orange|gray|slate)-(50|100|200|300|400|500|600|700|800|900)$/,
+    variants: ['hover', 'focus', 'active', 'dark'],
+  },
+  // Opacity variants for backgrounds
+  {
+    pattern: /^bg-(red|green|blue|yellow|orange|gray|slate)-(500|400)\/\d{1,2}$/,
+  },
+  // Essential animations
+  'animate-pulse',
+  'animate-spin',
+  'animate-bounce',
+  'animate-meteor-effect',
+  // Essential transitions
+  'transition-all',
+  'transition-colors',
+  'duration-300',
+  'duration-200',
+  'ease-in-out',
+  // Common utility classes found in codebase
+  'sr-only',
+  'focus:not-sr-only',
+  'line-through',
+  'font-mono',
+  'will-change-transform',
+  'filter-none'
+],
   theme: {
     extend: {
       colors: {
@@ -58,4 +97,4 @@ module.exports = {
     },
   },
   plugins: [],
-} 
+}

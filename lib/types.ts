@@ -187,10 +187,18 @@ export interface CouponValidationRequest {
 }
 
 export interface CouponValidationResponse {
-  isValid: boolean;
-  coupon?: Coupon;
-  discountAmount?: number;
-  finalAmount?: number;
+  success: boolean;
+  isValid?: boolean;
+  data?: {
+    code: string;
+    discountAmount: number;
+    discountPercentage?: number;
+    type: 'percentage' | 'fixed';
+    description?: string;
+    coupon?: Coupon;
+    finalAmount?: number;
+  };
+  message?: string;
   error?: string;
 }
 
@@ -199,6 +207,8 @@ export interface AppliedCoupon {
   type: 'percentage' | 'fixed';
   value: number;
   discountAmount: number;
+  discountPercentage?: number;
   originalAmount: number;
   finalAmount: number;
+  description?: string;
 }

@@ -3,12 +3,17 @@
 import { createLazyComponent } from '@/components/performance/lazy-component-wrapper';
 import { SkeletonSpinner } from '@/components/ui/skeleton';
 
+import type { Game } from '@/lib/api';
+
+interface DashboardPageClientProps {
+  initialGames: Game[];
+}
+
 // Lazy load dashboard page component
-export const LazyDashboardPageClient = createLazyComponent(
+export const LazyDashboardPageClient = createLazyComponent<DashboardPageClientProps>(
   () => import('./dashboard-page-client').then(module => ({ default: module.DashboardPageClient })),
   {
-    preload: true,
-    fallback: (
+    loading: () => (
       <div className="bg-[#0D0E12] min-h-screen text-white">
         <div className="h-16 bg-[#1A1B20]/80 animate-pulse" />
         <div className="h-64 bg-gradient-to-r from-blue-900 to-purple-900 animate-pulse" />
@@ -20,7 +25,8 @@ export const LazyDashboardPageClient = createLazyComponent(
           </div>
         </div>
       </div>
-    )
+    ),
+    ssr: false
   }
 );
 

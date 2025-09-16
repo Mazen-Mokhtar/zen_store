@@ -40,6 +40,15 @@ const nextConfig = {
   // Skip trailing slash redirect
   skipTrailingSlashRedirect: true,
   
+  // Enable ISR for faster builds
+  generateStaticParams: true,
+  
+  // Build optimization
+  swcMinify: true,
+  
+  // Output configuration for better caching
+  output: 'standalone',
+  
   // Disable caching during development
   ...(process.env.NODE_ENV === 'development' && {
     onDemandEntries: {
@@ -49,8 +58,18 @@ const nextConfig = {
     generateEtags: false,
   }),
   
-  // Bundle optimization
+  // Bundle optimization with Turbopack for faster builds
   experimental: {
+    // Enable Turbopack for faster builds (Next.js 13+)
+    turbo: {
+      rules: {
+        '*.svg': {
+          loaders: ['@svgr/webpack'],
+          as: '*.js',
+        },
+      },
+    },
+    // Build performance optimizations
     optimizeCss: true,
     optimizePackageImports: ['lucide-react', '@radix-ui/react-icons', 'framer-motion', 'react-icons'],
     esmExternals: true,
@@ -59,6 +78,20 @@ const nextConfig = {
     optimizeServerReact: true,
     serverMinification: true,
     serverSourceMaps: false,
+    // Additional build speed optimizations
+    swcMinify: true,
+    modularizeImports: {
+      'lucide-react': {
+        transform: 'lucide-react/dist/esm/icons/{{kebabCase member}}',
+        skipDefaultConversion: true,
+      },
+      'react-icons': {
+        transform: 'react-icons/{{member}}',
+      },
+    },
+    // Enable faster refresh and compilation
+    forceSwcTransforms: true,
+    fullySpecified: false,
   },
   
   // Server external packages
@@ -181,10 +214,11 @@ const nextConfig = {
   
   // Image optimization with priority and WebP/AVIF support
   images: {
-    formats: ['image/webp', 'image/avif'],
-    deviceSizes: [640, 750, 828, 1080, 1200, 1920, 2048, 3840],
-    imageSizes: [16, 32, 48, 64, 96, 128, 256, 384],
-    minimumCacheTTL: process.env.NODE_ENV === 'development' ? 1 : 60,
+    // Optimize for faster builds - reduce formats and sizes
+    formats: process.env.NODE_ENV === 'production' ? ['image/webp', 'image/avif'] : ['image/webp'],
+    deviceSizes: [640, 828, 1200, 1920], // Reduced from 8 to 4 sizes
+    imageSizes: [32, 64, 128, 256], // Reduced from 8 to 4 sizes
+    minimumCacheTTL: process.env.NODE_ENV === 'development' ? 1 : 3600, // Longer cache in production
     remotePatterns: [
       {
         protocol: 'https',
@@ -199,10 +233,13 @@ const nextConfig = {
         hostname: 'images.unsplash.com',
       },
     ],
-    unoptimized: false,
-    // Enable image optimization for better Core Web Vitals
+    // Skip optimization during development for faster builds
+    unoptimized: process.env.NODE_ENV === 'development',
+    // Allow SVG images
     dangerouslyAllowSVG: true,
     contentSecurityPolicy: "default-src 'self'; script-src 'none'; sandbox;",
+    // Loader optimization
+    loader: process.env.NODE_ENV === 'development' ? 'default' : 'default',
   },
   
   // Font optimization is enabled by default in Next.js 13+
@@ -239,6 +276,26 @@ const nextConfig = {
           {
             key: 'Permissions-Policy',
             value: 'camera=(), microphone=(), geolocation=()',
+          },
+        ],
+      },
+      // Static assets caching
+      {
+        source: '/(.*)\\.(js|css|woff|woff2|eot|ttf|otf|png|jpg|jpeg|gif|ico|svg)',
+        headers: [
+          {
+            key: 'Cache-Control',
+            value: 'public, max-age=31536000, immutable',
+          },
+        ],
+      },
+      // HTML pages caching
+      {
+        source: '/((?!api).*)',
+        headers: [
+          {
+            key: 'Cache-Control',
+            value: 'public, max-age=3600, stale-while-revalidate=86400',
           },
         ],
       },

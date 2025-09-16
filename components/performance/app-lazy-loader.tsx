@@ -24,13 +24,10 @@ export const AppLazyLoader = memo<AppLazyLoaderProps>(({
   const [shouldLoad, setShouldLoad] = useState(false);
   
   // Use intersection observer for lazy loading
-  const { ref: elementRef, shouldLoad: isIntersecting } = useIntersectionLazyLoad(
-    () => Promise.resolve({ default: () => null }),
-    {
-      threshold,
-      rootMargin
-    }
-  );
+  const { elementRef, isIntersecting } = useIntersectionLazyLoad({
+    threshold,
+    rootMargin
+  });
 
   // Handle visibility changes
   useEffect(() => {
@@ -46,7 +43,7 @@ export const AppLazyLoader = memo<AppLazyLoaderProps>(({
   }, [isIntersecting, isVisible, preloadDelay]);
 
   return (
-    <div ref={elementRef} className="w-full">
+    <div ref={elementRef as React.RefObject<HTMLDivElement>} className="w-full">
       {shouldLoad ? children : fallback}
     </div>
   );

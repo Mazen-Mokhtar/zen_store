@@ -1,7 +1,7 @@
 'use client';
 import React, { useRef, useState, useEffect } from 'react';
 import type { ComponentProps, ReactNode } from 'react';
-import { motion } from 'framer-motion';
+import { motion } from "framer-motion";
 import { FacebookIcon, FrameIcon, InstagramIcon, LinkedinIcon, YoutubeIcon } from 'lucide-react';
 
 interface FooterLink {

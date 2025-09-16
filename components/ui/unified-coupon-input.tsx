@@ -65,9 +65,12 @@ export function UnifiedCouponInput({
         if (result.success && result.data) {
           const appliedCouponData: AppliedCoupon = {
             code: result.data.code,
+            type: result.data.type,
+            value: result.data.discountPercentage || result.data.discountAmount || 0,
             discountAmount: result.data.discountAmount,
             discountPercentage: result.data.discountPercentage,
-            type: result.data.type,
+            originalAmount: orderAmount || 0,
+            finalAmount: (orderAmount || 0) - result.data.discountAmount,
             description: result.data.description
           };
           
