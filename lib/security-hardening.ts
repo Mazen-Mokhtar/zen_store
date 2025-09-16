@@ -220,8 +220,8 @@ export class SecurityHardening {
     }
 
     return crypto.timingSafeEqual(
-      Buffer.from(stored.token, 'hex'),
-      Buffer.from(token, 'hex')
+      new Uint8Array(Buffer.from(stored.token, 'hex')),
+      new Uint8Array(Buffer.from(token, 'hex'))
     );
   }
 
