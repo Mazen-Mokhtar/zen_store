@@ -1,7 +1,13 @@
 /** @type {import('next').NextConfig} */
-const withBundleAnalyzer = require('@next/bundle-analyzer')({
-  enabled: process.env.ANALYZE === 'true',
-});
+let withBundleAnalyzer;
+try {
+  withBundleAnalyzer = require('@next/bundle-analyzer')({
+    enabled: process.env.ANALYZE === 'true',
+  });
+} catch (error) {
+  console.warn('Bundle analyzer not available, skipping...');
+  withBundleAnalyzer = (config) => config;
+}
 const fs = require('fs');
 const path = require('path');
 // const { TreeShakingOptimizationPlugin, createResolveConfig } = require('./lib/webpack-tree-shaking');
