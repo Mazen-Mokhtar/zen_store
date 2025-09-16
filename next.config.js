@@ -259,7 +259,7 @@ const nextConfig = {
   async headers() {
     return [
       {
-        source: '/(.*)',
+        source: '/:path*',
         headers: [
           {
             key: 'X-Frame-Options',
@@ -281,7 +281,7 @@ const nextConfig = {
       },
       // Static assets caching
       {
-        source: '/(.*)\\.(js|css|woff|woff2|eot|ttf|otf|png|jpg|jpeg|gif|ico|svg)',
+        source: '/:path*\\.(js|css|woff|woff2|eot|ttf|otf|png|jpg|jpeg|gif|ico|svg)',
         headers: [
           {
             key: 'Cache-Control',
@@ -300,7 +300,7 @@ const nextConfig = {
         ],
       },
       {
-        source: '/api/(.*)',
+        source: '/api/:path*',
         headers: [
           {
             key: 'Cache-Control',
@@ -309,7 +309,7 @@ const nextConfig = {
         ],
       },
       {
-        source: '/_next/static/(.*)',
+        source: '/_next/static/:path*',
         headers: [
           {
             key: 'Cache-Control',
@@ -318,7 +318,7 @@ const nextConfig = {
         ],
       },
       {
-        source: '/images/(.*)',
+        source: '/images/:path*',
         headers: [
           {
             key: 'Cache-Control',
@@ -328,7 +328,7 @@ const nextConfig = {
       },
       // Font optimization headers
       {
-        source: '/_next/static/css/(.*)',
+        source: '/_next/static/css/:path*',
         headers: [
           {
             key: 'Cache-Control',
@@ -338,7 +338,7 @@ const nextConfig = {
       },
       // Font files caching
       {
-        source: '/_next/static/media/(.*)',
+        source: '/_next/static/media/:path*',
         headers: [
           {
             key: 'Cache-Control',
