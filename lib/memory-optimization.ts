@@ -213,7 +213,8 @@ export function useOptimizedEffect(
         cleanupRef.current();
       }
     };
-  }, [effect, ...(deps || [])]);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, deps ? [effect, ...deps] : [effect]);
 }
 
 // Optimized interval hook

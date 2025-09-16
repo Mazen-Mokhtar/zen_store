@@ -77,7 +77,7 @@ export function PackagesPageClient({ initialPackages, initialGames }: PackagesPa
         setError('Game not found');
       }
     }
-  }, [gameId]); // Remove initialGames and initialPackages from dependencies to prevent infinite loop
+  }, [gameId, initialGames, initialPackages]);
 
   // Update packages with coupon when coupon details change
   useEffect(() => {

@@ -143,8 +143,8 @@ export const useLazyComponent = <T extends ComponentType<any>>(
     setError(null);
     
     try {
-      const module = await importFn();
-      setComponent(() => module.default);
+      const componentModule = await importFn();
+      setComponent(() => componentModule.default);
     } catch (err) {
       const error = err instanceof Error ? err : new Error('Failed to load component');
       setError(error);
