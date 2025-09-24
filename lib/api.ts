@@ -636,9 +636,9 @@ class OrderApiService {
     this.api = new ApiService();
   }
 
-  async getUserOrders(): Promise<{ success: boolean; data: Order[] }> {
+  async getUserOrders(page: number = 1, limit: number = 10): Promise<{ success: boolean; data: Order[]; pagination?: any }> {
     try {
-      // Create a user-scoped cache key
+      // Create a user-scoped cache key with pagination
       const { authService } = await import('./auth');
       const user = authService.getUser();
 
@@ -646,12 +646,17 @@ class OrderApiService {
         return { success: false, data: [] };
       }
 
-      const cacheKey = `user-orders:${user._id}`;
-      const cached = getCachedData<{ success: boolean; data: Order[] }>(cacheKey);
+      const cacheKey = `user-orders:${user._id}:${page}:${limit}`;
+      const cached = getCachedData<{ success: boolean; data: Order[]; pagination?: any }>(cacheKey);
       if (cached) return cached;
 
-      const response = await this.api.authenticatedRequest<{ success: boolean; data: Order[] }>(
-        '/api/order'
+      // Build query parameters for pagination
+      const queryParams = new URLSearchParams();
+      queryParams.append('page', page.toString());
+      queryParams.append('limit', limit.toString());
+
+      const response = await this.api.authenticatedRequest<{ success: boolean; data: Order[]; pagination?: any }>(
+        `/api/order?${queryParams.toString()}`
       );
 
       // Short TTL for authenticated data

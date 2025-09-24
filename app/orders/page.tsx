@@ -26,6 +26,11 @@ const OrderDetailsModal = dynamic(() => import('@/components/ui/order-details-mo
   ssr: false
 });
 
+const Pagination = dynamic(() => import('@/components/admin/orders/Pagination'), {
+  loading: () => <SkeletonSpinner size="sm" />,
+  ssr: false
+});
+
 const statusConfig = ORDER_STATUS_CONFIG;
 
 const STATUS_ICONS: Record<Order['status'], React.ComponentType<{ className?: string }>> = {
@@ -209,6 +214,16 @@ function OrdersPageContent() {
   const [showModal, setShowModal] = useState(false);
   const [userData, setUserData] = useState({ name: '', email: '' });
   const [isAuthenticated, setIsAuthenticated] = useState(false);
+  
+  // Pagination state
+  const [pagination, setPagination] = useState({
+    currentPage: 1,
+    totalPages: 0,
+    totalItems: 0,
+    itemsPerPage: 10,
+    hasNextPage: false,
+    hasPrevPage: false
+  });
 
   useEffect(() => {
     const authState = authService.getAuthState();
@@ -221,14 +236,26 @@ function OrdersPageContent() {
     }
   }, []);
 
-  const fetchOrders = useCallback(async () => {
+  const fetchOrders = useCallback(async (page: number = pagination.currentPage, limit: number = pagination.itemsPerPage) => {
     try {
       setLoading(true);
       setError(null);
 
-      const result = await orderApiService.getUserOrders();
+      const result = await orderApiService.getUserOrders(page, limit);
       if (result?.success) {
         setOrders(result.data || []);
+        
+        // Update pagination info from server response
+        if (result.pagination) {
+          setPagination({
+            currentPage: result.pagination.currentPage || page,
+            totalPages: result.pagination.totalPages || 0,
+            totalItems: result.pagination.totalItems || 0,
+            itemsPerPage: result.pagination.itemsPerPage || limit,
+            hasNextPage: result.pagination.hasNextPage || false,
+            hasPrevPage: result.pagination.hasPrevPage || false
+          });
+        }
       } else {
         setError('حدث خطأ أثناء جلب الطلبات');
       }
@@ -237,7 +264,7 @@ function OrdersPageContent() {
     } finally {
       setLoading(false);
     }
-  }, []);
+  }, [pagination.currentPage, pagination.itemsPerPage]);
 
   useEffect(() => {
     fetchOrders();
@@ -256,6 +283,15 @@ function OrdersPageContent() {
     setShowModal(false);
     setSelectedOrder(null);
   }, []);
+
+  // Pagination handlers
+  const handlePageChange = useCallback((page: number) => {
+    fetchOrders(page, pagination.itemsPerPage);
+  }, [fetchOrders, pagination.itemsPerPage]);
+
+  const handleItemsPerPageChange = useCallback((itemsPerPage: number) => {
+    fetchOrders(1, itemsPerPage); // Reset to first page when changing items per page
+  }, [fetchOrders]);
 
   const formatDate = useCallback((dateString: string) => {
     return new Date(dateString).toLocaleDateString('ar-EG', {
@@ -481,6 +517,22 @@ function OrdersPageContent() {
                 <div className="space-y-2 md:space-y-3" role="list" aria-label="Your orders">
                   {renderedOrders}
                 </div>
+                
+                {/* Pagination */}
+                {orders.length > 0 && (
+                  <div className="mt-6 pt-4 border-t border-gray-700">
+                    <Pagination
+                      currentPage={pagination.currentPage}
+                      totalPages={pagination.totalPages}
+                      totalItems={pagination.totalItems}
+                      itemsPerPage={pagination.itemsPerPage}
+                      hasNextPage={pagination.hasNextPage}
+                      hasPrevPage={pagination.hasPrevPage}
+                      onPageChange={handlePageChange}
+                      onItemsPerPageChange={handleItemsPerPageChange}
+                    />
+                  </div>
+                )}
               </div>
             )}
           </div>

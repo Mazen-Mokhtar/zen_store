@@ -211,10 +211,20 @@ export async function POST(request: Request) {
 export async function GET(request: Request) {
   try {
     const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3000';
+    
+    // Extract pagination parameters from URL
+    const { searchParams } = new URL(request.url);
+    const page = searchParams.get('page') || '1';
+    const limit = searchParams.get('limit') || '10';
+    
+    // Build query string for backend API
+    const queryParams = new URLSearchParams();
+    queryParams.append('page', page);
+    queryParams.append('limit', limit);
 
     const outHeaders = await getAuthHeaders();
 
-    const response = await fetch(`${API_BASE_URL}/order`, {
+    const response = await fetch(`${API_BASE_URL}/order?${queryParams.toString()}`, {
       method: 'GET',
       headers: outHeaders,
       // @ts-ignore

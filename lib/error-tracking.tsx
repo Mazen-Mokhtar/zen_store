@@ -409,11 +409,11 @@ export class ErrorTracker {
 
   // Setup performance capture
   private setupPerformanceCapture(): void {
-    // Long task detection
+    // Long task detection with higher threshold to reduce noise
     if ('PerformanceObserver' in window) {
       const longTaskObserver = new PerformanceObserver((list) => {
         list.getEntries().forEach((entry) => {
-          if (entry.duration > 50) { // Tasks longer than 50ms
+          if (entry.duration > 100) { // Increased threshold from 50ms to 100ms
             this.addBreadcrumb({
               category: 'error',
               message: `Long task detected: ${entry.duration.toFixed(2)}ms`,
@@ -435,7 +435,7 @@ export class ErrorTracker {
       }
     }
 
-    // Memory usage monitoring
+    // Memory usage monitoring with less frequent checks
     if ('memory' in performance) {
       setInterval(() => {
         const memory = (performance as any).memory;
@@ -454,7 +454,7 @@ export class ErrorTracker {
             }
           });
         }
-      }, 30000); // Check every 30 seconds
+      }, 60000); // Increased from 30 seconds to 60 seconds
     }
   }
 

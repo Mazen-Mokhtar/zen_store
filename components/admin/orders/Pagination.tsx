@@ -13,6 +13,8 @@ interface PaginationProps {
   onItemsPerPageChange?: (itemsPerPage: number) => void;
   className?: string;
   disabled?: boolean;
+  hasNextPage: boolean;
+  hasPrevPage: boolean;
 }
 
 const Pagination: React.FC<PaginationProps> = memo(({
